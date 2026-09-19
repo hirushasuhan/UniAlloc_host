@@ -1,7 +1,16 @@
 'use client'
 import { useState } from 'react'
 import { api } from '@/lib/api'
-import { HiOutlineExclamationTriangle, HiOutlineClock, HiOutlineTrash, HiOutlineCalendarDays, HiOutlineXMark, HiOutlineHandRaised } from 'react-icons/hi2'
+import { 
+  HiOutlineExclamationTriangle, 
+  HiOutlineClock, 
+  HiOutlineTrash, 
+  HiOutlineCalendarDays, 
+  HiOutlineXMark, 
+  HiOutlineHandRaised,
+  HiOutlineChevronDown,
+  HiOutlineChevronUp
+} from 'react-icons/hi2'
 
 // Statuses that mean the lecturer has nothing left to do → never "overdue"
 const DONE = new Set(['completed', 'cancelled', 'review_pending'])
@@ -39,22 +48,30 @@ interface Props {
 }
 
 export default function DeadlineAlerts({ assignments, onChanged, mode = 'manage' }: Props) {
-  const [extendFor,   setExtendFor]   = useState<any | null>(null)
-  const [appealFor,   setAppealFor]   = useState<any | null>(null)
-  const [newDeadline, setNewDeadline] = useState('')
-  const [message,     setMessage]     = useState('')
-  const [reason,      setReason]      = useState('')
-  const [busy,        setBusy]        = useState(false)
-  const [err,         setErr]         = useState('')
-  const [notice,      setNotice]      = useState<{ text: string; ok: boolean } | null>(null)
+  const [extendFor,       setExtendFor]       = useState<any | null>(null)
+  const [appealFor,       setAppealFor]       = useState<any | null>(null)
+  const [newDeadline,     setNewDeadline]     = useState('')
+  const [message,         setMessage]         = useState('')
+  const [reason,          setReason]          = useState('')
+  const [busy,            setBusy]            = useState(false)
+  const [err,             setErr]             = useState('')
+  const [notice,          setNotice]          = useState<{ text: string; ok: boolean } | null>(null)
+  const [showAllOverdue,  setShowAllOverdue]  = useState(false)
 
   const active  = (assignments ?? []).filter(a => a.deadline && !DONE.has(a.status))
   const overdue = active.filter(a => daysUntil(a.deadline) < 0)
-                        .sort((a, b) => daysUntil(a.deadline) - daysUntil(b.deadline))
+                        .sort((a, b) => {
+                          const diff = daysUntil(b.deadline) - daysUntil(a.deadline)
+                          if (diff !== 0) return diff
+                          return (b.id ?? 0) - (a.id ?? 0)
+                        })
   const dueSoon = active.filter(a => { const d = daysUntil(a.deadline); return d >= 0 && d <= DUE_SOON_DAYS })
                         .sort((a, b) => daysUntil(a.deadline) - daysUntil(b.deadline))
 
   if (overdue.length === 0 && dueSoon.length === 0) return null
+
+  const hasMoreOverdue = overdue.length > 3
+  const visibleOverdue = showAllOverdue ? overdue : overdue.slice(0, 3)
 
   const todayISO = startOfToday().toISOString().slice(0, 10)
 
@@ -105,19 +122,29 @@ export default function DeadlineAlerts({ assignments, onChanged, mode = 'manage'
     } finally { setBusy(false) }
   }
 
-  const priorityDot = (p: string) => (({
-    urgent: 'bg-red-500', high: 'bg-orange-500', medium: 'bg-amber-500', low: 'bg-slate-400',
-  }) as Record<string, string>)[p] ?? 'bg-slate-400'
+  const priorityBadge = (p: string) => {
+    switch (p) {
+      case 'urgent':
+        return 'bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30'
+      case 'high':
+        return 'bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/30'
+      case 'medium':
+        return 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+      case 'low':
+      default:
+        return 'bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/30'
+    }
+  }
 
   // Assignee name only makes sense for managers; a lecturer is looking at their own work
-  const who = (a: any) => (mode === 'manage' && a.assigned_to_name) ? `${a.assigned_to_name} · ` : ''
+  const who = (a: any) => (mode === 'manage' && a.assigned_to_name) ? a.assigned_to_name : ''
 
   const actions = (a: any) => {
     if (mode === 'view') return null
     if (mode === 'appeal') {
       return (
         <button onClick={() => openAppeal(a)} disabled={busy}
-          className="btn-secondary text-xs py-1.5 px-2.5 inline-flex items-center gap-1.5 shrink-0">
+          className="btn-secondary text-xs py-1.5 px-3 inline-flex items-center gap-1.5 shrink-0 rounded-xl hover:border-accent hover:text-accent shadow-sm active:scale-95">
           <HiOutlineHandRaised size={14}/> Appeal
         </button>
       )
@@ -126,12 +153,13 @@ export default function DeadlineAlerts({ assignments, onChanged, mode = 'manage'
     return (
       <div className="flex items-center gap-2 shrink-0">
         <button onClick={() => openExtend(a)} disabled={busy}
-          className="btn-secondary text-xs py-1.5 px-2.5 inline-flex items-center gap-1.5">
-          <HiOutlineCalendarDays size={14}/> Extend{a._overdue ? ' & warn' : ''}
+          className="btn-secondary text-xs py-1.5 px-3 inline-flex items-center gap-1.5 shrink-0 rounded-xl hover:border-accent hover:text-accent shadow-sm active:scale-95">
+          <HiOutlineCalendarDays size={14} className="text-red-500"/>
+          <span>Extend{a._overdue ? ' & warn' : ''}</span>
         </button>
         {a._overdue && (
           <button onClick={() => del(a)} disabled={busy} title="Delete assignment"
-            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20">
+            className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 active:scale-95 transition-all">
             <HiOutlineTrash size={14}/>
           </button>
         )}
@@ -140,7 +168,7 @@ export default function DeadlineAlerts({ assignments, onChanged, mode = 'manage'
   }
 
   return (
-    <div className="mb-8 space-y-4">
+    <div className="mb-8 space-y-5">
       {notice && (
         <div className={`rounded-xl px-4 py-2.5 text-sm border ${notice.ok ? 'bg-green-500/10 border-green-500/30 text-green-500' : 'bg-red-500/10 border-red-500/30 text-red-500'}`}>
           {notice.text}
@@ -149,56 +177,166 @@ export default function DeadlineAlerts({ assignments, onChanged, mode = 'manage'
 
       {/* Overdue */}
       {overdue.length > 0 && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/[0.07] overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-red-500/20 text-red-600 dark:text-red-400 font-semibold text-sm">
-            <HiOutlineExclamationTriangle size={18}/> Overdue assignments ({overdue.length})
-          </div>
-          <div className="divide-y divide-[var(--border)]/40">
-            {overdue.map(a => {
-              const late = Math.abs(daysUntil(a.deadline))
-              return (
-                <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full shrink-0 ${priorityDot(a.priority)}`} />
-                      <span className="font-medium truncate">{a.title}</span>
-                    </div>
-                    <div className="text-xs text-[var(--muted)] mt-0.5">
-                      {who(a)}due {fmt(a.deadline)} ·{' '}
-                      <span className="text-red-500 font-medium">{late} day{late === 1 ? '' : 's'} overdue</span>
-                    </div>
-                  </div>
-                  {actions({ ...a, _overdue: true })}
+        <div className="relative rounded-2xl p-4 sm:p-5 bg-gradient-to-b from-red-500/[0.08] via-red-500/[0.03] to-transparent dark:from-red-950/40 dark:via-red-950/20 dark:to-transparent/10 border border-red-500/20 dark:border-red-500/30 backdrop-blur-md shadow-xl shadow-red-500/[0.03]">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3 mb-3.5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-red-500/15 dark:bg-red-500/25 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 ring-1 ring-red-500/20 shadow-inner">
+                <HiOutlineExclamationTriangle size={18} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-heading font-semibold text-sm text-[var(--text)] tracking-tight">
+                    Overdue Assignments
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/25">
+                    {overdue.length}
+                  </span>
                 </div>
-              )
-            })}
+                <p className="text-[11px] text-[var(--muted)]">
+                  Assignments past deadline that require immediate review
+                </p>
+              </div>
+            </div>
+
+            {hasMoreOverdue && (
+              <span className="text-xs font-medium text-[var(--muted)] hidden sm:inline-block">
+                {showAllOverdue ? `Showing all ${overdue.length}` : `Showing latest 3 of ${overdue.length}`}
+              </span>
+            )}
           </div>
+
+          {/* Cards List with Fade Effect */}
+          <div className="relative">
+            <div className="space-y-2.5">
+              {visibleOverdue.map(a => {
+                const late = Math.abs(daysUntil(a.deadline))
+                const assignee = who(a)
+                return (
+                  <div
+                    key={a.id}
+                    className="group relative flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[var(--card)] hover:bg-[var(--card-solid)] border border-[var(--border)] hover:border-red-500/30 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${priorityBadge(a.priority)}`}>
+                          {a.priority || 'medium'}
+                        </span>
+                        <span className="font-medium text-sm text-[var(--text)] group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors truncate">
+                          {a.title}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-[var(--muted)] mt-1.5 flex-wrap">
+                        {assignee && (
+                          <>
+                            <span className="font-medium text-[var(--text)]/80">{assignee}</span>
+                            <span className="text-[var(--muted)]/50">•</span>
+                          </>
+                        )}
+                        <span>Due {fmt(a.deadline)}</span>
+                        <span className="text-[var(--muted)]/50">•</span>
+                        <span className="inline-flex items-center gap-1 font-semibold text-red-600 dark:text-red-400">
+                          <HiOutlineClock size={12} />
+                          {late} day{late === 1 ? '' : 's'} overdue
+                        </span>
+                      </div>
+                    </div>
+
+                    {actions({ ...a, _overdue: true })}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Bottom fade gradient overlay */}
+            {!showAllOverdue && hasMoreOverdue && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-[var(--bg)]/90 via-[var(--bg)]/50 to-transparent dark:from-[var(--bg)] dark:via-[var(--bg)]/60 rounded-b-xl"
+              />
+            )}
+          </div>
+
+          {/* See more / Show less toggle */}
+          {hasMoreOverdue && (
+            <div className="mt-3.5 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowAllOverdue(!showAllOverdue)}
+                className="group inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 active:scale-95 border border-red-500/25 transition-all shadow-sm hover:shadow cursor-pointer"
+              >
+                <span>
+                  {showAllOverdue ? 'Show less' : `See more (${overdue.length - 3} more overdue)`}
+                </span>
+                <HiOutlineChevronDown
+                  size={14}
+                  className={`transition-transform duration-200 ${showAllOverdue ? 'rotate-180' : 'group-hover:translate-y-0.5'}`}
+                />
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {/* Due soon */}
       {dueSoon.length > 0 && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.07] overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold text-sm">
-            <HiOutlineClock size={18}/> Deadlines approaching ({dueSoon.length})
+        <div className="relative rounded-2xl p-4 sm:p-5 bg-gradient-to-b from-amber-500/[0.08] via-amber-500/[0.03] to-transparent dark:from-amber-950/40 dark:via-amber-950/20 dark:to-transparent/10 border border-amber-500/20 dark:border-amber-500/30 backdrop-blur-md shadow-xl shadow-amber-500/[0.03]">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3 mb-3.5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/15 dark:bg-amber-500/25 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 ring-1 ring-amber-500/20 shadow-inner">
+                <HiOutlineClock size={18} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-heading font-semibold text-sm text-[var(--text)] tracking-tight">
+                    Deadlines Approaching
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+                    {dueSoon.length}
+                  </span>
+                </div>
+                <p className="text-[11px] text-[var(--muted)]">
+                  Upcoming assignments due in the next 3 days
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="divide-y divide-[var(--border)]/40">
+
+          <div className="space-y-2.5">
             {dueSoon.map(a => {
               const left = daysUntil(a.deadline)
+              const assignee = who(a)
               return (
-                <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full shrink-0 ${priorityDot(a.priority)}`} />
-                      <span className="font-medium truncate">{a.title}</span>
+                <div
+                  key={a.id}
+                  className="group relative flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[var(--card)] hover:bg-[var(--card-solid)] border border-[var(--border)] hover:border-amber-500/30 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${priorityBadge(a.priority)}`}>
+                        {a.priority || 'medium'}
+                      </span>
+                      <span className="font-medium text-sm text-[var(--text)] group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">
+                        {a.title}
+                      </span>
                     </div>
-                    <div className="text-xs text-[var(--muted)] mt-0.5">
-                      {who(a)}due {fmt(a.deadline)} ·{' '}
-                      <span className="text-amber-600 dark:text-amber-400 font-medium">
-                        {left === 0 ? 'due today' : `${left} day${left === 1 ? '' : 's'} left`}
+                    <div className="flex items-center gap-2 text-xs text-[var(--muted)] mt-1.5 flex-wrap">
+                      {assignee && (
+                        <>
+                          <span className="font-medium text-[var(--text)]/80">{assignee}</span>
+                          <span className="text-[var(--muted)]/50">•</span>
+                        </>
+                      )}
+                      <span>Due {fmt(a.deadline)}</span>
+                      <span className="text-[var(--muted)]/50">•</span>
+                      <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400">
+                        <HiOutlineClock size={12} />
+                        {left === 0 ? 'Due today' : `${left} day${left === 1 ? '' : 's'} left`}
                       </span>
                     </div>
                   </div>
+
                   {actions({ ...a, _overdue: false })}
                 </div>
               )

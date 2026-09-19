@@ -28,7 +28,7 @@ export default function LoginPage() {
   // includes faculty_id + faculty_name. Avoids calling the auth-protected
   // /faculties endpoint from the public registration view.
   const faculties = Array.from(
-    new Map(departments.map(d => [d.faculty_id, d.faculty_name])).entries()
+    new Map((Array.isArray(departments) ? departments : []).map(d => [d.faculty_id, d.faculty_name])).entries()
   ).map(([id, faculty_name]) => ({ id, faculty_name }))
   
   const [error, setError]       = useState('')

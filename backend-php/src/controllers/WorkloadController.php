@@ -11,7 +11,8 @@ class WorkloadController
     public function show(array $params = []): void
     {
         $auth   = JwtMiddleware::handle(['system_admin', 'dean', 'department_head', 'lecturer']);
-        $userId = (int)($params['userId'] ?? $auth['sub']);
+        $rawId  = $params['userId'] ?? null;
+        $userId = ($rawId === null || $rawId === 'me' || (int)$rawId === 0) ? (int)$auth['sub'] : (int)$rawId;
 
         // Lecturers can only see their own
         if ($auth['role'] === 'lecturer' && $userId !== $auth['sub']) {
@@ -20,7 +21,7 @@ class WorkloadController
 
         $cap          = WorkloadService::getCapacity($userId);
         $alternatives = [];
-        if ($cap['is_overloaded']) {
+        if (!empty($cap['is_overloaded'])) {
             $alternatives = WorkloadService::suggestAlternatives($userId);
         }
 

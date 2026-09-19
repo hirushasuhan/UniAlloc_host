@@ -157,6 +157,7 @@ $routes = [
     'PATCH /assignments/{id}/progress'     => ['AssignmentController', 'updateProgress'],
 
     // Workload / Capacity
+    'GET /capacity/me'                     => ['WorkloadController', 'show'],
     'GET /capacity/{userId}'               => ['WorkloadController', 'show'],
     'GET /capacity'                        => ['WorkloadController', 'index'],
 
