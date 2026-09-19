@@ -13,14 +13,14 @@ type ViewState = 'select' | 'staff-login' | 'student-login' | 'student-register'
 export default function LoginPage() {
   const router = useRouter()
   const [view, setView] = useState<ViewState>('select')
-  
+
   // Form states
-  const [email, setEmail]       = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [enrollmentNo, setEnrollmentNo] = useState('')
   const [facultyId, setFacultyId] = useState('')
-  const [deptId, setDeptId]     = useState('')
+  const [deptId, setDeptId] = useState('')
 
   const [departments, setDepartments] = useState<any[]>([])
 
@@ -30,9 +30,9 @@ export default function LoginPage() {
   const faculties = Array.from(
     new Map((Array.isArray(departments) ? departments : []).map(d => [d.faculty_id, d.faculty_name])).entries()
   ).map(([id, faculty_name]) => ({ id, faculty_name }))
-  
-  const [error, setError]       = useState('')
-  const [loading, setLoading]   = useState(false)
+
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function LoginPage() {
         setLoading(false)
         return
       }
-      
+
       if (roleType === 'staff' && userRole === 'student') {
         setError('This login is for staff members only. Please use the Student login.')
         setLoading(false)
@@ -117,7 +117,7 @@ export default function LoginPage() {
         <p className="text-zinc-400 text-sm">Select your portal to continue</p>
       </div>
 
-      <button 
+      <button
         onClick={() => changeView('staff-login')}
         className="relative w-full flex items-center p-4 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-cyan-500/30 transition-all duration-500 group overflow-hidden"
       >
@@ -134,7 +134,7 @@ export default function LoginPage() {
         </div>
       </button>
 
-      <button 
+      <button
         onClick={() => changeView('student-login')}
         className="relative w-full flex items-center p-4 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-purple-500/30 transition-all duration-500 group overflow-hidden"
       >
@@ -162,12 +162,12 @@ export default function LoginPage() {
   const renderLoginForm = (roleTitle: string) => {
     const isStudent = roleTitle.toLowerCase() === 'student'
     const colorClass = isStudent ? 'purple' : 'cyan'
-    
+
     return (
       <div className="animate-in fade-in slide-in-from-right-4 duration-500">
         <div className="flex items-center mb-8">
-          <button 
-            onClick={() => changeView('select')} 
+          <button
+            onClick={() => changeView('select')}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all mr-4 border border-white/5 hover:scale-105"
           >
             <HiOutlineChevronLeft className="w-5 h-5" />
@@ -201,9 +201,9 @@ export default function LoginPage() {
           <div className="space-y-1">
             <div className="flex justify-between items-center ml-1">
               <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Password</label>
-              <button 
-                type="button" 
-                onClick={() => router.push('/forgot-password')} 
+              <button
+                type="button"
+                onClick={() => router.push('/forgot-password')}
                 className={`text-xs text-${colorClass}-400 hover:text-${colorClass}-300 transition-colors`}
               >
                 Forgot?
@@ -230,13 +230,13 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
-          
+
           <button
             type="submit"
             disabled={loading}
             className={`w-full mt-6 relative group overflow-hidden rounded-xl font-medium py-3.5 px-4 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed
-              ${isStudent 
-                ? 'bg-purple-600 hover:bg-purple-500 shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:shadow-[0_0_30px_rgba(147,51,234,0.5)]' 
+              ${isStudent
+                ? 'bg-purple-600 hover:bg-purple-500 shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:shadow-[0_0_30px_rgba(147,51,234,0.5)]'
                 : 'bg-cyan-600 hover:bg-cyan-500 shadow-[0_0_20px_rgba(8,145,178,0.3)] hover:shadow-[0_0_30px_rgba(8,145,178,0.5)]'}
               text-white border border-white/10`}
           >
@@ -251,7 +251,7 @@ export default function LoginPage() {
             <div className="absolute inset-0 h-full w-full bg-gradient-to-t from-black/20 to-transparent"></div>
           </button>
         </form>
-        
+
         {isStudent && (
           <div className="mt-8 text-center text-sm text-zinc-500">
             Don't have an account yet?{' '}
@@ -267,8 +267,8 @@ export default function LoginPage() {
   const renderRegisterForm = () => (
     <div className="animate-in fade-in slide-in-from-right-4 duration-500">
       <div className="flex items-center mb-6">
-        <button 
-          onClick={() => changeView('student-login')} 
+        <button
+          onClick={() => changeView('student-login')}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all mr-4 shrink-0 border border-white/5 hover:scale-105"
         >
           <HiOutlineChevronLeft className="w-5 h-5" />
@@ -403,50 +403,50 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen w-full flex bg-[#09090B] text-zinc-100 overflow-hidden selection:bg-cyan-500/30">
-      
+
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex w-[55%] relative items-center justify-center border-r border-white/5 bg-black/20 backdrop-blur-3xl">
-        
+
         {/* Dynamic Grid Background */}
-        <div 
-          className="absolute inset-0 opacity-[0.15]" 
-          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40v40H0V0zm1 1h38v38H1V1z' fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E\")" }} 
+        <div
+          className="absolute inset-0 opacity-[0.15]"
+          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40v40H0V0zm1 1h38v38H1V1z' fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E\")" }}
         />
 
         {/* Ambient Glows */}
         <div className="absolute top-[20%] left-[20%] w-[400px] h-[400px] rounded-full bg-cyan-600/20 blur-[120px] mix-blend-screen animate-pulse duration-1000" />
         <div className="absolute bottom-[20%] right-[20%] w-[400px] h-[400px] rounded-full bg-purple-600/20 blur-[120px] mix-blend-screen animate-pulse duration-1000 delay-500" />
-        
+
         <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-xl px-12">
-          
+
           {/* Custom Logo Display */}
           <div className="relative flex flex-col items-center justify-center mb-10 animate-in fade-in zoom-in-95 duration-1000">
             {/* Animated rings around logo */}
             <div className="absolute inset-0 rounded-full border border-cyan-500/20 scale-[1.3] animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]" />
             <div className="absolute inset-0 rounded-full border border-purple-500/20 scale-[1.6] animate-[ping_4s_cubic-bezier(0,0,0.2,1)_infinite]" />
             <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 to-purple-500/10 blur-2xl rounded-full scale-[1.5]" />
-            
+
             {/* Logo Glass Container */}
             <div className="relative w-36 h-36 rounded-[2rem] bg-zinc-900/40 backdrop-blur-2xl border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)] flex items-center justify-center p-5 overflow-hidden group">
-               <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
-               <img 
-                 src="/logo.png" 
-                 alt="UniAlloc Icon" 
-                 className="relative w-full h-full object-cover rounded-2xl drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] group-hover:scale-105 transition-transform duration-500" 
-               />
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
+              <img
+                src="/logo.png"
+                alt="UniAlloc Icon"
+                className="relative w-full h-full object-cover rounded-2xl drop-shadow-[0_0_15px_rgba(255,255,255,0.1)] group-hover:scale-105 transition-transform duration-500"
+              />
             </div>
           </div>
-          
+
           <div className="text-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200 fill-mode-both">
             <h1 className="text-5xl md:text-6xl font-heading font-black tracking-tighter">
               <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Uni</span>
               <span className="text-white drop-shadow-md">Alloc</span>
             </h1>
-            
+
             <div className="h-[1px] w-16 bg-gradient-to-r from-transparent via-zinc-500 to-transparent mx-auto"></div>
 
             <p className="text-lg md:text-xl text-zinc-400 font-light leading-relaxed max-w-md mx-auto">
-              The Intelligent <br/>
+              The Intelligent <br />
               <span className="text-zinc-200 font-medium">University HR Allocation</span> Platform
             </p>
           </div>
@@ -455,7 +455,7 @@ export default function LoginPage() {
 
       {/* Right Panel - Auth Forms */}
       <div className="w-full lg:w-[45%] flex items-center justify-center p-6 sm:p-12 relative z-10 bg-[#09090B]">
-        
+
         {/* Mobile Header */}
         <div className="absolute top-8 left-8 lg:hidden flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
           <img src="/logo.png" alt="UniAlloc Logo" className="w-8 h-8 object-cover rounded-md" />
@@ -464,14 +464,14 @@ export default function LoginPage() {
 
         {/* Form Container */}
         <div className="w-full max-w-[420px] mt-16 lg:mt-0 relative">
-          
+
           <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-[2.5rem] blur-xl opacity-50" />
-          
+
           <div className="relative bg-[#09090B]/80 border border-white/5 p-8 sm:p-10 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl">
-            
+
             {/* Top accent line */}
             <div className="absolute top-0 left-10 right-10 h-[1px] bg-gradient-to-r from-transparent via-zinc-500/50 to-transparent" />
-            
+
             <div className="relative">
               {view === 'select' && renderSelectView()}
               {view === 'staff-login' && renderLoginForm('Staff')}
@@ -481,9 +481,10 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-8 text-center animate-in fade-in duration-1000 delay-500">
-             <p className="text-[11px] font-medium tracking-widest uppercase text-zinc-600">
-               Secured by Advanced Encryption • © {new Date().getFullYear()}
-             </p>
+            <p className="text-[11px] font-medium tracking-widest uppercase text-zinc-600">
+              Secured by Advanced Encryption
+
+            </p>
           </div>
         </div>
       </div>
