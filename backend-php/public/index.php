@@ -53,8 +53,8 @@ set_exception_handler(function (\Throwable $e) use ($cfg) {
 
 // --- CORS ---
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if (in_array($origin, $cfg['cors_origins'], true)) {
-    header("Access-Control-Allow-Origin: $origin");
+if (in_array('*', $cfg['cors_origins'], true) || in_array($origin, $cfg['cors_origins'], true) || ($origin && str_ends_with(parse_url($origin, PHP_URL_HOST) ?? '', 'vercel.app'))) {
+    header("Access-Control-Allow-Origin: " . ($origin ?: '*'));
 }
 header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
@@ -86,6 +86,7 @@ $uri = preg_replace('#^/api#', '', $uri);
 // --- Route table ---
 $routes = [
     // Health
+    'GET /'                                => ['HealthController', 'index'],
     'GET /health'                          => ['HealthController', 'index'],
 
     // Auth
@@ -174,8 +175,15 @@ $params = [];
 $handler = null;
 
 foreach ($routes as $pattern => $ctrl) {
-    [$routeMethod, $routePath] = explode(' ', $pattern, 2);
+    $parts = explode(' ', $pattern, 2);
+    $routeMethod = $parts[0];
+    $routePath   = $parts[1] ?? '';
     if ($routeMethod !== $method) continue;
+
+    if (($routePath === '/' || $routePath === '') && ($uri === '' || $uri === '/')) {
+        $handler = $ctrl;
+        break;
+    }
 
     // Convert {id} placeholders to regex
     $regex = '#^' . preg_replace('#\{(\w+)\}#', '(?P<$1>[^/]+)', $routePath) . '$#';

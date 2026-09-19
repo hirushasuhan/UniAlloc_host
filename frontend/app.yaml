@@ -1,5 +1,5 @@
 kind: wasmer.io/App.v0
-name: backend-php
+name: uniAlloc
 owner: hirushasuhan
 package: .
-app_id: da_KGzIxtmUVgyw
+app_id: da_nBBIbtXU3VMe

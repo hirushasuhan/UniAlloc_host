@@ -1,22 +1,25 @@
 [package]
-name = "unialloc/frontend"
-version = "0.1.0"
+name = "hirushasuhan/frontend"
+version = "0.1.7"
 description = "UniAlloc Next.js Frontend for Wasmer Edge"
 
 [dependencies]
-"wasmer/js" = "*"
+"wasmer/static-web-server" = "^1.0.0"
 
-[build]
-command = "npm run build"
+[fs]
+"/public" = "public"
+"/settings" = "settings"
 
 [[command]]
 name = "run"
-module = "wasmer/js:js"
+module = "wasmer/static-web-server:static-web-server"
 runner = "wasi"
-env = [
-  "NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api",
-  "NEXT_PUBLIC_APP_NAME=UniAlloc"
-]
 
-[fs]
-"/app" = "."
+[command.annotations.wasi]
+main-args = ["-d", "/public", "-p", "80", "--page-fallback", "/public/index.html"]
+env = [
+  "PORT=80",
+  "SERVER_PORT=80",
+  "SERVER_ROOT=/public",
+  "SERVER_PAGE_FALLBACK=/public/index.html"
+]

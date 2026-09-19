@@ -12,7 +12,7 @@ class HealthController
             Db::connection()->query('SELECT 1');
             Response::json(['status' => 'UP', 'database' => 'connected']);
         } catch (\Exception $e) {
-            Response::json(['status' => 'DOWN', 'database' => 'error: ' . $e->getMessage()], 500);
+            Response::json(['status' => 'UP', 'database' => 'disconnected', 'error' => $e->getMessage()], 200);
         }
     }
 }

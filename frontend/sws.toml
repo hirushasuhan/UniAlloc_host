@@ -1,0 +1,6 @@
+[general]
+root = "/public"
+port = 80
+page-fallback = "/public/index.html"
+directory-listing = false
+compression = true

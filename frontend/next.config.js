@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 
 // The API origin the browser is allowed to talk to (connect-src).
-const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api'
+const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://backend-php.wasmer.app/api'
 let apiOrigin = "'self'"
 try {
   apiOrigin = new URL(apiBase).origin
@@ -18,7 +18,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  `connect-src 'self' ${apiOrigin}`,
+  `connect-src 'self' ${apiOrigin} https://backend-php.wasmer.app`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

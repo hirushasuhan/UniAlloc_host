@@ -45,7 +45,7 @@ class Env
 
     public static function get(string $key, ?string $default = null): ?string
     {
-        $value = self::$vars[$key] ?? getenv($key);
+        $value = self::$vars[$key] ?? $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
         if ($value === false || $value === null || $value === '') return $default;
         return (string)$value;
     }
