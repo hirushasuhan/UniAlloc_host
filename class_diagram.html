@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>UniAlloc – Class Diagram</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#f0f2f8;font-family:Arial,sans-serif;overflow:hidden;height:100vh}
+#bar{position:fixed;top:0;left:0;right:0;height:44px;background:#fff;border-bottom:1px solid #d1d5db;display:flex;align-items:center;padding:0 16px;gap:10px;z-index:9;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#bar h1{font-size:14px;font-weight:700;color:#111827;flex:1}
+.btn{background:#f9fafb;color:#374151;border:1px solid #d1d5db;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:12px}
+.btn:hover{background:#f3f4f6}
+#vp{width:100%;height:calc(100vh - 44px);margin-top:44px;cursor:grab;overflow:hidden}
+#vp:active{cursor:grabbing}
+svg{width:100%;height:100%}
+</style>
+</head>
+<body>
+<div id="bar">
+  <h1>UniAlloc — Class Diagram (UML)</h1>
+  <span style="font-size:11px;color:#6b7280">12 classes · scroll to zoom · drag to pan</span>
+  <button class="btn" onclick="fitView()">⊞ Fit</button>
+  <button class="btn" onclick="resetView()">Reset</button>
+</div>
+<div id="vp"><svg id="svg"><defs>
+  <marker id="assoc" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+    <polygon points="0 0, 9 3.5, 0 7" fill="#5a6a9a"/>
+  </marker>
+  <marker id="empty-arr" markerWidth="12" markerHeight="8" refX="11" refY="4" orient="auto">
+    <path d="M0,0 L11,4 L0,8" fill="none" stroke="#5a6a9a" stroke-width="1.5"/>
+  </marker>
+  <marker id="diamond" markerWidth="14" markerHeight="8" refX="0" refY="4" orient="auto">
+    <polygon points="0,4 5,0 10,4 5,8" fill="#fff" stroke="#5a6a9a" stroke-width="1.2"/>
+  </marker>
+</defs><g id="world"></g></svg></div>
+<script>
+// ── COLORS ──
+const C_HDR  = '#c8d0f0'; // lavender header
+const C_HDR2 = '#9aaad8'; // header border
+const C_BODY = '#ffffff';
+const C_BORD = '#9aaad8';
+const C_LINE = '#5a6a9a';
+const C_TEXT = '#1a1a3e';
+const C_DIM  = '#5a6080';
+
+// ── LAYOUT CONSTANTS ──
+const CW   = 240;  // class box width
+const CHDR = 30;   // header height
+const ARH  = 18;   // attribute/method row height
+const SPAD = 6;    // section vertical padding
+
+function secH(items) { return items.length * ARH + SPAD * 2; }
+function classH(c)   { return CHDR + secH(c.attrs) + secH(c.methods); }
+function cmx(c)      { return c.x + CW / 2; }
+function cmy(c)      { return c.y + classH(c) / 2; }
+
+// ── CLASS DATA ──
+// attrs use + public, - private, # protected
+// types: int, varchar, enum, decimal, text, boolean, datetime
+const classes = [
+  // ── TOP ROW ─────────────────────────────
+  {id:'role', name:'Role', x:530, y:40,
+   attrs:[
+     '- id : int',
+     '- role_name : enum',
+   ],
+   methods:[
+     '+ getId() : int',
+     '+ getRoleName() : string',
+   ]},
+
+  // ── SECOND ROW (center) ─────────────────
+  {id:'faculty', name:'Faculty', x:60, y:250,
+   attrs:[
+     '- id : int',
+     '- faculty_name : varchar',
+     '- dean_id : int',
+     '- created_at : datetime',
+   ],
+   methods:[
+     '+ getDepartments() : list',
+     '+ getWorkloadSummary() : object',
+   ]},
+
+  {id:'user', name:'User', x:420, y:250,
+   attrs:[
+     '- id : int',
+     '- full_name : varchar',
+     '- email : varchar',
+     '- password_hash : varchar',
+     '- role_id : int',
+     '- department_id : int',
+     '- enrollment_number : varchar',
+     '- contact : varchar',
+     '- capacity_hours : decimal',
+     '- is_active : boolean',
+     '- created_at : datetime',
+     '- updated_at : datetime',
+   ],
+   methods:[
+     '+ login() : token',
+     '+ logout() : void',
+     '+ changePassword() : void',
+     '+ updateProfile() : void',
+   ]},
+
+  {id:'department', name:'Department', x:790, y:250,
+   attrs:[
+     '- id : int',
+     '- dept_name : varchar',
+     '- faculty_id : int',
+     '- head_id : int',
+     '- created_at : datetime',
+   ],
+   methods:[
+     '+ getLecturers() : list',
+     '+ getWorkload() : object',
+   ]},
+
+  // ── THIRD ROW ───────────────────────────
+  {id:'assignment', name:'Assignment', x:60, y:680,
+   attrs:[
+     '- id : int',
+     '- title : varchar',
+     '- description : text',
+     '- assigned_to : int',
+     '- assigned_by : int',
+     '- department_id : int',
+     '- priority : enum',
+     '- status : enum',
+     '- estimated_hours : decimal',
+     '- actual_hours : decimal',
+     '- deadline : date',
+     '- created_at : datetime',
+     '- updated_at : datetime',
+   ],
+   methods:[
+     '+ updateStatus() : void',
+     '+ approve() : void',
+     '+ cancel() : void',
+   ]},
+
+  {id:'work_request', name:'WorkRequest', x:370, y:680,
+   attrs:[
+     '- id : int',
+     '- requester_id : int',
+     '- request_type : enum',
+     '- title : varchar',
+     '- description : text',
+     '- target_user_id : int',
+     '- target_dept_id : int',
+     '- target_faculty_id : int',
+     '- status : enum',
+     '- created_at : datetime',
+     '- updated_at : datetime',
+   ],
+   methods:[
+     '+ submit() : void',
+     '+ approve() : void',
+     '+ reject() : void',
+   ]},
+
+  {id:'student_request', name:'StudentRequest', x:680, y:680,
+   attrs:[
+     '- id : int',
+     '- student_id : int',
+     '- faculty_id : int',
+     '- title : varchar',
+     '- description : text',
+     '- status : enum',
+     '- assigned_to : int',
+     '- created_at : datetime',
+     '- updated_at : datetime',
+   ],
+   methods:[
+     '+ submit() : void',
+     '+ track() : string',
+   ]},
+
+  {id:'notification', name:'Notification', x:990, y:680,
+   attrs:[
+     '- id : int',
+     '- user_id : int',
+     '- title : varchar',
+     '- message : text',
+     '- type : enum',
+     '- is_read : boolean',
+     '- created_at : datetime',
+   ],
+   methods:[
+     '+ markRead() : void',
+     '+ markAllRead() : void',
+   ]},
+
+  // ── FOURTH ROW ──────────────────────────
+  {id:'assignment_progress', name:'AssignmentProgress', x:60, y:1160,
+   attrs:[
+     '- id : int',
+     '- assignment_id : int',
+     '- updated_by : int',
+     '- progress_percent : tinyint',
+     '- note : text',
+     '- updated_at : datetime',
+   ],
+   methods:[
+     '+ save() : void',
+     '+ getHistory() : list',
+   ]},
+
+  {id:'workload_appeal', name:'WorkloadAppeal', x:370, y:1160,
+   attrs:[
+     '- id : int',
+     '- lecturer_id : int',
+     '- reason : text',
+     '- status : enum',
+     '- reviewed_by : int',
+     '- reviewed_at : datetime',
+     '- created_at : datetime',
+     '- updated_at : datetime',
+   ],
+   methods:[
+     '+ submit() : void',
+     '+ review() : void',
+   ]},
+
+  {id:'role_promotion', name:'RolePromotion', x:680, y:1160,
+   attrs:[
+     '- id : int',
+     '- lecturer_id : int',
+     '- from_role_id : int',
+     '- to_role_id : int',
+     '- requested_by : int',
+     '- approved_by : int',
+     '- status : enum',
+     '- created_at : datetime',
+     '- updated_at : datetime',
+   ],
+   methods:[
+     '+ initiate() : void',
+     '+ approve() : void',
+     '+ reject() : void',
+   ]},
+
+  {id:'audit_log', name:'AuditLog', x:990, y:1160,
+   attrs:[
+     '- id : int',
+     '- user_id : int',
+     '- action : varchar',
+     '- entity : varchar',
+     '- entity_id : int',
+     '- ip_address : varchar',
+     '- created_at : datetime',
+   ],
+   methods:[
+     '+ record() : void',
+     '+ getLogs() : list',
+   ]},
+];
+
+const cmap = {};
+classes.forEach(c => cmap[c.id] = c);
+
+// ── RELATIONSHIPS ──
+// type: 'assoc'=solid arrow, 'comp'=diamond+arrow, 'dep'=dashed arrow
+// label, fromMul, toMul
+const rels = [
+  {f:'user',               t:'role',              type:'assoc', lbl:'has',           fm:'N',    tm:'1'},
+  {f:'user',               t:'department',        type:'assoc', lbl:'belongs to',    fm:'N',    tm:'1'},
+  {f:'faculty',            t:'department',        type:'assoc', lbl:'contains',      fm:'1',    tm:'*'},
+  {f:'faculty',            t:'user',              type:'assoc', lbl:'has dean',      fm:'1',    tm:'0..1'},
+  {f:'department',         t:'user',              type:'assoc', lbl:'has head',      fm:'1',    tm:'0..1'},
+  {f:'user',               t:'assignment',        type:'assoc', lbl:'assigned to',   fm:'1',    tm:'*'},
+  {f:'assignment',         t:'assignment_progress',type:'comp', lbl:'has progress',  fm:'1',    tm:'*'},
+  {f:'user',               t:'work_request',      type:'assoc', lbl:'creates',       fm:'1',    tm:'*'},
+  {f:'user',               t:'student_request',   type:'assoc', lbl:'submits',       fm:'1',    tm:'*'},
+  {f:'user',               t:'notification',      type:'assoc', lbl:'receives',      fm:'1',    tm:'*'},
+  {f:'user',               t:'workload_appeal',   type:'assoc', lbl:'appeals',       fm:'1',    tm:'*'},
+  {f:'user',               t:'role_promotion',    type:'assoc', lbl:'requests',      fm:'1',    tm:'*'},
+  {f:'user',               t:'audit_log',         type:'assoc', lbl:'generates',     fm:'1',    tm:'*'},
+];
+
+// ── RENDER HELPERS ──
+function ns(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+function sa(el, ...p) { for (let i = 0; i < p.length; i += 2) el.setAttribute(p[i], p[i+1]); return el; }
+function ln(g, x1, y1, x2, y2, col, w, dash, mEnd) {
+  const l = ns('line');
+  sa(l,'x1',x1,'y1',y1,'x2',x2,'y2',y2,'stroke',col||C_LINE,'stroke-width',w||1.5);
+  if (dash) sa(l,'stroke-dasharray',dash);
+  if (mEnd) sa(l,'marker-end',mEnd);
+  g.appendChild(l); return l;
+}
+function txt(g, x, y, text, opts={}) {
+  const t = ns('text');
+  sa(t,'x',x,'y',y,'font-family','Arial,sans-serif','font-size',opts.size||10.5,
+     'fill',opts.fill||C_TEXT,'text-anchor',opts.anchor||'start');
+  if (opts.bold) sa(t,'font-weight','700');
+  if (opts.italic) sa(t,'font-style','italic');
+  t.textContent = text;
+  g.appendChild(t); return t;
+}
+
+// Get nearest edge point of a class box toward (tx,ty)
+function edgePt(c, tx, ty) {
+  const cx = cmx(c), cy = cmy(c), h = classH(c);
+  const hw = CW/2, hh = h/2;
+  const dx = tx-cx, dy = ty-cy;
+  if (!dx && !dy) return [cx,cy];
+  const rx = Math.abs(dx)/hw, ry = Math.abs(dy)/hh;
+  if (rx >= ry) {
+    const t = hw/Math.abs(dx);
+    return [dx>0 ? cx+hw : cx-hw, cy+dy*t];
+  } else {
+    const t = hh/Math.abs(dy);
+    return [cx+dx*t, dy>0 ? cy+hh : cy-hh];
+  }
+}
+
+let scale=0.5, tx=40, ty=30, drag=false, lx=0, ly=0;
+
+function render() {
+  const world = document.getElementById('world');
+  while (world.firstChild) world.removeChild(world.firstChild);
+  world.setAttribute('transform', `translate(${tx},${ty}) scale(${scale})`);
+
+  // ── RELATIONSHIP LINES ──
+  rels.forEach(r => {
+    const fc = cmap[r.f], tc = cmap[r.t];
+    if (!fc || !tc) return;
+    const fcx=cmx(fc),fcy=cmy(fc),tcx=cmx(tc),tcy=cmy(tc);
+    const [x1,y1] = edgePt(fc, tcx, tcy);
+    const [x2,y2] = edgePt(tc, fcx, fcy);
+
+    const g = ns('g');
+
+    // Line style
+    const isDash = r.type === 'dep';
+    const mEnd = r.type === 'comp' ? 'url(#assoc)' : 'url(#empty-arr)';
+    const mStart = r.type === 'comp' ? 'url(#diamond)' : 'none';
+
+    const path = ns('path');
+    // Route with slight curve
+    const dx = x2-x1, dy = y2-y1;
+    let d;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      d = `M${x1},${y1} C${x1+dx*0.4},${y1} ${x2-dx*0.4},${y2} ${x2},${y2}`;
+    } else {
+      d = `M${x1},${y1} C${x1},${y1+dy*0.4} ${x2},${y2-dy*0.4} ${x2},${y2}`;
+    }
+    sa(path,'d',d,'fill','none','stroke',C_LINE,'stroke-width',1.4,
+       'marker-end',mEnd);
+    if (isDash) sa(path,'stroke-dasharray','6 3');
+    if (r.type === 'comp') sa(path,'marker-start','url(#diamond)');
+    g.appendChild(path);
+
+    // Relationship label
+    const mlx=(x1+x2)/2, mly=(y1+y2)/2;
+    const bg = ns('rect');
+    const lw = r.lbl.length*5.2+8;
+    sa(bg,'x',mlx-lw/2,'y',mly-9,'width',lw,'height',13,'rx',3,'fill','#eef0fa');
+    g.appendChild(bg);
+    txt(g, mlx, mly+1, r.lbl, {anchor:'middle', fill:'#4a5a8a', italic:true, size:9.5});
+
+    // Multiplicities
+    function mulTxt(x, y, m) {
+      const t = ns('text');
+      sa(t,'x',x,'y',y,'font-family','Arial,sans-serif','font-size',10,
+         'fill',C_LINE,'font-weight','700','text-anchor','middle');
+      t.textContent = m; g.appendChild(t);
+    }
+    const ang = Math.atan2(y2-y1, x2-x1);
+    const off = 28;
+    if (r.fm) mulTxt(x1+off*Math.cos(ang)-10*Math.sin(ang), y1+off*Math.sin(ang)+10*Math.cos(ang), r.fm);
+    if (r.tm) mulTxt(x2-off*Math.cos(ang)-10*Math.sin(ang), y2-off*Math.sin(ang)+10*Math.cos(ang), r.tm);
+
+    world.appendChild(g);
+  });
+
+  // ── CLASS BOXES ──
+  classes.forEach(c => {
+    const h = classH(c);
+    const g = ns('g');
+
+    // Shadow
+    const shad = ns('rect');
+    sa(shad,'x',c.x+2,'y',c.y+2,'width',CW,'height',h,'rx',4,'fill','rgba(0,0,0,0.10)');
+    g.appendChild(shad);
+
+    // Body
+    const body = ns('rect');
+    sa(body,'x',c.x,'y',c.y,'width',CW,'height',h,'rx',4,
+       'fill',C_BODY,'stroke',C_BORD,'stroke-width',1.5);
+    g.appendChild(body);
+
+    // Header background
+    const hdr = ns('rect');
+    sa(hdr,'x',c.x,'y',c.y,'width',CW,'height',CHDR,'rx',4,
+       'fill',C_HDR,'stroke','none');
+    g.appendChild(hdr);
+    const hdrFix = ns('rect');
+    sa(hdrFix,'x',c.x,'y',c.y+CHDR-4,'width',CW,'height',4,'fill',C_HDR);
+    g.appendChild(hdrFix);
+
+    // Header border line
+    const hdivL = ns('line');
+    sa(hdivL,'x1',c.x,'y1',c.y+CHDR,'x2',c.x+CW,'y2',c.y+CHDR,
+       'stroke',C_HDR2,'stroke-width',1.2);
+    g.appendChild(hdivL);
+
+    // Class name
+    txt(g, c.x+CW/2, c.y+CHDR-9, c.name,
+        {anchor:'middle', bold:true, size:12, fill:'#1a1a3e'});
+
+    // ATTRS section
+    const attrY = c.y + CHDR;
+    const attrSecH = secH(c.attrs);
+    c.attrs.forEach((a, i) => {
+      const ry = attrY + SPAD + i*ARH;
+      // Alternate row
+      if (i % 2 === 1) {
+        const rb = ns('rect');
+        sa(rb,'x',c.x,'y',ry,'width',CW,'height',ARH,'fill','#f4f5fc');
+        g.appendChild(rb);
+      }
+      txt(g, c.x+8, ry+ARH-4, a, {fill:C_DIM, size:9.5});
+    });
+
+    // Divider before methods
+    const methY = attrY + attrSecH;
+    const div = ns('line');
+    sa(div,'x1',c.x,'y1',methY,'x2',c.x+CW,'y2',methY,'stroke',C_HDR2,'stroke-width',1);
+    g.appendChild(div);
+
+    // METHODS section
+    c.methods.forEach((m, i) => {
+      const ry = methY + SPAD + i*ARH;
+      txt(g, c.x+8, ry+ARH-4, m, {fill:'#1a3a6a', size:9.5});
+    });
+
+    // Outer border
+    const bord = ns('rect');
+    sa(bord,'x',c.x,'y',c.y,'width',CW,'height',h,'rx',4,
+       'fill','none','stroke',C_BORD,'stroke-width',1.5);
+    g.appendChild(bord);
+
+    world.appendChild(g);
+  });
+}
+
+function fitView() {
+  const vp = document.getElementById('vp');
+  const cw = vp.clientWidth, ch = vp.clientHeight;
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  classes.forEach(c => {
+    minX=Math.min(minX,c.x); minY=Math.min(minY,c.y);
+    maxX=Math.max(maxX,c.x+CW); maxY=Math.max(maxY,c.y+classH(c));
+  });
+  const bw=maxX-minX+80, bh=maxY-minY+80;
+  scale=Math.min(cw/bw, ch/bh, 0.9);
+  tx=(cw-bw*scale)/2-minX*scale+40*scale;
+  ty=(ch-bh*scale)/2-minY*scale+40*scale;
+  render();
+}
+
+function resetView() { scale=0.5; tx=40; ty=30; render(); }
+
+const vp = document.getElementById('vp');
+vp.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r = vp.getBoundingClientRect();
+  const mx=e.clientX-r.left, my=e.clientY-r.top;
+  const d=e.deltaY>0?.88:1/.88;
+  tx=mx-(mx-tx)*d; ty=my-(my-ty)*d; scale*=d; render();
+},{passive:false});
+vp.addEventListener('mousedown', e=>{drag=true;lx=e.clientX;ly=e.clientY;});
+vp.addEventListener('mousemove', e=>{if(!drag)return;tx+=e.clientX-lx;ty+=e.clientY-ly;lx=e.clientX;ly=e.clientY;render();});
+vp.addEventListener('mouseup', ()=>drag=false);
+vp.addEventListener('mouseleave', ()=>drag=false);
+window.addEventListener('load', ()=>{render();setTimeout(fitView,120);});
+</script>
+</body>
+</html>

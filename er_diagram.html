@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>UniAlloc – ER Diagram</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#f0f2f8;font-family:Arial,sans-serif;overflow:hidden;height:100vh}
+#bar{position:fixed;top:0;left:0;right:0;height:44px;background:#fff;border-bottom:1px solid #d1d5db;display:flex;align-items:center;padding:0 16px;gap:10px;z-index:9;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#bar h1{font-size:14px;font-weight:700;color:#111827;flex:1}
+.btn{background:#f9fafb;color:#374151;border:1px solid #d1d5db;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:12px}
+.btn:hover{background:#f3f4f6}
+#vp{width:100%;height:calc(100vh - 44px);margin-top:44px;cursor:grab;overflow:hidden}
+#vp:active{cursor:grabbing}
+svg{width:100%;height:100%}
+</style>
+</head>
+<body>
+<div id="bar">
+  <h1>UniAlloc — ER Diagram (Crow's Foot Notation)</h1>
+  <span style="font-size:11px;color:#6b7280">13 entities · scroll to zoom · drag to pan</span>
+  <button class="btn" onclick="fitView()">⊞ Fit</button>
+  <button class="btn" onclick="resetView()">Reset</button>
+</div>
+<div id="vp"><svg id="svg"><defs>
+  <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+    <feDropShadow dx="1" dy="1" stdDeviation="2" flood-color="rgba(0,0,0,0.12)"/>
+  </filter>
+</defs><g id="world"></g></svg></div>
+<script>
+// ── LAYOUT CONSTANTS ──
+const HDR_H = 26;   // entity header height
+const ROW_H = 20;   // field row height
+const TW    = 74;   // type column width
+const KW    = 28;   // key badge column width
+const EW    = 230;  // total entity width
+
+// Colors
+const C_HDR   = '#c8d0f0'; // entity header
+const C_HDR_B = '#9aaad8'; // header border
+const C_ROW1  = '#ffffff';
+const C_ROW2  = '#f4f5fc';
+const C_BORD  = '#9aaad8';
+const C_LINE  = '#5a6a9a';
+const C_PK    = '#c00000';
+const C_FK    = '#1a5fb4';
+const C_UK    = '#276e37';
+
+// ── ENTITY DATA ──
+const entities = [
+  {id:'faculty', name:'FACULTY', x:130, y:40,
+   fields:[
+     {t:'INT',       n:'id',           k:'PK'},
+     {t:'VARCHAR',   n:'faculty_name', k:'UK'},
+     {t:'INT',       n:'dean_id',      k:'FK'},
+     {t:'TIMESTAMP', n:'created_at',   k:''},
+   ]},
+  {id:'setting', name:'SETTING', x:430, y:40,
+   fields:[
+     {t:'VARCHAR', n:'setting_key',   k:'PK'},
+     {t:'TEXT',    n:'setting_value', k:''},
+   ]},
+  {id:'department', name:'DEPARTMENT', x:130, y:240,
+   fields:[
+     {t:'INT',       n:'id',         k:'PK'},
+     {t:'VARCHAR',   n:'dept_name',  k:''},
+     {t:'INT',       n:'faculty_id', k:'FK'},
+     {t:'INT',       n:'head_id',    k:'FK'},
+     {t:'TIMESTAMP', n:'created_at', k:''},
+   ]},
+  {id:'role', name:'ROLE', x:820, y:240,
+   fields:[
+     {t:'INT',  n:'id',        k:'PK'},
+     {t:'ENUM', n:'role_name', k:''},
+   ]},
+  {id:'user', name:'USER', x:295, y:420,
+   fields:[
+     {t:'INT',       n:'id',                k:'PK'},
+     {t:'VARCHAR',   n:'full_name',         k:''},
+     {t:'VARCHAR',   n:'email',             k:'UK'},
+     {t:'VARCHAR',   n:'password_hash',     k:''},
+     {t:'INT',       n:'role_id',           k:'FK'},
+     {t:'INT',       n:'department_id',     k:'FK'},
+     {t:'VARCHAR',   n:'enrollment_number', k:''},
+     {t:'VARCHAR',   n:'contact',           k:''},
+     {t:'DECIMAL',   n:'capacity_hours',    k:''},
+     {t:'TINYINT',   n:'is_active',         k:''},
+     {t:'TIMESTAMP', n:'created_at',        k:''},
+     {t:'TIMESTAMP', n:'updated_at',        k:''},
+   ]},
+  {id:'assignment', name:'ASSIGNMENT', x:30, y:710,
+   fields:[
+     {t:'INT',       n:'id',              k:'PK'},
+     {t:'VARCHAR',   n:'title',           k:''},
+     {t:'TEXT',      n:'description',     k:''},
+     {t:'INT',       n:'assigned_to',     k:'FK'},
+     {t:'INT',       n:'assigned_by',     k:'FK'},
+     {t:'INT',       n:'department_id',   k:'FK'},
+     {t:'ENUM',      n:'priority',        k:''},
+     {t:'ENUM',      n:'status',          k:''},
+     {t:'DECIMAL',   n:'estimated_hours', k:''},
+     {t:'DECIMAL',   n:'actual_hours',    k:''},
+     {t:'DATE',      n:'deadline',        k:''},
+     {t:'TIMESTAMP', n:'created_at',      k:''},
+     {t:'TIMESTAMP', n:'updated_at',      k:''},
+   ]},
+  {id:'work_request', name:'WORK_REQUEST', x:280, y:790,
+   fields:[
+     {t:'INT',       n:'id',                   k:'PK'},
+     {t:'INT',       n:'requester_id',          k:'FK'},
+     {t:'ENUM',      n:'request_type',          k:''},
+     {t:'VARCHAR',   n:'title',                 k:''},
+     {t:'TEXT',      n:'description',           k:''},
+     {t:'INT',       n:'target_user_id',        k:'FK'},
+     {t:'INT',       n:'target_department_id',  k:'FK'},
+     {t:'INT',       n:'target_faculty_id',     k:'FK'},
+     {t:'ENUM',      n:'status',                k:''},
+     {t:'TIMESTAMP', n:'created_at',            k:''},
+     {t:'TIMESTAMP', n:'updated_at',            k:''},
+   ]},
+  {id:'student_request', name:'STUDENT_REQUEST', x:530, y:750,
+   fields:[
+     {t:'INT',       n:'id',          k:'PK'},
+     {t:'INT',       n:'student_id',  k:'FK'},
+     {t:'INT',       n:'faculty_id',  k:'FK'},
+     {t:'VARCHAR',   n:'title',       k:''},
+     {t:'TEXT',      n:'description', k:''},
+     {t:'ENUM',      n:'status',      k:''},
+     {t:'INT',       n:'assigned_to', k:'FK'},
+     {t:'TIMESTAMP', n:'created_at',  k:''},
+     {t:'TIMESTAMP', n:'updated_at',  k:''},
+   ]},
+  {id:'notification', name:'NOTIFICATION', x:730, y:750,
+   fields:[
+     {t:'INT',       n:'id',         k:'PK'},
+     {t:'INT',       n:'user_id',    k:'FK'},
+     {t:'VARCHAR',   n:'title',      k:''},
+     {t:'TEXT',      n:'message',    k:''},
+     {t:'ENUM',      n:'type',       k:''},
+     {t:'TINYINT',   n:'is_read',    k:''},
+     {t:'TIMESTAMP', n:'created_at', k:''},
+   ]},
+  {id:'audit_log', name:'AUDIT_LOG', x:920, y:750,
+   fields:[
+     {t:'INT',       n:'id',         k:'PK'},
+     {t:'INT',       n:'user_id',    k:'FK'},
+     {t:'VARCHAR',   n:'action',     k:''},
+     {t:'VARCHAR',   n:'entity',     k:''},
+     {t:'INT',       n:'entity_id',  k:''},
+     {t:'VARCHAR',   n:'ip_address', k:''},
+     {t:'TIMESTAMP', n:'created_at', k:''},
+   ]},
+  {id:'workload_appeal', name:'WORKLOAD_APPEAL', x:1100, y:700,
+   fields:[
+     {t:'INT',       n:'id',          k:'PK'},
+     {t:'INT',       n:'lecturer_id', k:'FK'},
+     {t:'TEXT',      n:'reason',      k:''},
+     {t:'ENUM',      n:'status',      k:''},
+     {t:'INT',       n:'reviewed_by', k:'FK'},
+     {t:'TIMESTAMP', n:'reviewed_at', k:''},
+     {t:'TIMESTAMP', n:'created_at',  k:''},
+     {t:'TIMESTAMP', n:'updated_at',  k:''},
+   ]},
+  {id:'role_promotion', name:'ROLE_PROMOTION', x:1280, y:620,
+   fields:[
+     {t:'INT',       n:'id',           k:'PK'},
+     {t:'INT',       n:'lecturer_id',  k:'FK'},
+     {t:'INT',       n:'from_role_id', k:'FK'},
+     {t:'INT',       n:'to_role_id',   k:'FK'},
+     {t:'INT',       n:'requested_by', k:'FK'},
+     {t:'INT',       n:'approved_by',  k:'FK'},
+     {t:'ENUM',      n:'status',       k:''},
+     {t:'TIMESTAMP', n:'created_at',   k:''},
+     {t:'TIMESTAMP', n:'updated_at',   k:''},
+   ]},
+  {id:'assignment_progress', name:'ASSIGNMENT_PROGRESS', x:30, y:1090,
+   fields:[
+     {t:'INT',       n:'id',              k:'PK'},
+     {t:'INT',       n:'assignment_id',   k:'FK'},
+     {t:'INT',       n:'updated_by',      k:'FK'},
+     {t:'TINYINT',   n:'progress_percent',k:''},
+     {t:'TEXT',      n:'note',            k:''},
+     {t:'TIMESTAMP', n:'updated_at',      k:''},
+   ]},
+];
+
+// Relationships: fromId, toId, fromCard, toCard, label
+// Cards: 'one','many','zeroOne','zeroMany','oneMany'
+const rels = [
+  {f:'faculty',    t:'department',         fc:'one',  tc:'many',    lbl:'"contains"'},
+  {f:'user',       t:'department',         fc:'many', tc:'one',     lbl:'"belongs to"'},
+  {f:'user',       t:'faculty',            fc:'many', tc:'one',     lbl:'"managed by"'},
+  {f:'user',       t:'role',               fc:'many', tc:'one',     lbl:'"has"'},
+  {f:'user',       t:'assignment',         fc:'one',  tc:'many',    lbl:'"assigned to"'},
+  {f:'user',       t:'work_request',       fc:'one',  tc:'many',    lbl:'"creates"'},
+  {f:'user',       t:'student_request',    fc:'one',  tc:'many',    lbl:'"submits"'},
+  {f:'user',       t:'notification',       fc:'one',  tc:'many',    lbl:'"receives"'},
+  {f:'user',       t:'audit_log',          fc:'one',  tc:'many',    lbl:'"generates"'},
+  {f:'user',       t:'workload_appeal',    fc:'one',  tc:'many',    lbl:'"appeals"'},
+  {f:'user',       t:'role_promotion',     fc:'one',  tc:'many',    lbl:'"requests"'},
+  {f:'assignment', t:'assignment_progress',fc:'one',  tc:'many',    lbl:'"has"'},
+];
+
+// ── COMPUTED ENTITY METRICS ──
+function entH(ent) { return HDR_H + ent.fields.length * ROW_H; }
+function entMidX(ent) { return ent.x + EW / 2; }
+function entMidY(ent) { return ent.y + entH(ent) / 2; }
+
+const emap = {};
+entities.forEach(e => emap[e.id] = e);
+
+// Find nearest edge point of entity to a given target point
+function edgePt(ent, tx, ty) {
+  const cx = entMidX(ent), cy = entMidY(ent);
+  const hw = EW / 2, hh = entH(ent) / 2;
+  const dx = tx - cx, dy = ty - cy;
+  // Check which side to exit from
+  if (dx === 0 && dy === 0) return [cx, cy];
+  const absDx = Math.abs(dx), absDy = Math.abs(dy);
+  if (absDx / hw >= absDy / hh) {
+    // Left or right
+    const t = hw / absDx;
+    return dx > 0 ? [cx + hw, cy + dy * t] : [cx - hw, cy + dy * t];
+  } else {
+    const t = hh / absDy;
+    return [cx + dx * t, dy > 0 ? cy + hh : cy - hh];
+  }
+}
+
+// ── RENDERING ──
+function ns(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+function sa(el, ...p) { for (let i = 0; i < p.length; i += 2) el.setAttribute(p[i], p[i+1]); return el; }
+function ln(g, x1, y1, x2, y2, col, w, dash) {
+  const l = ns('line');
+  sa(l, 'x1',x1,'y1',y1,'x2',x2,'y2',y2,'stroke',col||C_LINE,'stroke-width',w||1.5);
+  if (dash) sa(l, 'stroke-dasharray', dash);
+  g.appendChild(l); return l;
+}
+function circ(g, cx, cy, r, fill, stroke) {
+  const c = ns('circle');
+  sa(c,'cx',cx,'cy',cy,'r',r,'fill',fill||'#fff','stroke',stroke||C_LINE,'stroke-width',1.5);
+  g.appendChild(c);
+}
+function txt(g, x, y, text, opts={}) {
+  const t = ns('text');
+  sa(t,'x',x,'y',y,'font-family','Arial,sans-serif','font-size',opts.size||11,
+     'fill',opts.fill||'#1a1a2e','text-anchor',opts.anchor||'start');
+  if (opts.bold) sa(t,'font-weight','700');
+  if (opts.italic) sa(t,'font-style','italic');
+  t.textContent = text;
+  g.appendChild(t); return t;
+}
+
+// Draw cardinality marker at entity edge point (ex,ey),
+// with line going in direction (nx,ny) away from entity
+function drawCard(g, ex, ey, nx, ny, card) {
+  const px = -ny, py = nx; // perpendicular
+  const d1 = 10, d2 = 20;
+  if (card === 'one' || card === 'zeroOne') {
+    // Single bar
+    ln(g, ex+nx*d1+px*7, ey+ny*d1+py*7, ex+nx*d1-px*7, ey+ny*d1-py*7, C_LINE, 1.8);
+  }
+  if (card === 'many' || card === 'zeroMany' || card === 'oneMany') {
+    // Crow's foot: 3 lines converging at entity edge
+    ln(g, ex, ey, ex+nx*d1+px*8, ey+ny*d1+py*8, C_LINE, 1.5);
+    ln(g, ex, ey, ex+nx*d1,      ey+ny*d1,       C_LINE, 1.5);
+    ln(g, ex, ey, ex+nx*d1-px*8, ey+ny*d1-py*8,  C_LINE, 1.5);
+  }
+  if (card === 'zeroOne' || card === 'zeroMany') {
+    circ(g, ex+nx*d2, ey+ny*d2, 5, '#fff', C_LINE);
+  }
+  if (card === 'oneMany') {
+    // Extra bar for "one or many"
+    ln(g, ex+nx*d1+8+px*7, ey+ny*(d1+8)+py*7, ex+nx*(d1+8)-px*7, ey+ny*(d1+8)-py*7, C_LINE, 1.8);
+  }
+}
+
+let scale = 0.55, tx = 60, ty = 30, drag = false, lx = 0, ly = 0;
+
+function render() {
+  const world = document.getElementById('world');
+  while (world.firstChild) world.removeChild(world.firstChild);
+  world.setAttribute('transform', `translate(${tx},${ty}) scale(${scale})`);
+
+  // ── RELATIONSHIP LINES ──
+  rels.forEach(r => {
+    const fe = emap[r.f], te = emap[r.t];
+    if (!fe || !te) return;
+    const fcx = entMidX(fe), fcy = entMidY(fe);
+    const tcx = entMidX(te), tcy = entMidY(te);
+    const [x1,y1] = edgePt(fe, tcx, tcy);
+    const [x2,y2] = edgePt(te, fcx, fcy);
+
+    // Line
+    ln(world, x1, y1, x2, y2, C_LINE, 1.5);
+
+    // Direction vectors (pointing away from entity into line)
+    const dx = x2-x1, dy = y2-y1, dist = Math.sqrt(dx*dx+dy*dy);
+    if (dist < 1) return;
+    const ndx = dx/dist, ndy = dy/dist;
+
+    // Draw cardinality at FROM end (pointing INTO line from from-entity)
+    drawCard(world, x1, y1, ndx, ndy, r.fc);
+    // Draw cardinality at TO end (pointing INTO line from to-entity)
+    drawCard(world, x2, y2, -ndx, -ndy, r.tc);
+
+    // Relationship label in quotes near midpoint
+    const mlx = (x1+x2)/2, mly = (y1+y2)/2;
+    const bg = ns('rect');
+    const lw = r.lbl.length*5.5+6, lh = 14;
+    sa(bg,'x',mlx-lw/2,'y',mly-lh/2-1,'width',lw,'height',lh,'fill','#f0f2f8','rx',3);
+    world.appendChild(bg);
+    txt(world, mlx, mly+4, r.lbl, {anchor:'middle', fill:'#4a5a8a', italic:true, size:10});
+  });
+
+  // ── ENTITY BOXES ──
+  entities.forEach(ent => {
+    const h = entH(ent);
+    const g = ns('g');
+
+    // Drop shadow via rect
+    const shad = ns('rect');
+    sa(shad,'x',ent.x+2,'y',ent.y+2,'width',EW,'height',h,'rx',4,
+       'fill','rgba(0,0,0,0.10)');
+    g.appendChild(shad);
+
+    // Box background
+    const box = ns('rect');
+    sa(box,'x',ent.x,'y',ent.y,'width',EW,'height',h,'rx',4,
+       'fill',C_ROW1,'stroke',C_BORD,'stroke-width',1.5);
+    g.appendChild(box);
+
+    // Header
+    const hdr = ns('rect');
+    sa(hdr,'x',ent.x,'y',ent.y,'width',EW,'height',HDR_H,'rx',4,
+       'fill',C_HDR,'stroke','none');
+    g.appendChild(hdr);
+    // Fix header bottom corners
+    const hdrFix = ns('rect');
+    sa(hdrFix,'x',ent.x,'y',ent.y+HDR_H-4,'width',EW,'height',4,'fill',C_HDR);
+    g.appendChild(hdrFix);
+    // Header bottom border
+    ln(g, ent.x, ent.y+HDR_H, ent.x+EW, ent.y+HDR_H, C_HDR_B, 1.2);
+
+    // Entity name
+    txt(g, ent.x+EW/2, ent.y+HDR_H-8, ent.name,
+        {anchor:'middle', bold:true, size:12, fill:'#1a1a3e'});
+
+    // Column dividers
+    // Type col: 0..TW | Name col: TW..(EW-KW) | Key: (EW-KW)..EW
+    const nameColW = EW - TW - KW;
+
+    // Fields
+    ent.fields.forEach((f, i) => {
+      const ry = ent.y + HDR_H + i * ROW_H;
+      // Alternate row bg
+      if (i % 2 === 1) {
+        const rowBg = ns('rect');
+        sa(rowBg,'x',ent.x,'y',ry,'width',EW,'height',ROW_H,'fill',C_ROW2);
+        g.appendChild(rowBg);
+      }
+      // Row bottom border (light)
+      if (i < ent.fields.length - 1) {
+        ln(g, ent.x, ry+ROW_H, ent.x+EW, ry+ROW_H, '#dde0f0', 1);
+      }
+      // Type text
+      txt(g, ent.x+4, ry+ROW_H-5, f.t,
+          {fill:'#5a6890', size:9.5});
+      // Field name
+      const isFk = f.k === 'FK', isPk = f.k === 'PK', isUk = f.k === 'UK';
+      const nameFill = isPk ? C_PK : isFk ? C_FK : '#1a1a2e';
+      const nameBold = isPk || isFk;
+      txt(g, ent.x+TW+3, ry+ROW_H-5, f.n,
+          {fill:nameFill, bold:nameBold, size:10});
+      // Key badge
+      if (f.k) {
+        const kx = ent.x + EW - KW + 2;
+        const kbg = ns('rect');
+        const kbgColor = isPk ? '#fde8e8' : isFk ? '#deeeff' : '#e8f5e9';
+        const kbgBorder = isPk ? '#f9a8a8' : isFk ? '#93c5fd' : '#a7d7b4';
+        sa(kbg,'x',kx-1,'y',ry+2,'width',KW-2,'height',ROW_H-4,'rx',3,
+           'fill',kbgColor,'stroke',kbgBorder,'stroke-width',0.8);
+        g.appendChild(kbg);
+        txt(g, kx + (KW-2)/2 - 1, ry+ROW_H-5, f.k,
+            {anchor:'middle', fill:isPk?C_PK:isFk?C_FK:C_UK, bold:true, size:8.5});
+      }
+    });
+
+    // Column divider lines
+    ln(g, ent.x+TW, ent.y+HDR_H, ent.x+TW, ent.y+h, '#c8cce8', 1);
+    ln(g, ent.x+EW-KW, ent.y+HDR_H, ent.x+EW-KW, ent.y+h, '#c8cce8', 1);
+
+    // Outer border on top of everything
+    const border = ns('rect');
+    sa(border,'x',ent.x,'y',ent.y,'width',EW,'height',h,'rx',4,
+       'fill','none','stroke',C_BORD,'stroke-width',1.5);
+    g.appendChild(border);
+
+    world.appendChild(g);
+  });
+}
+
+function fitView() {
+  const vp = document.getElementById('vp');
+  const cw = vp.clientWidth, ch = vp.clientHeight;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  entities.forEach(e => {
+    minX = Math.min(minX, e.x); minY = Math.min(minY, e.y);
+    maxX = Math.max(maxX, e.x + EW); maxY = Math.max(maxY, e.y + entH(e));
+  });
+  const bw = maxX - minX + 80, bh = maxY - minY + 80;
+  scale = Math.min(cw / bw, ch / bh, 0.9);
+  tx = (cw - bw * scale) / 2 - minX * scale + 40 * scale;
+  ty = (ch - bh * scale) / 2 - minY * scale + 40 * scale;
+  render();
+}
+
+function resetView() { scale = 0.55; tx = 60; ty = 30; render(); }
+
+const vp = document.getElementById('vp');
+vp.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r = vp.getBoundingClientRect();
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const d = e.deltaY > 0 ? .88 : 1/.88;
+  tx = mx - (mx - tx) * d; ty = my - (my - ty) * d; scale *= d; render();
+}, {passive:false});
+vp.addEventListener('mousedown', e => { drag = true; lx = e.clientX; ly = e.clientY; });
+vp.addEventListener('mousemove', e => { if (!drag) return; tx += e.clientX - lx; ty += e.clientY - ly; lx = e.clientX; ly = e.clientY; render(); });
+vp.addEventListener('mouseup', () => drag = false);
+vp.addEventListener('mouseleave', () => drag = false);
+window.addEventListener('load', () => { render(); setTimeout(fitView, 120); });
+</script>
+</body>
+</html>
