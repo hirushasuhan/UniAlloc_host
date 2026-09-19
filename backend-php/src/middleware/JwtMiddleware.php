@@ -24,7 +24,10 @@ class JwtMiddleware
      */
     public static function handle(array $allowedRoles = [], bool $requireTotp = true): array
     {
-        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION']
+            ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+            ?? (function_exists('getallheaders') ? (getallheaders()['Authorization'] ?? getallheaders()['authorization'] ?? '') : '')
+            ?? '';
         if (!str_starts_with($authHeader, 'Bearer ')) {
             Response::error('Unauthorised — token missing', 401);
         }

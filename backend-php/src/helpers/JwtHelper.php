@@ -76,6 +76,12 @@ class JwtHelper
             return null;
         }
 
+        // Strict header validation: prevent algorithm confusion or 'none' alg
+        $headerDec = json_decode(self::base64UrlDecode($header), true);
+        if (!is_array($headerDec) || ($headerDec['alg'] ?? '') !== 'HS256' || ($headerDec['typ'] ?? '') !== 'JWT') {
+            return null;
+        }
+
         $payload = json_decode(self::base64UrlDecode($payloadEnc), true);
         if (!$payload || (isset($payload['exp']) && $payload['exp'] < time())) {
             return null;

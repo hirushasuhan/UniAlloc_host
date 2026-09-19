@@ -8,14 +8,30 @@ declare(strict_types=1);
 
 define('BASE_PATH', dirname(__DIR__));
 
-// --- Autoloader (manual PSR-4 style) ---
+// --- Autoloader (manual PSR-4 style with case-sensitivity fallback) ---
 spl_autoload_register(function (string $class): void {
     $prefix = 'App\\';
     $base   = BASE_PATH . '/src/';
     if (!str_starts_with($class, $prefix)) return;
     $relative = str_replace('\\', '/', substr($class, strlen($prefix)));
     $file = $base . $relative . '.php';
-    if (file_exists($file)) require $file;
+    if (file_exists($file)) {
+        require $file;
+        return;
+    }
+
+    // Fallback for Linux case-sensitive filesystems where subdirectories
+    // (controllers, dao, helpers, middleware, models, services) are lowercase
+    $parts = explode('/', $relative);
+    if (count($parts) > 1) {
+        $className = array_pop($parts);
+        $lowerDir = implode('/', array_map('strtolower', $parts));
+        $file = $base . $lowerDir . '/' . $className . '.php';
+        if (file_exists($file)) {
+            require $file;
+            return;
+        }
+    }
 });
 
 // --- Error handling ---------------------------------------------------
@@ -53,12 +69,25 @@ set_exception_handler(function (\Throwable $e) use ($cfg) {
 
 // --- CORS ---
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if (in_array('*', $cfg['cors_origins'], true) || in_array($origin, $cfg['cors_origins'], true) || ($origin && str_ends_with(parse_url($origin, PHP_URL_HOST) ?? '', 'vercel.app'))) {
-    header("Access-Control-Allow-Origin: " . ($origin ?: '*'));
+$isAllowedOrigin = false;
+
+if ($origin !== '') {
+    $originHost = parse_url($origin, PHP_URL_HOST) ?? '';
+    if (in_array($origin, $cfg['cors_origins'], true) ||
+        str_ends_with($originHost, 'vercel.app') ||
+        str_ends_with($originHost, 'wasmer.app')) {
+        $isAllowedOrigin = true;
+    }
 }
-header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Access-Control-Max-Age: 86400');
+
+if ($isAllowedOrigin) {
+    header("Access-Control-Allow-Origin: $origin");
+    header('Vary: Origin');
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization');
+    header('Access-Control-Max-Age: 86400');
+}
 
 // --- Security headers ---
 // Responses carry staff records, so they must never be cached by a shared
