@@ -6,14 +6,65 @@ import { getUser } from '@/lib/auth'
 import DashboardBanner from '@/components/ui/DashboardBanner'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
-  PieChart, Pie
+  PieChart, Pie, CartesianGrid, ReferenceLine
 } from 'recharts'
 import {
   HiOutlineExclamationTriangle, HiOutlineSparkles, HiOutlineUsers,
   HiOutlineMagnifyingGlass,
   HiOutlineEnvelope as Mail, HiOutlinePhone as Phone, HiOutlineBriefcase,
-  HiOutlineClock as Clock, HiOutlineBookOpen
+  HiOutlineClock as Clock, HiOutlineBookOpen, HiOutlineChartBar
 } from 'react-icons/hi2'
+
+function StaffBarTooltip({ active, payload }: any) {
+  if (!active || !payload || !payload.length) return null
+  const data = payload[0].payload
+  const isOver = data.is_overloaded || data.utilization_pct >= 100
+  const isLow = data.utilization_pct < 50
+  return (
+    <div className="rounded-2xl p-3.5 bg-[var(--card-solid,#1a1e29)]/95 backdrop-blur-xl border border-[var(--border-strong)] shadow-2xl min-w-[200px] text-xs select-none">
+      <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-[var(--border)]">
+        <span className="font-bold text-sm text-[var(--text)] truncate max-w-[130px]">{data.full_name}</span>
+        <span
+          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+            isOver
+              ? 'bg-rose-500/15 text-rose-500 border border-rose-500/30'
+              : isLow
+              ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30'
+              : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+          }`}
+        >
+          {isOver ? 'Overloaded' : isLow ? 'Available' : 'Optimal'}
+        </span>
+      </div>
+      <div className="space-y-1.5 text-[var(--muted)]">
+        <div className="flex justify-between items-center">
+          <span>Utilisation:</span>
+          <span className={`font-bold text-sm ${isOver ? 'text-rose-500' : 'text-[var(--text)]'}`}>
+            {data.utilization_pct}%
+          </span>
+        </div>
+        {data.capacity_hours !== undefined && (
+          <>
+            <div className="flex justify-between items-center text-[11px]">
+              <span>Allocated:</span>
+              <span className="font-semibold text-[var(--text)]">{data.allocated_hours ?? 0} hrs</span>
+            </div>
+            <div className="flex justify-between items-center text-[11px]">
+              <span>Max Capacity:</span>
+              <span className="font-semibold text-[var(--text)]">{data.capacity_hours ?? 0} hrs</span>
+            </div>
+            <div className="flex justify-between items-center text-[11px]">
+              <span>Available:</span>
+              <span className={`font-semibold ${data.available_hours < 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                {data.available_hours ?? 0} hrs
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function DeptHeadDashboard() {
   const [workload,     setWorkload]     = useState<any[]>([])
@@ -162,20 +213,112 @@ export default function DeptHeadDashboard() {
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Workload Chart */}
-          <div className="glass-card p-6">
-            <h2 className="font-heading font-semibold text-lg mb-4">Department Workload</h2>
+          <div className="glass-card p-6 relative overflow-hidden">
+            {/* Header with Title, Icon badge, and Status Pills */}
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 dark:bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 ring-1 ring-emerald-500/20 shadow-inner">
+                  <HiOutlineChartBar size={18} />
+                </div>
+                <div>
+                  <h2 className="font-heading font-semibold text-base text-[var(--text)] tracking-tight">
+                    Department Workload
+                  </h2>
+                  <p className="text-[11px] text-[var(--muted)]">Lecturer capacity utilisation overview</p>
+                </div>
+              </div>
+
+              {/* Mini Legend */}
+              <div className="flex items-center gap-3 text-[11px] font-medium text-[var(--muted)]">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
+                  <span>Normal</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-teal-400 shadow-sm shadow-teal-400/50" />
+                  <span>&lt;50%</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm shadow-rose-500/50 animate-pulse" />
+                  <span>Overloaded</span>
+                </span>
+              </div>
+            </div>
+
             {workload.length === 0
-              ? <p className="text-[var(--muted)] text-sm">No data available.</p>
+              ? <p className="text-[var(--muted)] text-sm py-12 text-center">No data available.</p>
               : (
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={workloadChartData} margin={{ top: 4, right: 8, bottom: 32, left: 0 }}>
-                    <XAxis dataKey="full_name" tick={{ fontSize: 11 }} interval={0} angle={-35} textAnchor="end" height={60} />
-                    <YAxis domain={[0,100]} unit="%" tick={{ fontSize: 11 }}/>
-                    <Tooltip formatter={(v: number) => `${v}%`}/>
-                    <Bar dataKey="utilization_pct" radius={[6,6,0,0]}>
-                      {workloadChartData.map((w, i) => (
-                        <Cell key={i} fill={w.is_overloaded ? '#ef4444' : '#10b981'}/>
-                      ))}
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={workloadChartData} margin={{ top: 12, right: 12, bottom: 36, left: -10 }}>
+                    <defs>
+                      <linearGradient id="dhDeptBarNormal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#34d399" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#059669" stopOpacity={0.85} />
+                      </linearGradient>
+                      <linearGradient id="dhDeptBarAvailable" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#2dd4bf" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#0d9488" stopOpacity={0.85} />
+                      </linearGradient>
+                      <linearGradient id="dhDeptBarOverloaded" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f87171" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#dc2626" stopOpacity={0.9} />
+                      </linearGradient>
+                    </defs>
+
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} opacity={0.6} />
+
+                    <XAxis
+                      dataKey="full_name"
+                      tick={{ fontSize: 11, fill: 'var(--muted)' }}
+                      interval={0}
+                      angle={-28}
+                      textAnchor="end"
+                      height={50}
+                      tickLine={false}
+                      axisLine={{ stroke: 'var(--border)' }}
+                    />
+                    <YAxis
+                      domain={[0, (dataMax: number) => Math.max(100, Math.ceil((dataMax + 10) / 20) * 20)]}
+                      unit="%"
+                      tick={{ fontSize: 11, fill: 'var(--muted)' }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+
+                    <ReferenceLine
+                      y={100}
+                      stroke="#ef4444"
+                      strokeDasharray="4 4"
+                      strokeOpacity={0.7}
+                      label={{
+                        value: '100% Limit',
+                        position: 'top',
+                        fill: '#ef4444',
+                        fontSize: 10,
+                        fontWeight: 600,
+                      }}
+                    />
+
+                    <Tooltip
+                      cursor={{ fill: 'rgba(16, 185, 129, 0.06)' }}
+                      content={<StaffBarTooltip />}
+                    />
+
+                    <Bar
+                      dataKey="utilization_pct"
+                      radius={[8, 8, 2, 2]}
+                      animationDuration={800}
+                    >
+                      {workloadChartData.map((w, i) => {
+                        const isOver = w.is_overloaded || w.utilization_pct >= 100
+                        const isLow = w.utilization_pct < 50
+                        const fill = isOver
+                          ? 'url(#dhDeptBarOverloaded)'
+                          : isLow
+                          ? 'url(#dhDeptBarAvailable)'
+                          : 'url(#dhDeptBarNormal)'
+                        return <Cell key={i} fill={fill} />
+                      })}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
