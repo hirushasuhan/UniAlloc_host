@@ -15,6 +15,16 @@ const STATUS_COLOR: Record<string,string> = {
   review_pending: 'bg-purple-100 text-purple-700'
 }
 
+const isOverdue = (deadline: string | null, status: string) => {
+  if (!deadline || ['completed', 'cancelled', 'review_pending'].includes(status)) return false
+  const clean = deadline.trim().split(' ')[0].split('T')[0]
+  const [y, m, d] = clean.split('-').map(Number)
+  if (!y || !m || !d) return false
+  const date = new Date(y, m - 1, d)
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  return date.getTime() < today.getTime()
+}
+
 export default function LecturerAssignmentsPage() {
   const [assignments, setAssignments] = useState<any[]>([])
   const [updating,    setUpdating]    = useState<number|null>(null)
@@ -54,7 +64,16 @@ export default function LecturerAssignmentsPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className={`badge text-xs ${PRIORITY_COLOR[a.priority]}`}>{a.priority}</span>
-                  {a.deadline && <span className="text-xs text-[var(--muted)]">Due: {a.deadline}</span>}
+                  {a.deadline && (
+                    <span className={`text-xs ${isOverdue(a.deadline, a.status) ? 'text-red-600 font-semibold' : 'text-[var(--muted)]'}`}>
+                      Due: {a.deadline}
+                      {isOverdue(a.deadline, a.status) && (
+                        <span className="ml-1.5 text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">
+                          Overdue
+                        </span>
+                      )}
+                    </span>
+                  )}
                 </div>
                 <h3 className="font-semibold">{a.title}</h3>
                 {a.description && <p className="text-sm text-[var(--muted)] mt-1">{a.description}</p>}

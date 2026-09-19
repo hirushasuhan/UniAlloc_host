@@ -17,6 +17,16 @@ const STATUS_COLOR: Record<string,string> = {
   review_pending: 'bg-purple-100 text-purple-700'
 }
 
+const isOverdue = (deadline: string | null, status: string) => {
+  if (!deadline || ['completed', 'cancelled', 'review_pending'].includes(status)) return false
+  const clean = deadline.trim().split(' ')[0].split('T')[0]
+  const [y, m, d] = clean.split('-').map(Number)
+  if (!y || !m || !d) return false
+  const date = new Date(y, m - 1, d)
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  return date.getTime() < today.getTime()
+}
+
 export default function DeptHeadAssignmentsPage() {
   const user = getUser()
   const [assignments, setAssignments] = useState<any[]>([])
@@ -73,7 +83,22 @@ export default function DeptHeadAssignmentsPage() {
                 <td className="py-3 px-4 text-[var(--muted)]">{a.assigned_to_name}</td>
                 <td className="py-3 px-4"><span className={`badge ${PRIORITY_COLOR[a.priority]}`}>{a.priority}</span></td>
                 <td className="py-3 px-4 text-[var(--muted)]">{a.estimated_hours}h</td>
-                <td className="py-3 px-4 text-[var(--muted)]">{a.deadline ?? '—'}</td>
+                <td className="py-3 px-4">
+                  {a.deadline ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className={isOverdue(a.deadline, a.status) ? 'text-red-600 font-semibold' : 'text-[var(--muted)]'}>
+                        {a.deadline}
+                      </span>
+                      {isOverdue(a.deadline, a.status) && (
+                        <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">
+                          Overdue
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-[var(--muted)]">—</span>
+                  )}
+                </td>
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-2">
                     <div className="w-16 h-1.5 rounded-full bg-[var(--border)]">

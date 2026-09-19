@@ -10,13 +10,23 @@ const DUE_SOON_DAYS = 3
 function startOfToday(): Date {
   const d = new Date(); d.setHours(0, 0, 0, 0); return d
 }
+function parseDate(deadline: string): Date {
+  const clean = (deadline || '').trim().split(' ')[0].split('T')[0]
+  const [y, m, d] = clean.split('-').map(Number)
+  if (!y || !m || !d) return new Date(NaN)
+  return new Date(y, m - 1, d)
+}
 function daysUntil(deadline: string): number {
-  const d = new Date(deadline + 'T00:00:00')
+  const d = parseDate(deadline)
+  if (isNaN(d.getTime())) return 0
   return Math.round((d.getTime() - startOfToday().getTime()) / 86400000)
 }
 function fmt(deadline: string): string {
-  try { return new Date(deadline + 'T00:00:00').toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) }
-  catch { return deadline }
+  try {
+    const d = parseDate(deadline)
+    if (isNaN(d.getTime())) return deadline
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  } catch { return deadline }
 }
 
 interface Props {

@@ -52,7 +52,7 @@ class AssignmentDao
                 JOIN users ub ON ub.id = a.assigned_by
                 LEFT JOIN departments d ON d.id = a.department_id
                 WHERE ' . implode(' AND ', $where) . '
-                ORDER BY FIELD(a.priority,"urgent","high","medium","low"), a.deadline ASC';
+                ORDER BY FIELD(a.priority,'urgent','high','medium','low'), a.deadline ASC';
 
         $stmt = Db::connection()->prepare($sql);
         $stmt->execute($bind);
