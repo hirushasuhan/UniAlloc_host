@@ -1,0 +1,22 @@
+[package]
+name = "unialloc/frontend"
+version = "0.1.0"
+description = "UniAlloc Next.js Frontend for Wasmer Edge"
+
+[dependencies]
+"wasmer/js" = "*"
+
+[build]
+command = "npm run build"
+
+[[command]]
+name = "run"
+module = "wasmer/js:js"
+runner = "wasi"
+env = [
+  "NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api",
+  "NEXT_PUBLIC_APP_NAME=UniAlloc"
+]
+
+[fs]
+"/app" = "."

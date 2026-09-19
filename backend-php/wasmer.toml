@@ -1,0 +1,31 @@
+[package]
+name = "unialloc/backend"
+version = "0.1.0"
+description = "UniAlloc PHP Backend API for Wasmer Edge"
+
+[dependencies]
+"php/php" = "*"
+
+[[command]]
+name = "run"
+module = "php/php:php"
+runner = "wasi"
+
+[command.annotations.wasi]
+main-args = ["-t", "/app/public", "-S", "0.0.0.0:8080", "/app/public/index.php"]
+env = [
+  "APP_NAME=UniAlloc",
+  "APP_DEBUG=false",
+  "JWT_SECRET=df446a53004cfa3d8f32fe22b975334bd01eef80073d291876b6cc89b84e19bb",
+  "JWT_TTL=480",
+  "APP_KEY=8af9de3d094894a6039e72260800135b879b9df161e420e9b25e3c8fd6896b6f",
+  "DB_HOST=127.0.0.1",
+  "DB_PORT=3306",
+  "DB_NAME=uniAlloc_db",
+  "DB_USER=root",
+  "DB_PASSWORD=",
+  "CORS_ORIGINS=*"
+]
+
+[fs]
+"/app" = "."
