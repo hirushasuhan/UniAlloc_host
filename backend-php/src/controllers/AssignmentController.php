@@ -219,19 +219,23 @@ class AssignmentController
         $userName = $user['full_name'] ?? 'User';
 
         if ($pct >= 100) {
-            AssignmentDao::update($id, ['status' => 'review_pending']);
+            AssignmentDao::update($id, ['status' => 'completed']);
             NotificationDao::create(
                 (int)$a['assigned_by'],
-                "Task ready for review: \"{$a['title']}\" (completed by {$userName})",
+                "Task completed: \"{$a['title']}\" (completed by {$userName})",
                 'assignment'
             );
-        } elseif ($pct > 0 && $a['status'] === 'pending') {
+        } elseif ($pct > 0) {
             AssignmentDao::update($id, ['status' => 'in_progress']);
-            NotificationDao::create(
-                (int)$a['assigned_by'],
-                "Task accepted & started: \"{$a['title']}\" (by {$userName})",
-                'assignment'
-            );
+            if ($a['status'] === 'pending') {
+                NotificationDao::create(
+                    (int)$a['assigned_by'],
+                    "Task accepted & started: \"{$a['title']}\" (by {$userName})",
+                    'assignment'
+                );
+            }
+        } else {
+            AssignmentDao::update($id, ['status' => 'pending']);
         }
 
         AuditLogDao::log($auth['sub'], 'update_progress', 'assignment_progress', $pid);

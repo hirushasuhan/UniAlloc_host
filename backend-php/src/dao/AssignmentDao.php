@@ -46,7 +46,10 @@ class AssignmentDao
                        ' . UserDao::displayNameSql('ut') . ' AS assigned_to_name,
                        ' . UserDao::displayNameSql('ub') . ' AS assigned_by_name,
                        d.dept_name,
-                       (SELECT MAX(ap.progress_percent) FROM assignment_progress ap WHERE ap.assignment_id = a.id) AS latest_progress
+                       COALESCE(
+                           (SELECT ap.progress_percent FROM assignment_progress ap WHERE ap.assignment_id = a.id ORDER BY ap.id DESC LIMIT 1),
+                           IF(a.status = \'completed\', 100, 0)
+                       ) AS latest_progress
                 FROM assignments a
                 JOIN users ut ON ut.id = a.assigned_to
                 JOIN users ub ON ub.id = a.assigned_by

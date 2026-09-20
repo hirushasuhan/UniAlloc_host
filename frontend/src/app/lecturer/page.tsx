@@ -33,9 +33,16 @@ export default function LecturerDashboard() {
 
   async function updateProgress(id: number) {
     const p = progress[id] ?? { pct: 0, note: '' }
+    if (p.pct === 100) {
+      const confirmed = window.confirm(
+        'Are you sure you want to mark this assignment as 100% completed?'
+      )
+      if (!confirmed) return
+    }
     await api.patch(`/assignments/${id}/progress`, { progress_percent: p.pct, note: p.note })
     setUpdating(null)
     api.get('/assignments').then(r => setAssignments(r.data.data ?? []))
+    if (user) api.get(`/capacity/${user.id}`).then(r => setCapacity(r.data.data?.capacity))
   }
 
   // Active assignments that contribute to workload capacity
@@ -297,12 +304,14 @@ export default function LecturerDashboard() {
                       </span>
                     </div>
 
-                    {a.status !== 'completed' && (
+                    {a.status !== 'cancelled' && (
                       updating === a.id ? (
                         <div className="mt-3 pt-3 border-t border-[var(--border)]/50 space-y-2.5">
                           <div className="flex items-center justify-between text-xs text-[var(--muted)]">
                             <span>Update Completion</span>
-                            <span className="font-bold text-indigo-500">{progress[a.id]?.pct ?? 0}%</span>
+                            <span className={`font-bold ${progress[a.id]?.pct === 100 ? 'text-green-500' : 'text-indigo-500'}`}>
+                              {progress[a.id]?.pct ?? 0}% {progress[a.id]?.pct === 100 && '(Completed)'}
+                            </span>
                           </div>
                           <input
                             type="range"
@@ -329,11 +338,11 @@ export default function LecturerDashboard() {
                         <button
                           onClick={() => {
                             setUpdating(a.id)
-                            setProgress((p) => ({ ...p, [a.id]: { pct: a.latest_progress ?? 0, note: '' } }))
+                            setProgress((p) => ({ ...p, [a.id]: { pct: a.latest_progress ?? (a.status === 'completed' ? 100 : 0), note: '' } }))
                           }}
                           className="text-xs font-semibold text-indigo-500 hover:text-indigo-400 hover:underline mt-1.5 inline-flex items-center gap-1 transition-colors"
                         >
-                          Update progress →
+                          {a.status === 'completed' ? 'Adjust progress / status ↺' : 'Update progress →'}
                         </button>
                       )
                     )}

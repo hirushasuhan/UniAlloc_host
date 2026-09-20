@@ -4,7 +4,13 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import DeadlineAlerts from '@/components/ui/DeadlineAlerts'
 import { api } from '@/lib/api'
 import { getUser } from '@/lib/auth'
-import { HiOutlineBriefcase, HiOutlinePlus, HiOutlineXMark } from 'react-icons/hi2'
+import {
+  HiOutlineBriefcase,
+  HiOutlinePlus,
+  HiOutlineXMark,
+  HiOutlineCheckCircle,
+  HiOutlineClipboardDocumentList,
+} from 'react-icons/hi2'
 
 export default function DeptHeadMyWorkPage() {
   const user = getUser()
@@ -13,6 +19,7 @@ export default function DeptHeadMyWorkPage() {
   const [pct,         setPct]         = useState(0)
   const [note,        setNote]        = useState('')
   const [msg,         setMsg]         = useState<{ text: string; ok: boolean } | null>(null)
+  const [activeTab,   setActiveTab]   = useState<'active' | 'completed'>('active')
 
   // Self-allocation modal
   const [showSelf, setShowSelf] = useState(false)
@@ -51,6 +58,13 @@ export default function DeptHeadMyWorkPage() {
   }
 
   async function saveProgress(id: number) {
+    if (pct === 100) {
+      const confirmed = window.confirm(
+        'Are you sure you want to mark this assignment as 100% completed?'
+      )
+      if (!confirmed) return
+    }
+    setMsg(null)
     try {
       await api.patch(`/assignments/${id}/progress`, { progress_percent: pct, note })
       setMsg({ text: 'Progress updated.', ok: true })
@@ -94,36 +108,98 @@ export default function DeptHeadMyWorkPage() {
       {/* Overdue & approaching-deadline alerts for my own work (read-only) */}
       <DeadlineAlerts assignments={assignments} onChanged={load} mode="view" />
 
-      {assignments.length === 0 && (
+      {assignments.length === 0 ? (
         <div className="glass-card p-10 text-center">
           <HiOutlineBriefcase size={32} className="mx-auto text-[var(--muted)] mb-3 opacity-40" />
           <p className="text-[var(--muted)]">No assignments have been assigned to you yet.</p>
         </div>
-      )}
+      ) : (
+        <>
+          {/* Tab Navigation */}
+          <div className="flex border-b border-[var(--border)] mb-6 gap-2">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`flex items-center gap-2 px-5 py-3 font-medium text-sm border-b-2 transition-all ${
+                activeTab === 'active'
+                  ? 'border-teal-500 text-teal-600 dark:text-teal-400 font-semibold'
+                  : 'border-transparent text-[var(--muted)] hover:text-[var(--text)]'
+              }`}
+            >
+              <HiOutlineClipboardDocumentList size={17} />
+              <span>Active Assignments</span>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                  activeTab === 'active'
+                    ? 'bg-teal-500/10 text-teal-600 dark:text-teal-400'
+                    : 'bg-[var(--border)] text-[var(--muted)]'
+                }`}
+              >
+                {active.length}
+              </span>
+            </button>
 
-      {active.length > 0 && (
-        <div className="space-y-4 mb-8">
-          <h2 className="font-heading font-semibold text-base">Active Assignments</h2>
-          {active.map((a: any) => (
-            <WorkCard key={a.id} a={a}
-              updating={updating} pct={pct} note={note}
-              onOpen={() => { setUpdating(a.id); setPct(a.latest_progress ?? 0); setNote('') }}
-              onPct={setPct} onNote={setNote}
-              onSave={() => saveProgress(a.id)}
-              onClose={() => setUpdating(null)} />
-          ))}
-        </div>
-      )}
+            <button
+              onClick={() => setActiveTab('completed')}
+              className={`flex items-center gap-2 px-5 py-3 font-medium text-sm border-b-2 transition-all ${
+                activeTab === 'completed'
+                  ? 'border-teal-500 text-teal-600 dark:text-teal-400 font-semibold'
+                  : 'border-transparent text-[var(--muted)] hover:text-[var(--text)]'
+              }`}
+            >
+              <HiOutlineCheckCircle size={17} />
+              <span>Completed Assignments</span>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                  activeTab === 'completed'
+                    ? 'bg-teal-500/10 text-teal-600 dark:text-teal-400'
+                    : 'bg-[var(--border)] text-[var(--muted)]'
+                }`}
+              >
+                {completed.length}
+              </span>
+            </button>
+          </div>
 
-      {completed.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="font-heading font-semibold text-base text-[var(--muted)]">Completed</h2>
-          {completed.map((a: any) => (
-            <WorkCard key={a.id} a={a} updating={null} pct={0} note=""
-              onOpen={() => {}} onPct={() => {}} onNote={() => {}}
-              onSave={() => {}} onClose={() => {}} />
-          ))}
-        </div>
+          {activeTab === 'active' && (
+            active.length > 0 ? (
+              <div className="space-y-4">
+                {active.map((a: any) => (
+                  <WorkCard key={a.id} a={a}
+                    updating={updating} pct={pct} note={note}
+                    onOpen={() => { setUpdating(a.id); setPct(a.latest_progress ?? 0); setNote('') }}
+                    onPct={setPct} onNote={setNote}
+                    onSave={() => saveProgress(a.id)}
+                    onClose={() => setUpdating(null)} />
+                ))}
+              </div>
+            ) : (
+              <div className="glass-card p-10 text-center">
+                <HiOutlineCheckCircle size={32} className="mx-auto text-[var(--muted)] mb-3 opacity-40" />
+                <p className="text-[var(--muted)]">No active assignments at the moment.</p>
+              </div>
+            )
+          )}
+
+          {activeTab === 'completed' && (
+            completed.length > 0 ? (
+              <div className="space-y-4">
+                {completed.map((a: any) => (
+                  <WorkCard key={a.id} a={a}
+                    updating={updating} pct={pct} note={note}
+                    onOpen={() => { setUpdating(a.id); setPct(a.latest_progress ?? 100); setNote('') }}
+                    onPct={setPct} onNote={setNote}
+                    onSave={() => saveProgress(a.id)}
+                    onClose={() => setUpdating(null)} />
+                ))}
+              </div>
+            ) : (
+              <div className="glass-card p-10 text-center">
+                <HiOutlineBriefcase size={32} className="mx-auto text-[var(--muted)] mb-3 opacity-40" />
+                <p className="text-[var(--muted)]">No completed assignments yet.</p>
+              </div>
+            )
+          )}
+        </>
       )}
 
       {/* ---- Self-Allocation Modal ---- */}
@@ -179,10 +255,10 @@ function WorkCard({ a, updating, pct, note, onOpen, onPct, onNote, onSave, onClo
     urgent: 'bg-red-100 text-red-700', high: 'bg-orange-100 text-orange-700',
     medium: 'bg-amber-100 text-amber-700', low: 'bg-slate-100 text-slate-700',
   }
-  const isActive = a.status !== 'completed' && a.status !== 'cancelled'
+  const isCancelled = a.status === 'cancelled'
 
   return (
-    <div className={`glass-card p-5 ${!isActive ? 'opacity-60' : ''}`}>
+    <div className={`glass-card p-5 ${a.status === 'completed' ? 'border-green-500/20' : ''}`}>
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
@@ -196,9 +272,9 @@ function WorkCard({ a, updating, pct, note, onOpen, onPct, onNote, onSave, onClo
           </p>
         </div>
         <span className={`badge flex-shrink-0 ${
-          a.status === 'completed'   ? 'bg-green-100 text-green-700' :
-          a.status === 'in_progress' ? 'bg-blue-100 text-blue-700'  :
-                                       'bg-amber-100 text-amber-700'
+          a.status === 'completed'   ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400' :
+          a.status === 'in_progress' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'  :
+                                       'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
         }`}>
           {a.status.replace('_', ' ')}
         </span>
@@ -207,16 +283,18 @@ function WorkCard({ a, updating, pct, note, onOpen, onPct, onNote, onSave, onClo
       <div className="flex items-center gap-3 mb-3">
         <div className="flex-1 h-2.5 rounded-full bg-[var(--border)]">
           <div className="h-2.5 rounded-full bg-gradient-to-r from-teal-500 to-emerald-600 transition-all"
-            style={{ width: `${a.latest_progress ?? 0}%` }} />
+            style={{ width: `${a.latest_progress ?? (a.status === 'completed' ? 100 : 0)}%` }} />
         </div>
-        <span className="text-sm font-medium w-10 text-right">{a.latest_progress ?? 0}%</span>
+        <span className="text-sm font-medium w-10 text-right">{a.latest_progress ?? (a.status === 'completed' ? 100 : 0)}%</span>
       </div>
 
-      {isActive && (
+      {!isCancelled && (
         updating === a.id ? (
           <div className="space-y-3 bg-[var(--bg)] rounded-xl p-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Progress: {pct}%</label>
+              <label className="block text-sm font-medium mb-1">
+                Progress: {pct}% {pct === 100 && '(Completed)'}
+              </label>
               <input type="range" min={0} max={100} step={5} value={pct}
                 onChange={e => onPct(+e.target.value)} className="w-full accent-teal-500" />
             </div>
@@ -228,8 +306,8 @@ function WorkCard({ a, updating, pct, note, onOpen, onPct, onNote, onSave, onClo
             </div>
           </div>
         ) : (
-          <button onClick={onOpen} className="text-sm text-teal-600 hover:underline font-medium">
-            Update progress →
+          <button onClick={onOpen} className="text-sm text-teal-600 dark:text-teal-400 hover:underline font-medium">
+            {a.status === 'completed' ? 'Adjust progress / status ↺' : 'Update progress →'}
           </button>
         )
       )}
