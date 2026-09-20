@@ -77,6 +77,11 @@ export default function AdminUsersPage() {
         position:       form.position || null,
         role_id:        parseInt(form.role_id),
         department_id:  form.department_id ? parseInt(form.department_id) : null,
+        // Only meaningful for a Dean account — the backend links it to
+        // faculties.dean_id. Was previously picked in the "Faculty" select
+        // above but never actually sent, so a new Dean never showed up on
+        // the Faculties page.
+        faculty_id:     form.role_id === '2' && selectedFaculty ? parseInt(selectedFaculty) : null,
         capacity_hours: parseFloat(form.capacity_hours),
       })
       setMsg({ text: 'User created successfully.', ok: true })
@@ -349,9 +354,16 @@ export default function AdminUsersPage() {
                     disabled={form.role_id === '1'}
                   >
                     <option value="">— Select Faculty —</option>
-                    {faculties.map((f: any) => (
-                      <option key={f.id} value={f.id}>{f.faculty_name}</option>
-                    ))}
+                    {faculties.map((f: any) => {
+                      const isDeanRole = form.role_id === '2';
+                      const hasDean = !!f.dean_name;
+                      const shouldDisable = isDeanRole && hasDean;
+                      return (
+                        <option key={f.id} value={f.id} disabled={shouldDisable}>
+                          {f.faculty_name}{shouldDisable ? ' (Already has Dean)' : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
 

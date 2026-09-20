@@ -132,6 +132,26 @@ class UserController
             }
         }
 
+        // Rule: a faculty can only have ONE (active) Dean — mirrors the
+        // Faculties page's own "Edit Dean" check; a brand-new Dean account
+        // is just another way of assigning one.
+        if ($targetRoleId === 2 && !empty($body['faculty_id'])) {
+            $db   = \App\Helpers\Db::connection();
+            $chk  = $db->prepare(
+                "SELECT u.full_name
+                 FROM faculties f
+                 JOIN users u ON u.id = f.dean_id
+                 WHERE f.id = :fid
+                   AND u.is_active = 1
+                   AND u.operational_status != 'On Study Leave'"
+            );
+            $chk->execute([':fid' => (int)$body['faculty_id']]);
+            $existing = $chk->fetch();
+            if ($existing) {
+                Response::error("This faculty already has an active Dean ({$existing['full_name']}). Move them off it first, or choose a different faculty.", 422);
+            }
+        }
+
         $userId = UserDao::create($body);
 
         // Keep departments.head_id in sync when a Department Head account is created
@@ -139,6 +159,16 @@ class UserController
             \App\Helpers\Db::connection()
                 ->prepare('UPDATE departments SET head_id = :uid WHERE id = :did')
                 ->execute([':uid' => $userId, ':did' => (int)$body['department_id']]);
+        }
+
+        // Keep faculties.dean_id in sync when a Dean account is created —
+        // this was previously silently dropped: the create-user form lets the
+        // admin pick a faculty for a new Dean, but nothing ever wrote it back,
+        // so the new Dean never actually showed up on the Faculties page.
+        if ($targetRoleId === 2 && !empty($body['faculty_id'])) {
+            \App\Helpers\Db::connection()
+                ->prepare('UPDATE faculties SET dean_id = :uid WHERE id = :fid')
+                ->execute([':uid' => $userId, ':fid' => (int)$body['faculty_id']]);
         }
 
         AuditLogDao::log($auth['sub'], 'create_user', 'users', $userId);
