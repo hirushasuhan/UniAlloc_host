@@ -4,9 +4,10 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import { api } from '@/lib/api'
 import { getUser } from '@/lib/auth'
 import { HiOutlineCheckCircle, HiOutlineXCircle, HiOutlinePlus, HiOutlineXMark } from 'react-icons/hi2'
+import TruncatedTitle from '@/components/ui/TruncatedTitle'
 
 const STEP_LABEL: Record<string, string> = {
-  pending_dean:      'Awaiting Your Approval',
+  pending_dean:      'Awaiting Dean Approval',
   pending_dept_head: 'Awaiting Dept Head',
   pending_assignee:  'Awaiting Acceptance',
   approved:          'Approved',
@@ -226,7 +227,9 @@ export default function DeanRequestsPage() {
               <tbody>
                 {other.map((r: any) => (
                   <tr key={r.id} className="border-b border-[var(--border)]/50 hover:bg-[var(--bg)]/50">
-                    <td className="py-3 px-4 font-medium max-w-[200px] truncate">{r.title}</td>
+                    <td className="py-3 px-4 font-medium">
+                      <TruncatedTitle title={r.title} subtitle={r.description} maxWidthClass="max-w-[200px] lg:max-w-[280px]" />
+                    </td>
                     <td className="py-3 px-4 text-[var(--muted)]">{r.requester_name}</td>
                     <td className="py-3 px-4 text-[var(--muted)]">{r.target_user_name ?? r.target_faculty_name ?? '—'}</td>
                     <td className="py-3 px-4 text-xs">{r.request_type?.replace(/_/g, '-')}</td>

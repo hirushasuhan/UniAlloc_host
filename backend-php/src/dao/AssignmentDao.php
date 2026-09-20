@@ -126,6 +126,13 @@ class AssignmentDao
         return $stmt->rowCount() > 0;
     }
 
+    public static function hardDelete(int $id): bool
+    {
+        $stmt = Db::connection()->prepare('DELETE FROM assignments WHERE id = :id');
+        $stmt->execute([':id' => $id]);
+        return $stmt->rowCount() > 0;
+    }
+
     public static function addProgress(int $assignmentId, int $userId, int $percent, ?string $note): int
     {
         $db   = Db::connection();

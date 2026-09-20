@@ -192,9 +192,31 @@ class AssignmentController
     {
         $auth = JwtMiddleware::handle(['system_admin', 'dean', 'department_head']);
         $id   = (int)($params['id'] ?? 0);
-        $ok   = AssignmentDao::delete($id);
+        $a    = AssignmentDao::findById($id);
+        if (!$a) {
+            Response::error('Assignment not found', 404);
+        }
+
+        // Deans and Dept Heads can delete assignments within their scope
+        if ($auth['role'] === 'department_head') {
+            $user = UserDao::findById($auth['sub']);
+            if ($user && $user['department_id'] && (int)$a['department_id'] !== (int)$user['department_id'] && (int)$a['assigned_by'] !== (int)$auth['sub']) {
+                Response::error('Forbidden: cannot delete assignment from another department', 403);
+            }
+        }
+
+        // If the assignment is already cancelled, hard delete it permanently
+        if ($a['status'] === 'cancelled') {
+            $ok = AssignmentDao::hardDelete($id);
+            AuditLogDao::log($auth['sub'], 'delete_assignment', 'assignments', $id);
+            Response::success(['deleted' => $ok], 'Cancelled assignment deleted permanently');
+            return;
+        }
+
+        // If not cancelled yet, cancel it
+        $ok = AssignmentDao::delete($id);
         AuditLogDao::log($auth['sub'], 'cancel_assignment', 'assignments', $id);
-        Response::success(['cancelled' => $ok]);
+        Response::success(['cancelled' => $ok], 'Assignment cancelled');
     }
 
     public function updateProgress(array $params = []): void

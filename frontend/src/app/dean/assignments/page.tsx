@@ -5,7 +5,9 @@ import AssignmentModal from '@/components/ui/AssignmentModal'
 import DeadlineAlerts from '@/components/ui/DeadlineAlerts'
 import { api } from '@/lib/api'
 import { getUser } from '@/lib/auth'
-import { HiOutlinePlus, HiOutlineMagnifyingGlass } from 'react-icons/hi2'
+import { HiOutlinePlus, HiOutlineMagnifyingGlass, HiOutlineTrash } from 'react-icons/hi2'
+import ConfirmDeleteModal from '@/components/ui/ConfirmDeleteModal'
+import TruncatedTitle from '@/components/ui/TruncatedTitle'
 
 const PRIORITY_COLOR: Record<string,string> = {
   urgent: 'bg-red-100 text-red-700', high: 'bg-orange-100 text-orange-700',
@@ -35,6 +37,8 @@ export default function DeanAssignmentsPage() {
   const [search,      setSearch]      = useState('')
   const [statusF,     setStatusF]     = useState('')
   const [showModal,   setShowModal]   = useState(false)
+  const [deleteModal, setDeleteModal] = useState<{ id: number; title: string } | null>(null)
+  const [deleting,    setDeleting]    = useState(false)
 
   const load = () => api.get('/assignments').then(r => setAssignments(r.data.data ?? []))
 
@@ -52,6 +56,19 @@ export default function DeanAssignmentsPage() {
 
   async function updateStatus(id:number, status:string) {
     await api.put(`/assignments/${id}`, { status }); load()
+  }
+
+  async function executeDeleteAssignment(id: number) {
+    setDeleting(true)
+    try {
+      await api.delete(`/assignments/${id}`)
+      setDeleteModal(null)
+      load()
+    } catch (e: any) {
+      alert(e.response?.data?.message ?? 'Failed to delete assignment')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (
@@ -93,7 +110,9 @@ export default function DeanAssignmentsPage() {
           <tbody>
             {filtered.map((a:any) => (
               <tr key={a.id} className="border-b border-[var(--border)]/50 hover:bg-[var(--bg)]/50">
-                <td className="py-3 px-4 font-medium max-w-[200px] truncate">{a.title}</td>
+                <td className="py-3 px-4 font-medium">
+                  <TruncatedTitle title={a.title} maxWidthClass="max-w-[200px] lg:max-w-[280px]" />
+                </td>
                 <td className="py-3 px-4 text-[var(--muted)]">{a.assigned_to_name}</td>
                 <td className="py-3 px-4"><span className={`badge ${PRIORITY_COLOR[a.priority]}`}>{a.priority}</span></td>
                 <td className="py-3 px-4 text-[var(--muted)]">{a.estimated_hours}h</td>
@@ -122,13 +141,18 @@ export default function DeanAssignmentsPage() {
                   </div>
                 </td>
                 <td className="py-3 px-4"><span className={`badge ${STATUS_COLOR[a.status] || 'bg-slate-100 text-slate-700'}`}>{a.status.replace('_',' ')}</span></td>
-                <td className="py-3 px-4 flex gap-2">
+                <td className="py-3 px-4 flex items-center gap-2">
                   {a.status === 'review_pending' && (
-                    <button onClick={() => updateStatus(a.id, 'completed')} className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded hover:bg-green-100">Approve</button>
+                    <button onClick={() => updateStatus(a.id, 'completed')} className="text-xs font-semibold text-green-600 bg-green-50 dark:bg-green-950/40 dark:text-green-400 px-2 py-1 rounded hover:bg-green-100">Approve</button>
                   )}
                   {a.status === 'pending' && (
                     <button onClick={() => updateStatus(a.id, 'cancelled')}
-                      className="text-xs text-red-500 hover:underline">Cancel</button>
+                      className="text-xs text-amber-600 dark:text-amber-400 hover:underline">Cancel</button>
+                  )}
+                  {a.status === 'cancelled' && (
+                    <button onClick={() => setDeleteModal({ id: a.id, title: a.title })} className="text-xs text-red-600 dark:text-red-400 hover:underline font-medium inline-flex items-center gap-1">
+                      <HiOutlineTrash size={13} /> Delete
+                    </button>
                   )}
                 </td>
               </tr>
@@ -144,6 +168,14 @@ export default function DeanAssignmentsPage() {
         <AssignmentModal users={users} depts={depts} assignedBy={user.id}
           onClose={() => setShowModal(false)} onCreated={load}/>
       )}
+
+      <ConfirmDeleteModal
+        isOpen={!!deleteModal}
+        taskTitle={deleteModal?.title}
+        loading={deleting}
+        onConfirm={() => deleteModal && executeDeleteAssignment(deleteModal.id)}
+        onCancel={() => setDeleteModal(null)}
+      />
     </DashboardLayout>
   )
 }
