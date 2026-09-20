@@ -1,6 +1,6 @@
 [package]
 name = "hirushasuhan/backend"
-version = "0.1.13"
+version = "0.1.14"
 description = "UniAlloc PHP Backend API for Wasmer Edge"
 
 [dependencies]
@@ -14,24 +14,6 @@ name = "run"
 module = "php/php:php"
 runner = "https://webc.org/runner/wcgi"
 
-# ------------------------------------------------------------------
-# NOTE (security): the env list below is committed to git, so the database
-# host, port, name and user travel with the source. No password is here —
-# that part is right — but these values still hand an attacker the exact
-# coordinates of the database, and git history keeps them even after an edit.
-#
-# Left in place deliberately for now: removing them without first creating
-# the matching Wasmer secrets would break the next deploy. When you are ready:
-#
-#   wasmer app secret create --app backend-php DB_HOST db.fr-roub1.bengt.wasmernet.com
-#   wasmer app secret create --app backend-php DB_PORT 20184
-#   wasmer app secret create --app backend-php DB_NAME uniAlloc_db
-#   wasmer app secret create --app backend-php DB_USER user_35d68140
-#
-# then delete the four DB_* entries from the env list below and redeploy.
-# Config::Env::get() already falls back to real environment variables, so the
-# app reads them from the secrets with no code change.
-# ------------------------------------------------------------------
 [command.annotations.wasi]
 main-args = ["-t", "/app/public", "-S", "0.0.0.0:80", "/app/public/index.php"]
 env = ["PORT=80", "APP_NAME=UniAlloc", "APP_DEBUG=false", "DB_HOST=db.fr-roub1.bengt.wasmernet.com", "DB_PORT=20184", "DB_NAME=uniAlloc_db", "DB_USER=user_35d68140", "CORS_ORIGINS=https://unialloc.vercel.app,https://unialloc.wasmer.app,http://localhost:3000"]
