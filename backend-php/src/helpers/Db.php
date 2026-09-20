@@ -29,6 +29,17 @@ class Db
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                     PDO::ATTR_EMULATE_PREPARES   => false,
                 ]);
+
+                // Pin the session to UTC so every TIMESTAMP column (audit
+                // logs, created_at/updated_at, ...) reads and writes a
+                // consistent instant, regardless of whichever timezone the
+                // DB host or the backend host happens to be configured
+                // with. TIMESTAMP columns store the true UTC instant
+                // internally either way, so this only fixes how it's
+                // interpreted on the way in/out — it doesn't shift any
+                // existing data. Callers that want a specific person's
+                // local time convert from this UTC value on the frontend.
+                self::$instance->exec("SET time_zone = '+00:00'");
             } catch (PDOException $e) {
                 // The raw PDO message names the host, database and user, so it
                 // is only surfaced when APP_DEBUG is explicitly on.

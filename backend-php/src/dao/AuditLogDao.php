@@ -22,12 +22,21 @@ class AuditLogDao
 
     public static function list(int $limit = 100, int $offset = 0): array
     {
+        // `timestamp` is formatted here as an explicit ISO-8601 UTC string
+        // (with the trailing Z) instead of MySQL's bare "Y-m-d H:i:s". A
+        // bare string like that has no timezone marker, so `new Date(...)`
+        // on the frontend guesses — and browsers parse a space-separated
+        // datetime as LOCAL time, not UTC, which silently shows the wrong
+        // moment. An unambiguous UTC string lets `toLocaleString()` convert
+        // it correctly to whichever timezone the viewer's own browser is in.
         $stmt = Db::connection()->prepare(
-            'SELECT al.*, u.full_name AS user_name, u.email AS user_email
+            "SELECT al.id, al.user_id, al.action, al.entity, al.entity_id, al.detail,
+                    DATE_FORMAT(al.timestamp, '%Y-%m-%dT%H:%i:%sZ') AS `timestamp`,
+                    u.full_name AS user_name, u.email AS user_email
              FROM audit_logs al
              LEFT JOIN users u ON u.id = al.user_id
              ORDER BY al.timestamp DESC
-             LIMIT :limit OFFSET :offset'
+             LIMIT :limit OFFSET :offset"
         );
         $stmt->bindValue(':limit',  $limit,  \PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
