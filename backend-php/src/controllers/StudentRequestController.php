@@ -413,6 +413,8 @@ class StudentRequestController
             'deadline'        => $body['deadline'] ?? null,
         ]);
 
+        StudentRequestDao::linkAssignment((int)$sr['id'], $assignmentId);
+
         \App\Services\WorkloadService::checkAndNotifyOverload($assignedTo, $assignmentId, $reviewedBy);
         NotificationDao::create(
             $assignedTo,

@@ -24,7 +24,13 @@ class StudentRequestDao
                     f.faculty_name,
                     dd.dept_name         AS dept_name,
                     ' . UserDao::displayNameSql('ua') . ' AS assigned_to_name,
-                    ' . UserDao::displayNameSql('sg') . ' AS suggested_supervisor_name
+                    ' . UserDao::displayNameSql('sg') . ' AS suggested_supervisor_name,
+                    asn.status           AS assignment_status,
+                    asn.deadline         AS assignment_deadline,
+                    COALESCE(
+                        (SELECT MAX(ap.progress_percent) FROM assignment_progress ap WHERE ap.assignment_id = COALESCE(sr.assignment_id, asn.id)),
+                        IF(asn.status = \'completed\', 100, 0)
+                    ) AS progress_percent
              FROM student_requests sr
              JOIN  users us       ON us.id = sr.student_id
              LEFT JOIN departments hd ON hd.id = us.department_id
@@ -32,6 +38,10 @@ class StudentRequestDao
              LEFT JOIN departments dd ON dd.id = sr.department_id
              LEFT JOIN users ua   ON ua.id = sr.assigned_to
              LEFT JOIN users sg   ON sg.id = sr.suggested_supervisor_id
+             LEFT JOIN assignments asn ON (
+                 (sr.assignment_id IS NOT NULL AND asn.id = sr.assignment_id)
+                 OR (sr.assignment_id IS NULL AND sr.assigned_to IS NOT NULL AND asn.assigned_to = sr.assigned_to AND asn.title = CONCAT(\'Student Supervision: \', sr.title))
+             )
              ' . $where;
     }
 
@@ -145,6 +155,16 @@ class StudentRequestDao
             ':at'     => $assignedTo,
             ':id'     => $id,
         ]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Link the created supervision assignment to the student request.
+     */
+    public static function linkAssignment(int $id, int $assignmentId): bool
+    {
+        $stmt = Db::connection()->prepare('UPDATE student_requests SET assignment_id = :aid WHERE id = :id');
+        $stmt->execute([':aid' => $assignmentId, ':id' => $id]);
         return $stmt->rowCount() > 0;
     }
 

@@ -84,15 +84,50 @@ export default function StudentDashboard() {
           ) : (
             <div className="space-y-3">
               {supervisors.map((r: any) => (
-                <div key={r.id} className="p-4 rounded-xl bg-[var(--bg)] border border-[var(--border)] flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold font-heading shrink-0">
-                    {r.assigned_to_name.replace(/^[^.]+\.\s*/, '').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                <div key={r.id} className="p-4 rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-3">
+                  <div className="flex items-center gap-4">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold font-heading shrink-0 shadow-sm">
+                      {r.assigned_to_name.replace(/^[^.]+\.\s*/, '').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm truncate">{r.assigned_to_name}</p>
+                      <p className="text-xs text-[var(--muted)] truncate">
+                        For: {r.title}{r.dept_name ? ` · ${r.dept_name}` : ''}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-sm truncate">{r.assigned_to_name}</p>
-                    <p className="text-xs text-[var(--muted)] truncate">
-                      For: {r.title}{r.dept_name ? ` · ${r.dept_name}` : ''}
-                    </p>
+
+                  {/* Supervision Progress Bar */}
+                  <div className="pt-2 border-t border-[var(--border)]/60 space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[var(--muted)] text-[11px] font-medium flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          (r.progress_percent ?? 0) >= 100 ? 'bg-emerald-500' : 'bg-emerald-500 animate-pulse'
+                        }`} />
+                        Supervision Progress
+                      </span>
+                      <span className="font-bold text-xs text-indigo-500 dark:text-indigo-400">
+                        {Math.round(r.progress_percent ?? 0)}%
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          (r.progress_percent ?? 0) >= 100
+                            ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                            : (r.progress_percent ?? 0) >= 50
+                            ? 'bg-gradient-to-r from-indigo-500 to-cyan-400'
+                            : 'bg-gradient-to-r from-cyan-500 to-blue-500'
+                        }`}
+                        style={{ width: `${Math.min(100, Math.max(0, r.progress_percent ?? 0))}%` }}
+                      />
+                    </div>
+                    {r.assignment_deadline && (
+                      <div className="flex items-center justify-between text-[10px] text-[var(--muted)] pt-0.5">
+                        <span>Target: {r.assignment_deadline}</span>
+                        <span className="capitalize">{r.assignment_status?.replace('_', ' ') ?? 'assigned'}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -125,6 +160,26 @@ export default function StudentDashboard() {
                         {r.status}
                       </span>
                     </div>
+                    {(r.status === 'assigned' || r.approval_step === 'approved') && (
+                      <div className="mt-2.5 pt-2 border-t border-[var(--border)]/50 space-y-1">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-[var(--muted)]">Supervision Progress:</span>
+                          <span className="font-semibold text-indigo-500 dark:text-indigo-400">{Math.round(r.progress_percent ?? 0)}%</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              (r.progress_percent ?? 0) >= 100
+                                ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                                : (r.progress_percent ?? 0) >= 50
+                                ? 'bg-gradient-to-r from-indigo-500 to-cyan-400'
+                                : 'bg-gradient-to-r from-cyan-500 to-blue-500'
+                            }`}
+                            style={{ width: `${Math.min(100, Math.max(0, r.progress_percent ?? 0))}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

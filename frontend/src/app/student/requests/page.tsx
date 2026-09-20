@@ -368,6 +368,52 @@ export default function StudentRequestsPage() {
                                 </>
                               )}
                             </div>
+
+                            {/* Supervision Progress Bar for Approved Requests */}
+                            {(r.status === 'assigned' || r.approval_step === 'approved') && (
+                              <div className="mt-3 p-3 rounded-xl bg-[var(--card-solid,#161a26)]/60 border border-[var(--border)] space-y-2">
+                                <div className="flex items-center justify-between text-xs">
+                                  <div className="flex items-center gap-1.5 font-medium text-[var(--text)]">
+                                    <span className={`w-2 h-2 rounded-full ${
+                                      (r.progress_percent ?? 0) >= 100
+                                        ? 'bg-emerald-500'
+                                        : 'bg-emerald-500 animate-pulse'
+                                    }`} />
+                                    <span>Supervision Progress</span>
+                                    {r.assignment_status && (
+                                      <span className="text-[10px] text-[var(--muted)] font-normal">
+                                        ({r.assignment_status === 'completed' ? 'Completed' : r.assignment_status === 'in_progress' ? 'In Progress' : 'Pending'})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="font-bold text-xs text-indigo-500 dark:text-indigo-400">
+                                    {Math.round(r.progress_percent ?? 0)}%
+                                  </span>
+                                </div>
+
+                                {/* Progress Bar Track */}
+                                <div className="w-full h-2 rounded-full bg-zinc-200 dark:bg-zinc-800/80 overflow-hidden relative">
+                                  <div
+                                    className={`h-full rounded-full transition-all duration-500 ${
+                                      (r.progress_percent ?? 0) >= 100
+                                        ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                                        : (r.progress_percent ?? 0) >= 50
+                                        ? 'bg-gradient-to-r from-indigo-500 to-cyan-400'
+                                        : 'bg-gradient-to-r from-cyan-500 to-blue-500'
+                                    }`}
+                                    style={{ width: `${Math.min(100, Math.max(0, r.progress_percent ?? 0))}%` }}
+                                  />
+                                </div>
+
+                                {r.assignment_deadline && (
+                                  <div className="flex items-center justify-between text-[11px] text-[var(--muted)] pt-0.5">
+                                    <span>Target Deadline:</span>
+                                    <span className="font-medium text-[var(--text)]">{r.assignment_deadline}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
                             <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-[var(--border)]/50">
                               <p className="text-[11px] text-[var(--muted)]">
                                 Submitted {new Date(r.created_at).toLocaleDateString()}

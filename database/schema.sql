@@ -207,6 +207,7 @@ CREATE TABLE IF NOT EXISTS `student_requests` (
   `home_head_approved_by`   INT UNSIGNED NULL DEFAULT NULL,
   `home_head_approved_at`   TIMESTAMP    NULL DEFAULT NULL,
   `suggested_supervisor_id` INT UNSIGNED NULL DEFAULT NULL,
+  `assignment_id`           INT UNSIGNED NULL DEFAULT NULL,
   `created_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -221,7 +222,8 @@ CREATE TABLE IF NOT EXISTS `student_requests` (
   CONSTRAINT `fk_sreq_assigned_to`  FOREIGN KEY (`assigned_to`) REFERENCES `users`     (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_sreq_reviewed_by`  FOREIGN KEY (`reviewed_by`) REFERENCES `users`     (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_sreq_home_head`    FOREIGN KEY (`home_head_approved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_sreq_suggested`    FOREIGN KEY (`suggested_supervisor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+  CONSTRAINT `fk_sreq_suggested`    FOREIGN KEY (`suggested_supervisor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_sreq_assignment`   FOREIGN KEY (`assignment_id`) REFERENCES `assignments` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------------
