@@ -26,6 +26,8 @@ export default function SettingsModal({ user, onClose, onChangePasswordClick, on
     contact: user.contact ?? ''
   })
   
+  const isStudent = user.role === 'student'
+  
   const [saving, setSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [err, setErr] = useState('')
@@ -104,7 +106,7 @@ export default function SettingsModal({ user, onClose, onChangePasswordClick, on
             {success && <div className="mb-4 text-sm text-green-500 bg-green-500/10 rounded-xl px-3 py-2 border border-green-500/20">{success}</div>}
             
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className={isStudent ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 gap-3"}>
                 <div>
                   <label className="block text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-1.5">Title</label>
                   <select
@@ -117,18 +119,20 @@ export default function SettingsModal({ user, onClose, onChangePasswordClick, on
                     {TITLES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-1.5">Position</label>
-                  <select
-                    value={form.position}
-                    onChange={e => f('position', e.target.value)}
-                    className="input disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!isEditing}
-                  >
-                    <option value="">— None —</option>
-                    {POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </div>
+                {!isStudent && (
+                  <div>
+                    <label className="block text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-1.5">Position</label>
+                    <select
+                      value={form.position}
+                      onChange={e => f('position', e.target.value)}
+                      className="input disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!isEditing}
+                    >
+                      <option value="">— None —</option>
+                      {POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-1.5">Full Name *</label>
