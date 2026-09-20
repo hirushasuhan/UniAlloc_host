@@ -32,6 +32,13 @@ export default function StudentRequestsPage() {
   const [editDepartments,setEditDepartments]= useState<any[]>([])
   const [editSaving,     setEditSaving]     = useState(false)
 
+  // "My Requests" only shows the newest few by default (the list is already
+  // newest-first from the backend) so the page doesn't grow taller with
+  // every request ever submitted — "See more" expands it into its own
+  // scroll area instead.
+  const COLLAPSED_REQUEST_COUNT = 3
+  const [showAllRequests, setShowAllRequests] = useState(false)
+
   const load = () => api.get('/student-requests').then(r => setRequests(r.data.data ?? []))
 
   useEffect(() => {
@@ -265,9 +272,12 @@ export default function StudentRequestsPage() {
           <h2 className="font-heading font-semibold text-lg mb-4">My Requests</h2>
           {requests.length === 0
             ? <p className="text-[var(--muted)] text-sm">No requests submitted yet.</p>
-            : (
-              <div className="space-y-4">
-                {requests.map((r: any) => (
+            : (() => {
+              const visibleRequests = showAllRequests ? requests : requests.slice(0, COLLAPSED_REQUEST_COUNT)
+              const hasMore = requests.length > COLLAPSED_REQUEST_COUNT
+              const list = (
+                <div className="space-y-4">
+                {visibleRequests.map((r: any) => (
                   <div key={r.id} className="p-4 rounded-xl bg-[var(--bg)] border border-[var(--border)]">
                     {editingId === r.id ? (
                       <div className="space-y-3">
@@ -349,8 +359,27 @@ export default function StudentRequestsPage() {
                     )}
                   </div>
                 ))}
-              </div>
-            )
+                </div>
+              )
+              return hasMore && showAllRequests ? (
+                <div className="max-h-[520px] overflow-y-auto pr-1 -mr-1">
+                  {list}
+                  <button type="button" onClick={() => setShowAllRequests(false)}
+                    className="w-full mt-3 text-xs text-center text-[var(--muted)] hover:text-[var(--text)] transition-colors py-1.5">
+                    Show fewer
+                  </button>
+                </div>
+              ) : hasMore ? (
+                <div className="relative">
+                  {list}
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[var(--card)] to-transparent" />
+                  <button type="button" onClick={() => setShowAllRequests(true)}
+                    className="relative w-full -mt-2 text-xs font-medium text-center text-[var(--accent)] hover:opacity-80 transition-opacity py-1.5">
+                    See more ({requests.length - COLLAPSED_REQUEST_COUNT} more)
+                  </button>
+                </div>
+              ) : list
+            })()
           }
         </div>
       </div>
