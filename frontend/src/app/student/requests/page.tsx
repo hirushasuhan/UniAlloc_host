@@ -39,7 +39,14 @@ export default function StudentRequestsPage() {
   const COLLAPSED_REQUEST_COUNT = 3
   const [showAllRequests, setShowAllRequests] = useState(false)
 
-  const load = () => api.get('/student-requests').then(r => setRequests(r.data.data ?? []))
+  const load = () => api.get('/student-requests')
+    .then(r => setRequests(r.data.data ?? []))
+    .catch((err: any) => {
+      // A silent failure here used to just leave the list empty with no
+      // explanation — indistinguishable from "you have no requests". Surface
+      // whatever the backend said instead.
+      setMsg({ text: err.response?.data?.message ?? 'Could not load your requests.', ok: false })
+    })
 
   useEffect(() => {
     load()
