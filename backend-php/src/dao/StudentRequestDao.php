@@ -148,6 +148,44 @@ class StudentRequestDao
         return $stmt->rowCount() > 0;
     }
 
+    /**
+     * Student edits their OWN request's content while it's still awaiting
+     * the home head's decision. Only fields a student could set at creation
+     * are touched here — status/approval_step and every reviewer-owned
+     * column (home_head_approved_by, assigned_to, reviewed_by, ...) are left
+     * exactly as they are. The controller enforces the "still
+     * pending_home_head" + ownership rules before calling this.
+     */
+    public static function updateContent(int $id, string $title, ?string $description, int $facultyId, ?int $departmentId): bool
+    {
+        $stmt = Db::connection()->prepare(
+            'UPDATE student_requests
+                SET title = :title, description = :desc, faculty_id = :fid, department_id = :did
+              WHERE id = :id'
+        );
+        $stmt->execute([
+            ':title' => $title,
+            ':desc'  => $description,
+            ':fid'   => $facultyId,
+            ':did'   => $departmentId,
+            ':id'    => $id,
+        ]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Delete a request outright. Nothing else references student_requests.id
+     * (an assignment is only created once a request is approved/finalised),
+     * so this is a plain, safe delete — the controller is what restricts
+     * WHEN a student is allowed to call it.
+     */
+    public static function delete(int $id): bool
+    {
+        $stmt = Db::connection()->prepare('DELETE FROM student_requests WHERE id = :id');
+        $stmt->execute([':id' => $id]);
+        return $stmt->rowCount() > 0;
+    }
+
     /** Reject the request at step 1 (home head declines to endorse). */
     public static function reject(int $id, int $reviewedBy): bool
     {

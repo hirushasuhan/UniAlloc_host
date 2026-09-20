@@ -191,6 +191,7 @@ $routes = [
     'POST /student-requests'               => ['StudentRequestController', 'store'],
     'GET /student-requests/{id}'           => ['StudentRequestController', 'show'],
     'PATCH /student-requests/{id}'         => ['StudentRequestController', 'update'],
+    'DELETE /student-requests/{id}'        => ['StudentRequestController', 'destroy'],
 
     // Notifications
     'GET /notifications'                   => ['NotificationController', 'index'],

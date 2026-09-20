@@ -180,9 +180,49 @@ class StudentRequestController
 
     public function update(array $params = []): void
     {
-        $auth = JwtMiddleware::handle(['dean', 'department_head', 'system_admin']);
+        $auth = JwtMiddleware::handle(['dean', 'department_head', 'system_admin', 'student']);
         $id   = (int)($params['id'] ?? 0);
         $body = json_decode(file_get_contents('php://input'), true) ?? [];
+
+        $sr = StudentRequestDao::findById($id);
+        if (!$sr) Response::error('Student request not found', 404);
+
+        // A student editing their OWN request is a completely different
+        // operation from the approve/reject flow below — it changes what the
+        // request SAYS (title/description/target), not its status, and it's
+        // only allowed before anyone has acted on it. Once the home
+        // department head has endorsed (or rejected) it, they've already
+        // acted on a specific title/description/target, so editing it out
+        // from under them would be misleading — same boundary destroy() uses.
+        if ($auth['role'] === 'student') {
+            if ((int)$sr['student_id'] !== (int)$auth['sub']) {
+                Response::error('Forbidden', 403);
+            }
+            if ($sr['approval_step'] !== 'pending_home_head') {
+                Response::error('This request is already being reviewed and can no longer be edited.', 409);
+            }
+            if (empty($body['title'])) Response::error('title is required', 422);
+
+            $db = Db::connection();
+            $facultyId    = !empty($body['faculty_id']) ? (int)$body['faculty_id'] : (int)$sr['faculty_id'];
+            $departmentId = array_key_exists('department_id', $body)
+                ? (!empty($body['department_id']) ? (int)$body['department_id'] : null)
+                : ($sr['department_id'] !== null ? (int)$sr['department_id'] : null);
+
+            if ($departmentId) {
+                $chk = $db->prepare('SELECT faculty_id FROM departments WHERE id = :did');
+                $chk->execute([':did' => $departmentId]);
+                $dept = $chk->fetch();
+                if (!$dept) Response::error('Department not found.', 422);
+                if ((int)$dept['faculty_id'] !== $facultyId) {
+                    Response::error('The selected department does not belong to the selected faculty.', 422);
+                }
+            }
+
+            $ok = StudentRequestDao::updateContent($id, $body['title'], $body['description'] ?? null, $facultyId, $departmentId);
+            AuditLogDao::log($auth['sub'], 'update_student_request', 'student_requests', $id);
+            Response::success(['updated' => $ok]);
+        }
 
         // Accept either {status: assigned|rejected} or the legacy {action: approve|reject}
         $status = $body['status'] ?? '';
@@ -192,9 +232,6 @@ class StudentRequestController
         if (!in_array($status, ['assigned', 'rejected'], true)) {
             Response::error("status must be 'assigned' or 'rejected'", 422);
         }
-
-        $sr = StudentRequestDao::findById($id);
-        if (!$sr) Response::error('Student request not found', 404);
 
         // Already fully resolved?
         if (in_array($sr['approval_step'], ['approved', 'rejected'], true)) {
@@ -321,6 +358,31 @@ class StudentRequestController
         StudentRequestDao::finalise($id, 'assigned', (int)$auth['sub'], $assignedTo);
         self::assignSupervisor($sr, $assignedTo, (int)$auth['sub'], $body);
         Response::success(['updated' => true]);
+    }
+
+    public function destroy(array $params = []): void
+    {
+        $auth = JwtMiddleware::handle(['student', 'system_admin']);
+        $id   = (int)($params['id'] ?? 0);
+
+        $sr = StudentRequestDao::findById($id);
+        if (!$sr) Response::error('Student request not found', 404);
+
+        // Same rule as the student-edit branch in update(): a student can
+        // only remove their own request, and only before anyone has acted
+        // on it. An admin can clean up any request regardless of stage.
+        if ($auth['role'] === 'student') {
+            if ((int)$sr['student_id'] !== (int)$auth['sub']) {
+                Response::error('Forbidden', 403);
+            }
+            if ($sr['approval_step'] !== 'pending_home_head') {
+                Response::error('This request is already being reviewed and can no longer be deleted.', 409);
+            }
+        }
+
+        $ok = StudentRequestDao::delete($id);
+        AuditLogDao::log($auth['sub'], 'delete_student_request', 'student_requests', $id);
+        Response::success(['deleted' => $ok]);
     }
 
     /**
