@@ -18,6 +18,10 @@ export default function StudentRequestsPage() {
   const [desc,       setDesc]       = useState('')
   const [msg,        setMsg]        = useState<{ text: string; ok: boolean } | null>(null)
   const [loading,    setLoading]    = useState(false)
+  // True once the profile already has a contact number — that field then
+  // becomes read-only here, same as name and enrollment number always are.
+  // Changing an existing number happens in Settings, not on this form.
+  const [hasContact, setHasContact] = useState(true)
 
   const load = () => api.get('/student-requests').then(r => setRequests(r.data.data ?? []))
 
@@ -28,7 +32,9 @@ export default function StudentRequestsPage() {
     if (u) {
       setName(u.full_name || '')
       setEnrollment((u as any).enrollment_number || '')
-      setContact((u as any).contact || '')
+      const profileContact = (u as any).contact || ''
+      setContact(profileContact)
+      setHasContact(profileContact.trim() !== '')
     }
   }, [])
 
@@ -45,11 +51,14 @@ export default function StudentRequestsPage() {
     e.preventDefault()
 
     // The supervisor who picks this up needs a number that actually reaches
-    // the student, so a few stray digits can't get through.
-    const contactError = validateContact(contact)
-    if (contactError) {
-      setMsg({ text: contactError, ok: false })
-      return
+    // the student. Only checked when the field is editable — once a real
+    // number is on file this form can't touch it (see hasContact below).
+    if (!hasContact) {
+      const contactError = validateContact(contact)
+      if (contactError) {
+        setMsg({ text: contactError, ok: false })
+        return
+      }
     }
 
     setLoading(true)
@@ -58,14 +67,18 @@ export default function StudentRequestsPage() {
       await api.post('/student-requests', {
         title,
         description: desc,
-        name,
-        enrollment_number: enrollment,
-        contact: normaliseContact(contact),
         faculty_id: parseInt(facultyId),
-        department_id: deptId ? parseInt(deptId) : null
+        department_id: deptId ? parseInt(deptId) : null,
+        // Only meaningful the first time: the backend uses this to fill in a
+        // missing contact number and otherwise ignores it entirely, so it's
+        // never how an existing number changes.
+        ...(hasContact ? {} : { contact: normaliseContact(contact) })
       })
       setMsg({ text: 'Request submitted! Your own department head will endorse it first, then it goes to the final approver (Dean or the target department head).', ok: true })
       setTitle(''); setDesc(''); setFacultyId(''); setDeptId('')
+      // The number just submitted (if any) is now on file — lock the field
+      // the same way it would show after a page reload.
+      if (!hasContact) setHasContact(true)
       load()
     } catch (err: any) {
       setMsg({ text: err.response?.data?.message ?? 'Submission failed.', ok: false })
@@ -109,21 +122,26 @@ export default function StudentRequestsPage() {
 
           <form onSubmit={submit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1.5">Full Name *</label>
-              <input value={name} onChange={e => setName(e.target.value)} className="input" required
-                placeholder="Your full name" />
+              <label className="block text-sm font-medium mb-1.5">Full Name</label>
+              <input value={name} className="input opacity-70 cursor-not-allowed" readOnly disabled
+                title="From your profile — change it in Settings" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1.5">Enrollment Number *</label>
-                <input value={enrollment} onChange={e => setEnrollment(e.target.value)} className="input" required
-                  placeholder="e.g. UWU/IIT/23/099" />
+                <label className="block text-sm font-medium mb-1.5">Enrollment Number</label>
+                <input value={enrollment} className="input opacity-70 cursor-not-allowed" readOnly disabled
+                  title="From your profile — contact your System Administrator to correct this" />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1.5">Contact Number *</label>
-                <input value={contact} onChange={e => setContact(e.target.value)} className="input" required
+                <label className="block text-sm font-medium mb-1.5">
+                  Contact Number {!hasContact && '*'}
+                </label>
+                <input value={contact} onChange={e => setContact(e.target.value)}
+                  className={`input ${hasContact ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  readOnly={hasContact} disabled={hasContact} required={!hasContact}
                   type="tel" inputMode="tel" maxLength={20}
-                  placeholder="e.g. +94771234567" />
+                  placeholder="e.g. +94771234567"
+                  title={hasContact ? 'From your profile — change it in Settings' : undefined} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">

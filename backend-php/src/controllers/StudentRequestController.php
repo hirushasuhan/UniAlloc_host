@@ -115,33 +115,38 @@ class StudentRequestController
             }
         }
 
-        // A supervisor has to be able to reach the student, so a usable number
-        // is required on every request. The form marks the field `required`,
-        // but that is a hint to the browser, not a control: without this check
-        // a handful of digits (or nothing at all) reaches the database.
-        $contact = trim((string)($body['contact'] ?? ''));
-        if ($contact === '') {
-            Response::error('Contact number is required.', 422);
-        }
-        ContactPolicy::enforce($contact);
+        // Identity comes from the student's OWN profile, never from this
+        // request's body. `name` / `enrollment_number` / `contact` used to be
+        // taken from the client and written straight into `users` — so a
+        // student could submit somebody else's name, a bogus enrollment
+        // number, or a fake phone number, and it would silently overwrite
+        // their real profile (the approver display is a JOIN back to `users`,
+        // so the spoofed value is what everyone downstream would see).
+        //
+        // full_name / enrollment_number are never touched here at all —
+        // changing those belongs to Settings (name) or an admin action
+        // (enrollment number), not a side effect of filing a request.
+        $student = UserDao::findById((int)$auth['sub']);
+        if (!$student) Response::error('Student not found', 404);
 
-        // Update student profile details (name, enrollment_number, contact) in active users table if provided
-        $updateFields = [];
-        $updateParams = [];
-        if (!empty($body['name'])) {
-            $updateFields[] = 'full_name = :name';
-            $updateParams[':name'] = $body['name'];
+        $existingContact = trim((string)($student['contact'] ?? ''));
+        if ($existingContact === '') {
+            // Registration doesn't collect a phone number, so this may be the
+            // first time this student has anywhere to supply one. Allow
+            // setting it exactly once here; once a number is on file this
+            // branch never runs again for them, so it can't be used to
+            // overwrite a real number with a fake one.
+            $contact = trim((string)($body['contact'] ?? ''));
+            if ($contact === '') {
+                Response::error('Contact number is required. Add one below or in Settings.', 422);
+            }
+            ContactPolicy::enforce($contact);
+            $db->prepare('UPDATE users SET contact = :contact WHERE id = :uid')
+               ->execute([':contact' => ContactPolicy::normalise($contact), ':uid' => $auth['sub']]);
         }
-        if (!empty($body['enrollment_number'])) {
-            $updateFields[] = 'enrollment_number = :enrollment';
-            $updateParams[':enrollment'] = $body['enrollment_number'];
-        }
-        $updateFields[] = 'contact = :contact';
-        $updateParams[':contact'] = ContactPolicy::normalise($contact);
-        if (!empty($updateFields)) {
-            $updateParams[':uid'] = $auth['sub'];
-            $db->prepare('UPDATE users SET ' . implode(', ', $updateFields) . ' WHERE id = :uid')->execute($updateParams);
-        }
+        // else: a contact number is already on file — this endpoint ignores
+        // whatever the client sent for it. Changing an existing number goes
+        // through Settings, where it's validated the same way.
 
         $id = StudentRequestDao::create($auth['sub'], $facultyId, $body['title'], $body['description'] ?? null, $departmentId);
 
@@ -161,7 +166,11 @@ class StudentRequestController
         } else {
             // No home department head on record — fall back to advancing the
             // request straight to final approval so it never gets stuck.
-            StudentRequestDao::endorse($id, (int)$auth['sub'], null);
+            // Recorded as endorsed by nobody (null), NOT by the student
+            // themselves — self-endorsement would be a false entry in the
+            // audit trail (and would read as if the student approved their
+            // own request).
+            StudentRequestDao::endorse($id, null, null);
             self::notifyFinalApprover($db, StudentRequestDao::findById($id), $body['title']);
         }
 

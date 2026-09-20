@@ -100,8 +100,14 @@ class StudentRequestDao
      * Step 1 — the student's home department head endorses the request.
      * Records the endorsement and optionally a suggested supervisor, then
      * advances the chain to `pending_final` (status stays 'pending').
+     *
+     * $homeHeadId is nullable for the one case where there IS no home head to
+     * record: the department has nobody in the role, and the request is
+     * auto-advanced so it doesn't get stuck forever. Recording NULL there
+     * (instead of, say, the student's own id) keeps the audit trail honest —
+     * "no one endorsed this" is a different fact from "this person did".
      */
-    public static function endorse(int $id, int $homeHeadId, ?int $suggestedSupervisorId): bool
+    public static function endorse(int $id, ?int $homeHeadId, ?int $suggestedSupervisorId): bool
     {
         $stmt = Db::connection()->prepare(
             'UPDATE student_requests
