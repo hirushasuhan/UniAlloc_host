@@ -35,6 +35,7 @@ export default function DeptHeadAssignmentsPage() {
   const [users,       setUsers]       = useState<any[]>([])
   const [depts,       setDepts]       = useState<any[]>([])
   const [search,      setSearch]      = useState('')
+  const [statusF,     setStatusF]     = useState('')
   const [showModal,   setShowModal]   = useState(false)
   const [deleteModal, setDeleteModal] = useState<{ id: number; title: string } | null>(null)
   const [deleting,    setDeleting]    = useState(false)
@@ -46,10 +47,18 @@ export default function DeptHeadAssignmentsPage() {
     api.get('/departments').then(r => setDepts(r.data.data ?? []))
   }, [])
 
-  const filtered = assignments.filter(a =>
-    !search || a.title.toLowerCase().includes(search.toLowerCase()) ||
-    a.assigned_to_name?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = assignments.filter(a => {
+    const matchS = !search || a.title.toLowerCase().includes(search.toLowerCase()) || a.assigned_to_name?.toLowerCase().includes(search.toLowerCase())
+    let matchSt = true
+    if (statusF === 'cross_faculty') {
+      matchSt = a.work_request_type === 'cross_faculty'
+    } else if (statusF === 'cross_department') {
+      matchSt = a.work_request_type === 'cross_department'
+    } else if (statusF) {
+      matchSt = a.status === statusF
+    }
+    return matchS && matchSt
+  })
 
   async function updateStatus(id:number, status:string) {
     await api.put(`/assignments/${id}`, { status }); load()
@@ -81,9 +90,20 @@ export default function DeptHeadAssignmentsPage() {
       {/* Overdue & approaching-deadline assignments */}
       <DeadlineAlerts assignments={assignments} onChanged={load} />
 
-      <div className="relative max-w-xs mb-5">
-        <HiOutlineMagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"/>
-        <input value={search} onChange={e=>setSearch(e.target.value)} className="input pl-9" placeholder="Search…"/>
+      <div className="flex flex-wrap gap-3 mb-5">
+        <div className="relative flex-1 max-w-xs">
+          <HiOutlineMagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"/>
+          <input value={search} onChange={e=>setSearch(e.target.value)} className="input pl-9" placeholder="Search assignments…"/>
+        </div>
+        <select value={statusF} onChange={e=>setStatusF(e.target.value)} className="input max-w-[180px]">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="cross_department">🏛️ Cross-Dept</option>
+          <option value="cross_faculty">🌐 Cross-Faculty</option>
+        </select>
       </div>
 
       <div className="glass-card overflow-x-auto">
@@ -97,7 +117,41 @@ export default function DeptHeadAssignmentsPage() {
             {filtered.map((a:any) => (
               <tr key={a.id} className="border-b border-[var(--border)]/50 hover:bg-[var(--bg)]/50">
                 <td className="py-3 px-4 font-medium">
-                  <TruncatedTitle title={a.title} maxWidthClass="max-w-[180px] lg:max-w-[260px]" />
+                  <div className="flex flex-col gap-1">
+                    <TruncatedTitle title={a.title} maxWidthClass="max-w-[180px] lg:max-w-[260px]" />
+                    {a.work_request_type === 'cross_department' && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">
+                          🏛️ Cross-Dept
+                        </span>
+                        {Number(a.assigned_by) === Number(user?.id) ? (
+                          <span className="text-[10px] font-medium text-teal-600 dark:text-teal-400">
+                            (Outgoing to {a.dept_name || 'external'})
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-medium text-teal-600 dark:text-teal-400">
+                            (From: {a.assigned_by_name})
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {a.work_request_type === 'cross_faculty' && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                          🌐 Cross-Faculty
+                        </span>
+                        {Number(a.assigned_by) === Number(user?.id) ? (
+                          <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400">
+                            (Outgoing to {a.dept_name || a.faculty_name || 'external'})
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-medium text-purple-600 dark:text-purple-400">
+                            (From: {a.assigned_by_name})
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </td>
                 <td className="py-3 px-4 text-[var(--muted)]">{a.assigned_to_name}</td>
                 <td className="py-3 px-4"><span className={`badge ${PRIORITY_COLOR[a.priority]}`}>{a.priority}</span></td>

@@ -29,7 +29,8 @@ class AssignmentController
                     $filters['dean_scope_user_id']    = $auth['sub'];
                     break;
                 case 'department_head':
-                    $filters['department_id'] = $auth['dept'];
+                    $filters['dept_head_scope_dept_id'] = $auth['dept'];
+                    $filters['dept_head_scope_user_id'] = $auth['sub'];
                     break;
                 case 'lecturer':
                     $filters['assigned_to'] = $auth['sub'];

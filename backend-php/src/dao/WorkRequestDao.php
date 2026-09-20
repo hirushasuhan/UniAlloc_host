@@ -7,7 +7,11 @@ class WorkRequestDao
 {
     // ------------------------------------------------------------------
     // Base SELECT fragment (used by every read query)
-    // ------------------------------------------------------------------
+    public static function baseSelectSql(): string
+    {
+        return self::baseSelect();
+    }
+
     private static function baseSelect(): string
     {
         return '
@@ -18,7 +22,14 @@ class WorkRequestDao
                    d.dept_name     AS target_dept_name,
                    f.faculty_name  AS target_faculty_name,
                    ' . UserDao::displayNameSql('da') . '  AS dean_approver_name,
-                   ' . UserDao::displayNameSql('dha') . ' AS dept_head_approver_name
+                   ' . UserDao::displayNameSql('dha') . ' AS dept_head_approver_name,
+                   asn.status          AS assignment_status,
+                   asn.deadline        AS assignment_deadline,
+                   asn.estimated_hours AS assignment_estimated_hours,
+                   COALESCE(
+                       (SELECT ap.progress_percent FROM assignment_progress ap WHERE ap.assignment_id = wr.assignment_id ORDER BY ap.id DESC LIMIT 1),
+                       IF(asn.status = \'completed\', 100, 0)
+                   ) AS latest_progress
             FROM work_requests wr
             JOIN  users ur  ON ur.id  = wr.requester_id
             LEFT JOIN users ut  ON ut.id  = wr.target_user_id
@@ -26,6 +37,7 @@ class WorkRequestDao
             LEFT JOIN faculties   f ON f.id = wr.target_faculty_id
             LEFT JOIN users da  ON da.id  = wr.dean_approved_by
             LEFT JOIN users dha ON dha.id = wr.dept_head_approved_by
+            LEFT JOIN assignments asn ON asn.id = wr.assignment_id
         ';
     }
 
@@ -70,6 +82,18 @@ class WorkRequestDao
         if (!empty($filters['pending_assignee_user'])) {
             $orClauses[] = "(wr.approval_step = 'pending_assignee' AND wr.target_user_id = :pau)";
             $bind[':pau'] = (int)$filters['pending_assignee_user'];
+        }
+
+        // Approved requests in my faculty (for Dean to monitor external work given to their faculty staff)
+        if (!empty($filters['approved_dean_faculty'])) {
+            $orClauses[] = "(wr.status = 'approved' AND wr.target_faculty_id = :apdf)";
+            $bind[':apdf'] = (int)$filters['approved_dean_faculty'];
+        }
+
+        // Approved requests in my dept (for Dept Head to monitor external work given to their dept staff)
+        if (!empty($filters['approved_depthead_dept'])) {
+            $orClauses[] = "(wr.status = 'approved' AND wr.target_dept_id = :apdd)";
+            $bind[':apdd'] = (int)$filters['approved_depthead_dept'];
         }
 
         // Direct target lookup (admin)
@@ -251,6 +275,14 @@ class WorkRequestDao
         );
         $stmt->execute([':uid' => $userId, ':id' => $id]);
         return $stmt->rowCount() > 0;
+    }
+
+    public static function setAssignmentId(int $requestId, int $assignmentId): bool
+    {
+        $stmt = Db::connection()->prepare(
+            'UPDATE work_requests SET assignment_id = :aid WHERE id = :id'
+        );
+        return $stmt->execute([':aid' => $assignmentId, ':id' => $requestId]);
     }
 
     // ------------------------------------------------------------------

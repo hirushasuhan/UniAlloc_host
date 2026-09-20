@@ -38,6 +38,7 @@ export default function DeptHeadRequestsPage() {
     description:       '',
   })
   const [saving, setSaving] = useState(false)
+  const [tabFilter, setTabFilter] = useState<'all' | 'cross_dept' | 'cross_faculty' | 'approved' | 'pending'>('all')
 
   const load = () => api.get('/work-requests').then(r => setRequests(r.data.data ?? []))
   useEffect(() => {
@@ -186,42 +187,170 @@ export default function DeptHeadRequestsPage() {
       )}
 
       {/* ---- All other requests ---- */}
-      {outgoing.length > 0 && (
-        <section>
-          <h2 className="font-heading font-semibold mb-3">All Requests</h2>
-          <div className="glass-card overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[var(--border)]">
-                  {['Title', 'From', 'Target', 'Type', 'Step', 'Date'].map(h => (
-                    <th key={h} className="text-left py-3 px-4 text-[var(--muted)] font-medium">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {outgoing.map((r: any) => (
-                  <tr key={r.id} className="border-b border-[var(--border)]/50 hover:bg-[var(--bg)]/50">
-                    <td className="py-3 px-4 font-medium">
-                      <TruncatedTitle title={r.title} subtitle={r.description} maxWidthClass="max-w-[180px] lg:max-w-[260px]" />
-                    </td>
-                    <td className="py-3 px-4 text-[var(--muted)]">{r.requester_name}</td>
-                    <td className="py-3 px-4 text-[var(--muted)]">{r.target_user_name ?? r.target_dept_name ?? '—'}</td>
-                    <td className="py-3 px-4 text-xs">{r.request_type?.replace(/_/g, '-')}</td>
-                    <td className="py-3 px-4">
-                      <span className={`badge text-xs ${STEP_COLOR[r.approval_step] ?? 'bg-slate-100 text-slate-700'}`}>
-                        {STEP_LABEL[r.approval_step] ?? r.approval_step}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-[var(--muted)]">
-                      {new Date(r.created_at).toLocaleDateString()}
-                    </td>
+      {outgoing.length > 0 && (() => {
+        const filteredOutgoing = outgoing.filter((r: any) => {
+          if (tabFilter === 'cross_dept') return r.request_type === 'cross_department'
+          if (tabFilter === 'cross_faculty') return r.request_type === 'cross_faculty'
+          if (tabFilter === 'approved') return r.approval_step === 'approved'
+          if (tabFilter === 'pending') return r.approval_step !== 'approved'
+          return true
+        })
+
+        return (
+          <section>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <h2 className="font-heading font-semibold text-lg">Cross-Dept & All Requests</h2>
+              <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-xl bg-[var(--card-solid)] border border-[var(--border)] text-xs">
+                <button
+                  type="button"
+                  onClick={() => setTabFilter('all')}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                    tabFilter === 'all'
+                      ? 'bg-teal-600 text-white shadow-sm'
+                      : 'text-[var(--muted)] hover:text-[var(--text)]'
+                  }`}
+                >
+                  All ({outgoing.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTabFilter('cross_dept')}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                    tabFilter === 'cross_dept'
+                      ? 'bg-teal-600 text-white shadow-sm'
+                      : 'text-[var(--muted)] hover:text-[var(--text)]'
+                  }`}
+                >
+                  🏛️ Cross-Dept ({outgoing.filter((r: any) => r.request_type === 'cross_department').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTabFilter('cross_faculty')}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                    tabFilter === 'cross_faculty'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'text-[var(--muted)] hover:text-[var(--text)]'
+                  }`}
+                >
+                  🌐 Cross-Faculty ({outgoing.filter((r: any) => r.request_type === 'cross_faculty').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTabFilter('approved')}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                    tabFilter === 'approved'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-[var(--muted)] hover:text-[var(--text)]'
+                  }`}
+                >
+                  In Progress & Completed ({outgoing.filter((r: any) => r.approval_step === 'approved').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTabFilter('pending')}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                    tabFilter === 'pending'
+                      ? 'bg-amber-600 text-white shadow-sm'
+                      : 'text-[var(--muted)] hover:text-[var(--text)]'
+                  }`}
+                >
+                  Pending ({outgoing.filter((r: any) => r.approval_step !== 'approved').length})
+                </button>
+              </div>
+            </div>
+
+            <div className="glass-card overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[var(--border)]">
+                    {['Title', 'From', 'Target', 'Type', 'Status', 'Execution Progress', 'Date'].map(h => (
+                      <th key={h} className="text-left py-3 px-4 text-[var(--muted)] font-medium">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+                </thead>
+                <tbody>
+                  {filteredOutgoing.map((r: any) => (
+                    <tr key={r.id} className="border-b border-[var(--border)]/50 hover:bg-[var(--bg)]/50">
+                      <td className="py-3 px-4 font-medium">
+                        <TruncatedTitle title={r.title} subtitle={r.description} maxWidthClass="max-w-[180px] lg:max-w-[260px]" />
+                      </td>
+                      <td className="py-3 px-4 text-[var(--muted)]">
+                        {r.requester_id === user?.id ? (
+                          <span className="font-semibold text-teal-600 dark:text-teal-400">You</span>
+                        ) : (
+                          r.requester_name
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-[var(--muted)]">
+                        <div>
+                          <span className="font-medium text-[var(--text)]">
+                            {r.target_user_id === user?.id ? 'You' : (r.target_user_name ?? r.target_dept_name ?? '—')}
+                          </span>
+                          {Number(r.target_dept_id) === Number(user?.dept_id) && Number(r.requester_id) !== Number(user?.id) && (
+                            <span className="inline-block text-[10px] ml-1.5 px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-600 dark:text-teal-400 font-semibold">
+                              Your Dept Staff
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        {r.request_type === 'cross_department' ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">
+                            🏛️ Cross-Dept
+                          </span>
+                        ) : r.request_type === 'cross_faculty' ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                            🌐 Cross-Faculty
+                          </span>
+                        ) : (
+                          <span className="text-xs">{r.request_type?.replace(/_/g, '-')}</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`badge text-xs ${STEP_COLOR[r.approval_step] ?? 'bg-slate-100 text-slate-700'}`}>
+                          {STEP_LABEL[r.approval_step] ?? r.approval_step}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        {r.approval_step === 'approved' ? (
+                          <div className="flex flex-col gap-1 min-w-[140px]">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className={`font-bold ${Number(r.latest_progress) === 100 ? 'text-green-600 dark:text-green-400' : 'text-teal-600 dark:text-teal-400'}`}>
+                                {r.latest_progress ?? 0}%
+                              </span>
+                              <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+                                {r.assignment_status?.replace('_', ' ') ?? 'assigned'}
+                              </span>
+                            </div>
+                            <div className="w-full h-1.5 rounded-full bg-[var(--border)] overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-300 ${
+                                  Number(r.latest_progress) === 100
+                                    ? 'bg-gradient-to-r from-emerald-500 to-green-500'
+                                    : 'bg-gradient-to-r from-teal-500 to-indigo-500'
+                                }`}
+                                style={{ width: `${Math.max(0, Math.min(100, Number(r.latest_progress ?? 0)))}%` }}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-[var(--muted)] italic">Awaiting approval</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-[var(--muted)]">
+                        {new Date(r.created_at).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredOutgoing.length === 0 && (
+                    <tr><td colSpan={7} className="py-8 text-center text-[var(--muted)]">No requests match this filter.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )
+      })()}
 
       {requests.length === 0 && (
         <div className="glass-card p-8 text-center text-[var(--muted)]">No requests yet.</div>

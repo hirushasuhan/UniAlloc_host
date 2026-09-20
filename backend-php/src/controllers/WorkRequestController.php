@@ -32,33 +32,25 @@ class WorkRequestController
 
         switch ($auth['role']) {
             case 'system_admin':
-                // Admin sees all — special case, no filter → skip DAO and return all
+                // Admin sees all with full assignment & progress info
                 $stmt = Db::connection()->prepare(
-                    'SELECT wr.*,
-                            ' . UserDao::displayNameSql('ur') . ' AS requester_name,
-                            ' . UserDao::displayNameSql('ut') . ' AS target_user_name,
-                            d.dept_name    AS target_dept_name,
-                            f.faculty_name AS target_faculty_name
-                     FROM work_requests wr
-                     JOIN users ur ON ur.id = wr.requester_id
-                     LEFT JOIN users ut ON ut.id = wr.target_user_id
-                     LEFT JOIN departments d ON d.id = wr.target_dept_id
-                     LEFT JOIN faculties f ON f.id = wr.target_faculty_id
-                     ORDER BY wr.created_at DESC'
+                    WorkRequestDao::baseSelectSql() . ' ORDER BY wr.created_at DESC'
                 );
                 $stmt->execute();
                 Response::success($stmt->fetchAll());
                 return;
 
             case 'dean':
-                $filters['requester_id']         = $auth['sub'];
+                $filters['requester_id']          = $auth['sub'];
                 $filters['pending_dean_faculty']  = $auth['faculty'];
+                $filters['approved_dean_faculty'] = $auth['faculty'];
                 $filters['pending_assignee_user'] = $auth['sub'];
                 break;
 
             case 'department_head':
                 $filters['requester_id']           = $auth['sub'];
                 $filters['pending_depthead_dept']  = $auth['dept'];
+                $filters['approved_depthead_dept'] = $auth['dept'];
                 $filters['pending_assignee_user']  = $auth['sub'];
                 break;
 
@@ -475,7 +467,7 @@ class WorkRequestController
             if ($u) $deptId = $u['department_id'] ?? null;
         }
 
-        AssignmentDao::create([
+        $assignmentId = AssignmentDao::create([
             'title'           => $req['title'],
             'description'     => $req['description'] ?? null,
             'assigned_to'     => (int)$req['target_user_id'],
@@ -485,5 +477,9 @@ class WorkRequestController
             'estimated_hours' => 4.00,
             'deadline'        => null,
         ]);
+
+        if ($assignmentId) {
+            WorkRequestDao::setAssignmentId((int)$req['id'], $assignmentId);
+        }
     }
 }

@@ -33,6 +33,11 @@ class AssignmentDao
             $bind[':dean_scope_user_id'] = $filters['dean_scope_user_id'];
             $bind[':dean_scope_user_id2'] = $filters['dean_scope_user_id'];
         }
+        if (!empty($filters['dept_head_scope_dept_id'])) {
+            $where[] = '(a.department_id = :dept_head_scope_dept_id OR a.assigned_by = :dept_head_scope_user_id)';
+            $bind[':dept_head_scope_dept_id'] = $filters['dept_head_scope_dept_id'];
+            $bind[':dept_head_scope_user_id'] = $filters['dept_head_scope_user_id'];
+        }
         if (!empty($filters['status'])) {
             $where[] = 'a.status = :status';
             $bind[':status'] = $filters['status'];
@@ -46,6 +51,11 @@ class AssignmentDao
                        ' . UserDao::displayNameSql('ut') . ' AS assigned_to_name,
                        ' . UserDao::displayNameSql('ub') . ' AS assigned_by_name,
                        d.dept_name,
+                       d.faculty_id,
+                       f.faculty_name,
+                       wr.id AS work_request_id,
+                       wr.request_type AS work_request_type,
+                       wr.requester_id AS work_requester_id,
                        COALESCE(
                            (SELECT ap.progress_percent FROM assignment_progress ap WHERE ap.assignment_id = a.id ORDER BY ap.id DESC LIMIT 1),
                            IF(a.status = \'completed\', 100, 0)
@@ -54,6 +64,8 @@ class AssignmentDao
                 JOIN users ut ON ut.id = a.assigned_to
                 JOIN users ub ON ub.id = a.assigned_by
                 LEFT JOIN departments d ON d.id = a.department_id
+                LEFT JOIN faculties f ON f.id = d.faculty_id
+                LEFT JOIN work_requests wr ON wr.assignment_id = a.id
                 WHERE ' . implode(' AND ', $where) . '
                 ORDER BY FIELD(a.priority,\'urgent\',\'high\',\'medium\',\'low\'), a.deadline ASC';
 
