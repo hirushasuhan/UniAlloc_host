@@ -26,8 +26,12 @@ export default function AdminFacultiesPage() {
   }
   useEffect(() => { load() }, [])
 
-  const deans = users.filter(u => u.role_name === 'dean')
-  const heads  = users.filter(u => u.role_name === 'department_head')
+  // A dean already leading another faculty shouldn't be offered again —
+  // the backend rejects it too, but filtering here keeps the dropdown from
+  // showing someone who isn't actually a valid choice.
+  const availableDeans = (currentFacultyId: number | null) =>
+    users.filter(u => u.role_name === 'dean' && (!u.faculty_id || u.faculty_id === currentFacultyId))
+  const heads = users.filter(u => u.role_name === 'department_head')
 
   async function createFaculty(e: FormEvent) {
     e.preventDefault(); setSaving(true); setMsg(null)
@@ -152,7 +156,7 @@ export default function AdminFacultiesPage() {
                 <label className="block text-sm font-medium mb-1">Assign Dean</label>
                 <select value={facForm.dean_id} onChange={e=>setFacForm(f=>({...f,dean_id:e.target.value}))} className="input">
                   <option value="">— None —</option>
-                  {deans.map((d:any) => <option key={d.id} value={d.id}>{d.position ? `${d.position}. ` : ''}{d.full_name}</option>)}
+                  {availableDeans(null).map((d:any) => <option key={d.id} value={d.id}>{d.position ? `${d.position}. ` : ''}{d.full_name}</option>)}
                 </select>
               </div>
               <button type="submit" disabled={saving} className="btn-primary w-full justify-center">{saving?'Creating…':'Create Faculty'}</button>
@@ -175,7 +179,7 @@ export default function AdminFacultiesPage() {
                 <label className="block text-sm font-medium mb-1">Dean</label>
                 <select value={deanForm.dean_id} onChange={e=>setDeanForm({dean_id:e.target.value})} className="input">
                   <option value="">— None —</option>
-                  {deans.map((d:any) => <option key={d.id} value={d.id}>{d.position ? `${d.position}. ` : ''}{d.full_name}</option>)}
+                  {availableDeans(deanModal).map((d:any) => <option key={d.id} value={d.id}>{d.position ? `${d.position}. ` : ''}{d.full_name}</option>)}
                 </select>
                 <p className="text-xs text-[var(--muted)] mt-1.5">
                   This links the dean's account to this faculty. Without it, the dean's dashboard (Staff &amp; Workload) will show no data.

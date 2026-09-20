@@ -29,7 +29,16 @@ class FacultyController
         JwtMiddleware::handle(['system_admin']);
         $body = json_decode(file_get_contents('php://input'), true) ?? [];
         if (empty($body['faculty_name'])) Response::error('faculty_name is required', 422);
-        $id = FacultyDao::create($body['faculty_name'], $body['dean_id'] ?? null);
+
+        $deanId = !empty($body['dean_id']) ? (int)$body['dean_id'] : null;
+        if ($deanId) {
+            $conflict = FacultyDao::deanConflict($deanId);
+            if ($conflict) {
+                Response::error("This person is already the Dean of {$conflict['faculty_name']}. Move them off that faculty first, or choose a different Dean.", 422);
+            }
+        }
+
+        $id = FacultyDao::create($body['faculty_name'], $deanId);
         Response::success(['id' => $id], 'Faculty created', 201);
     }
 
@@ -38,6 +47,14 @@ class FacultyController
         JwtMiddleware::handle(['system_admin']);
         $id   = (int)($params['id'] ?? 0);
         $body = json_decode(file_get_contents('php://input'), true) ?? [];
+
+        if (array_key_exists('dean_id', $body) && !empty($body['dean_id'])) {
+            $conflict = FacultyDao::deanConflict((int)$body['dean_id'], $id);
+            if ($conflict) {
+                Response::error("This person is already the Dean of {$conflict['faculty_name']}. Move them off that faculty first, or choose a different Dean.", 422);
+            }
+        }
+
         $ok   = FacultyDao::update($id, $body);
         Response::success(['updated' => $ok]);
     }

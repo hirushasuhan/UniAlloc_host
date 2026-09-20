@@ -29,6 +29,30 @@ class FacultyDao
         return $row ?: null;
     }
 
+    /**
+     * Is $deanId already the (active) Dean of some other faculty?
+     * Returns that faculty's {id, faculty_name} if so, otherwise null.
+     * $excludeFacultyId lets an update skip the faculty being edited so
+     * re-saving its own current dean doesn't trip the check.
+     * A dean who is inactive or On Study Leave doesn't count as "taken" —
+     * mirrors the same rule PromotionController uses for dean promotions.
+     */
+    public static function deanConflict(int $deanId, int $excludeFacultyId = 0): ?array
+    {
+        $stmt = Db::connection()->prepare(
+            'SELECT f.id, f.faculty_name
+             FROM faculties f
+             JOIN users u ON u.id = f.dean_id
+             WHERE f.dean_id = :dean_id
+               AND f.id != :exclude_id
+               AND u.is_active = 1
+               AND u.operational_status != \'On Study Leave\''
+        );
+        $stmt->execute([':dean_id' => $deanId, ':exclude_id' => $excludeFacultyId]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
     public static function create(string $facultyName, ?int $deanId = null): int
     {
         $db   = Db::connection();
