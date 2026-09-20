@@ -42,6 +42,14 @@ export default function DeanStudentRequestsPage() {
 
   async function handleResolve(status: 'assigned'|'rejected') {
     if (!selected) return
+
+    // Approving creates a real supervision task in the lecturer's queue, and a
+    // task with no deadline can never be scheduled or flagged overdue.
+    if (status === 'assigned' && !deadline) {
+      setMsg({ text: 'Pick a deadline before assigning a supervisor.', ok: false })
+      return
+    }
+
     try {
       await api.patch(`/student-requests/${selected.id}`, {
         status,
@@ -49,7 +57,7 @@ export default function DeanStudentRequestsPage() {
         ...(status === 'assigned' ? {
           priority,
           estimated_hours: parseFloat(estHours) || 4,
-          deadline: deadline || null
+          deadline
         } : {})
       })
       setMsg({ text: status === 'assigned' ? 'Request approved — a supervision task was created for the lecturer.' : 'Request rejected.', ok: true })
@@ -156,12 +164,12 @@ export default function DeanStudentRequestsPage() {
                 <input type="number" value={estHours} onChange={e=>setEstHours(e.target.value)} className="input" min="0.5" step="0.5"/>
               </div>
               <div className="col-span-2">
-                <label className="block text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-1.5">Deadline</label>
+                <label className="block text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-1.5">Deadline *</label>
                 <input type="date" min={today} value={deadline} onChange={e=>setDeadline(e.target.value)} className="input"/>
               </div>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => handleResolve('assigned')} disabled={!assignTo}
+              <button onClick={() => handleResolve('assigned')} disabled={!assignTo || !deadline}
                 className="btn-primary flex-1 justify-center">Assign & Approve</button>
               <button onClick={() => handleResolve('rejected')}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-red-300 text-red-600 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20">
