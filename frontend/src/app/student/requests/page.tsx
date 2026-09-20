@@ -4,7 +4,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import { api } from '@/lib/api'
 import { getUser } from '@/lib/auth'
 import { validateContact, normaliseContact } from '@/lib/validation'
-import { HiOutlinePencil, HiOutlineTrash, HiOutlineXMark, HiOutlineCheck } from 'react-icons/hi2'
+import { HiOutlinePencil, HiOutlineTrash, HiOutlineXMark, HiOutlineCheck, HiOutlineChevronDown } from 'react-icons/hi2'
 
 export default function StudentRequestsPage() {
   const [requests,   setRequests]   = useState<any[]>([])
@@ -269,116 +269,160 @@ export default function StudentRequestsPage() {
 
         {/* My Requests */}
         <div className="glass-card p-6">
-          <h2 className="font-heading font-semibold text-lg mb-4">My Requests</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <h2 className="font-heading font-semibold text-lg">My Requests</h2>
+              {requests.length > 0 && (
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 border border-indigo-500/20 font-semibold">
+                  {requests.length}
+                </span>
+              )}
+            </div>
+            {requests.length > COLLAPSED_REQUEST_COUNT && (
+              <span className="text-xs text-[var(--muted)] font-medium hidden sm:inline-block">
+                {showAllRequests ? `Showing all ${requests.length}` : `Showing latest 3 of ${requests.length}`}
+              </span>
+            )}
+          </div>
+
           {requests.length === 0
             ? <p className="text-[var(--muted)] text-sm">No requests submitted yet.</p>
             : (() => {
               const visibleRequests = showAllRequests ? requests : requests.slice(0, COLLAPSED_REQUEST_COUNT)
               const hasMore = requests.length > COLLAPSED_REQUEST_COUNT
-              const list = (
-                <div className="space-y-4">
-                {visibleRequests.map((r: any) => (
-                  <div key={r.id} className="p-4 rounded-xl bg-[var(--bg)] border border-[var(--border)]">
-                    {editingId === r.id ? (
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-xs font-medium mb-1">Request Title *</label>
-                          <input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
-                            className="input text-sm" required />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium mb-1">Description</label>
-                          <textarea value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
-                            className="input text-sm" rows={3} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-medium mb-1">Faculty *</label>
-                            <select value={editForm.faculty_id} onChange={e => changeEditFaculty(e.target.value)} className="input text-sm" required>
-                              <option value="">— Select Faculty —</option>
-                              {faculties.map((f: any) => (
-                                <option key={f.id} value={f.id}>{f.faculty_name}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium mb-1">Department</label>
-                            <select value={editForm.department_id} onChange={e => setEditForm(f => ({ ...f, department_id: e.target.value }))}
-                              className="input text-sm" disabled={!editForm.faculty_id}>
-                              <option value="">{editForm.faculty_id ? '— Any Department —' : 'Select faculty first'}</option>
-                              {editDepartments.map((d: any) => (
-                                <option key={d.id} value={d.id}>{d.dept_name}</option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <button type="button" onClick={() => saveEdit(r.id)} disabled={editSaving}
-                            className="btn-primary text-xs py-1.5 px-3 inline-flex items-center gap-1">
-                            <HiOutlineCheck size={14}/> {editSaving ? 'Saving…' : 'Save'}
-                          </button>
-                          <button type="button" onClick={cancelEdit} disabled={editSaving}
-                            className="btn-secondary text-xs py-1.5 px-3 inline-flex items-center gap-1">
-                            <HiOutlineXMark size={14}/> Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex items-start justify-between gap-3 mb-1">
-                          <p className="font-semibold text-sm">{r.title}</p>
-                          {(() => { const st = stageLabel(r); return (
-                            <span className={`badge flex-shrink-0 ${st.cls}`}>{st.text}</span>
-                          )})()}
-                        </div>
-                        {r.description && <p className="text-xs text-[var(--muted)] line-clamp-2">{r.description}</p>}
-                        <p className="text-xs text-[var(--muted)] mt-1.5">
-                          {r.faculty_name}{r.dept_name ? ` · ${r.dept_name}` : ''}
-                        </p>
-                        {r.assigned_to_name && (
-                          <p className="text-xs text-indigo-500 mt-1">Supervisor: {r.assigned_to_name}</p>
-                        )}
-                        <div className="flex items-center justify-between mt-1.5">
-                          <p className="text-xs text-[var(--muted)]">
-                            Submitted {new Date(r.created_at).toLocaleDateString()}
-                          </p>
-                          {canModify(r) && (
-                            <div className="flex items-center gap-1">
-                              <button type="button" onClick={() => startEdit(r)} title="Edit request"
-                                className="inline-flex items-center justify-center w-7 h-7 bg-white/5 hover:bg-cyan-500/20 text-cyan-500 rounded-md transition-colors border border-white/5 hover:border-cyan-500/30">
-                                <HiOutlinePencil size={14}/>
+              return (
+                <div className="relative">
+                  <div className={showAllRequests ? "max-h-[580px] overflow-y-auto space-y-3.5 pr-1.5 -mr-1.5" : "space-y-3.5"}>
+                    {visibleRequests.map((r: any) => (
+                      <div
+                        key={r.id}
+                        className="group relative p-4 rounded-2xl bg-[var(--bg)] hover:bg-[var(--card-solid)] border border-[var(--border)] hover:border-indigo-500/30 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                      >
+                        {editingId === r.id ? (
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-xs font-medium mb-1">Request Title *</label>
+                              <input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                                className="input text-sm" required />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium mb-1">Description</label>
+                              <textarea value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                                className="input text-sm" rows={3} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-xs font-medium mb-1">Faculty *</label>
+                                <select value={editForm.faculty_id} onChange={e => changeEditFaculty(e.target.value)} className="input text-sm" required>
+                                  <option value="">— Select Faculty —</option>
+                                  {faculties.map((f: any) => (
+                                    <option key={f.id} value={f.id}>{f.faculty_name}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium mb-1">Department</label>
+                                <select value={editForm.department_id} onChange={e => setEditForm(f => ({ ...f, department_id: e.target.value }))}
+                                  className="input text-sm" disabled={!editForm.faculty_id}>
+                                  <option value="">{editForm.faculty_id ? '— Any Department —' : 'Select faculty first'}</option>
+                                  {editDepartments.map((d: any) => (
+                                    <option key={d.id} value={d.id}>{d.dept_name}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button type="button" onClick={() => saveEdit(r.id)} disabled={editSaving}
+                                className="btn-primary text-xs py-1.5 px-3 inline-flex items-center gap-1">
+                                <HiOutlineCheck size={14}/> {editSaving ? 'Saving…' : 'Save'}
                               </button>
-                              <button type="button" onClick={() => deleteRequest(r.id)} title="Withdraw request"
-                                className="inline-flex items-center justify-center w-7 h-7 bg-white/5 hover:bg-red-500/20 text-red-500 rounded-md transition-colors border border-white/5 hover:border-red-500/30">
-                                <HiOutlineTrash size={14}/>
+                              <button type="button" onClick={cancelEdit} disabled={editSaving}
+                                className="btn-secondary text-xs py-1.5 px-3 inline-flex items-center gap-1">
+                                <HiOutlineXMark size={14}/> Cancel
                               </button>
                             </div>
-                          )}
-                        </div>
-                      </>
-                    )}
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-start justify-between gap-3 mb-1.5">
+                              <p className="font-semibold text-sm group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors">
+                                {r.title}
+                              </p>
+                              {(() => { const st = stageLabel(r); return (
+                                <span className={`badge flex-shrink-0 ${st.cls}`}>{st.text}</span>
+                              )})()}
+                            </div>
+                            {r.description && (
+                              <p className="text-xs text-[var(--muted)] line-clamp-2 leading-relaxed mb-2">
+                                {r.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 text-xs text-[var(--muted)] flex-wrap">
+                              <span>{r.faculty_name}{r.dept_name ? ` · ${r.dept_name}` : ''}</span>
+                              {r.assigned_to_name && (
+                                <>
+                                  <span className="text-[var(--muted)]/40">•</span>
+                                  <span className="font-medium text-indigo-500 dark:text-indigo-400">
+                                    Supervisor: {r.assigned_to_name}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-[var(--border)]/50">
+                              <p className="text-[11px] text-[var(--muted)]">
+                                Submitted {new Date(r.created_at).toLocaleDateString()}
+                              </p>
+                              {canModify(r) && (
+                                <div className="flex items-center gap-1.5">
+                                  <button type="button" onClick={() => startEdit(r)} title="Edit request"
+                                    className="inline-flex items-center justify-center w-7 h-7 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-500 dark:text-indigo-400 rounded-lg transition-colors border border-indigo-500/20 hover:border-indigo-500/35 active:scale-95">
+                                    <HiOutlinePencil size={13}/>
+                                  </button>
+                                  <button type="button" onClick={() => deleteRequest(r.id)} title="Withdraw request"
+                                    className="inline-flex items-center justify-center w-7 h-7 bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400 rounded-lg transition-colors border border-red-500/20 hover:border-red-500/35 active:scale-95">
+                                    <HiOutlineTrash size={13}/>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
+
+                  {/* Smooth multi-stop bottom fade gradient when collapsed */}
+                  {!showAllRequests && hasMore && (
+                    <div
+                      aria-hidden="true"
+                      className="pointer-events-none absolute bottom-0 inset-x-0 h-28 bg-gradient-to-t from-[#ffffff] via-[#ffffff]/75 to-transparent dark:from-[#171b26] dark:via-[#171b26]/75 rounded-b-2xl"
+                    />
+                  )}
+
+                  {/* See more / Show less toggle button */}
+                  {hasMore && (
+                    <div className="mt-4 flex justify-center">
+                      <button
+                        type="button"
+                        onClick={() => setShowAllRequests(!showAllRequests)}
+                        className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-indigo-500 dark:text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 active:scale-95 border border-indigo-500/25 transition-all shadow-sm hover:shadow cursor-pointer backdrop-blur-sm"
+                      >
+                        <span>
+                          {showAllRequests
+                            ? 'Show less'
+                            : `See more (${requests.length - COLLAPSED_REQUEST_COUNT} older request${requests.length - COLLAPSED_REQUEST_COUNT === 1 ? '' : 's'})`}
+                        </span>
+                        <HiOutlineChevronDown
+                          size={14}
+                          className={`transition-transform duration-300 ${
+                            showAllRequests ? 'rotate-180' : 'group-hover:translate-y-0.5'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )
-              return hasMore && showAllRequests ? (
-                <div className="max-h-[520px] overflow-y-auto pr-1 -mr-1">
-                  {list}
-                  <button type="button" onClick={() => setShowAllRequests(false)}
-                    className="w-full mt-3 text-xs text-center text-[var(--muted)] hover:text-[var(--text)] transition-colors py-1.5">
-                    Show fewer
-                  </button>
-                </div>
-              ) : hasMore ? (
-                <div className="relative">
-                  {list}
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[var(--card)] to-transparent" />
-                  <button type="button" onClick={() => setShowAllRequests(true)}
-                    className="relative w-full -mt-2 text-xs font-medium text-center text-[var(--accent)] hover:opacity-80 transition-opacity py-1.5">
-                    See more ({requests.length - COLLAPSED_REQUEST_COUNT} more)
-                  </button>
-                </div>
-              ) : list
             })()
           }
         </div>
