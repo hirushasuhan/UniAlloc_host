@@ -8,7 +8,9 @@ import { HiOutlineXMark } from 'react-icons/hi2'
 export default function DeptHeadStudentRequestsPage() {
   const [requests, setRequests] = useState<any[]>([])
   const [users,    setUsers]    = useState<any[]>([])
-  const [facultyUsers, setFacultyUsers] = useState<any[]>([])
+  // Roster fetched on demand for the TARGET faculty of whichever request is
+  // being endorsed (see openReview) — used to suggest a supervisor.
+  const [suggestPool, setSuggestPool] = useState<any[]>([])
   const [selected, setSelected] = useState<any>(null)
   const [mode,     setMode]     = useState<'endorse'|'final'>('final')
   const [assignTo, setAssignTo] = useState('')
@@ -18,7 +20,6 @@ export default function DeptHeadStudentRequestsPage() {
   const [msg,      setMsg]      = useState<{text:string;ok:boolean}|null>(null)
 
   const myDept    = getUser()?.dept_id ?? null
-  const myFaculty = getUser()?.faculty_id ?? null
 
   // Today's date (local) in YYYY-MM-DD — deadline can't be in the past
   const today = (() => {
@@ -35,37 +36,50 @@ export default function DeptHeadStudentRequestsPage() {
 
   const openReview = (r: any) => {
     setSelected(r)
+    const endorsing = isHomeStage(r) && !isOwnDeptDirect(r)
     // Own-department (or the cross-dept final stage) → full assign form.
     // Any other home-stage request → endorse & forward.
-    setMode(isHomeStage(r) && !isOwnDeptDirect(r) ? 'endorse' : 'final')
+    setMode(endorsing ? 'endorse' : 'final')
     setAssignTo(''); setPriority('medium'); setEstHours('4'); setDeadline('')
+
+    // A request being endorsed here is, by definition, one this head cannot
+    // finally approve themselves (own-department requests skip straight to
+    // 'final' above) — it targets ANOTHER department or faculty. So who can
+    // actually be suggested has to come from the request's TARGET faculty
+    // (r.faculty_id), never this head's own — a lecturer in the home
+    // department usually isn't even eligible to supervise where the request
+    // is headed.
+    setSuggestPool([])
+    if (endorsing && r.faculty_id) {
+      api.get(`/users?faculty_id=${r.faculty_id}`)
+        .then(res => setSuggestPool(res.data.data ?? []))
+        .catch(() => setSuggestPool([]))
+    }
   }
 
   const load = () => api.get('/student-requests').then(r => setRequests(r.data.data ?? []))
   useEffect(() => {
     load()
     api.get('/users').then(r => setUsers(r.data.data ?? []))
-    // All staff in this head's faculty (every department + the Dean) — used to
-    // suggest supervisors for faculty-wide requests and to suggest the Dean.
-    if (myFaculty) {
-      api.get(`/users?faculty_id=${myFaculty}`)
-        .then(r => setFacultyUsers(r.data.data ?? []))
-        .catch(() => setFacultyUsers([]))
-    }
   }, [])
 
   // /users is already scoped to the department for dept heads
   const assignable = users.filter(u => ['lecturer','department_head'].includes(u.role_name))
-  const facultyDean = facultyUsers.filter(u => u.role_name === 'dean')
 
-  // Supervisors the head may suggest when endorsing a request:
-  //   • Faculty-wide request → every lecturer/head in the faculty, plus the Dean.
-  //   • Otherwise            → own-department staff, plus the Dean.
+  // Supervisors the head may suggest when endorsing a request — always drawn
+  // from suggestPool (the request's TARGET faculty, fetched in openReview):
+  //   • Faculty-wide target (no department_id) → every lecturer/head/dean there.
+  //   • Specific target department              → that department's own
+  //     lecturers/head, plus its faculty's Dean.
   const suggestListFor = (r: any) => {
-    if (r && !r.department_id) {
-      return facultyUsers.filter(u => ['lecturer','department_head','dean'].includes(u.role_name))
+    if (!r) return []
+    if (!r.department_id) {
+      return suggestPool.filter(u => ['lecturer','department_head','dean'].includes(u.role_name))
     }
-    return [...assignable, ...facultyDean]
+    return suggestPool.filter(u =>
+      (Number(u.department_id) === Number(r.department_id) && ['lecturer','department_head'].includes(u.role_name))
+      || u.role_name === 'dean'
+    )
   }
 
   async function handleEndorse(action: 'endorse'|'reject') {
