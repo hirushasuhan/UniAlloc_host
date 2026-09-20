@@ -3,6 +3,7 @@ import { useEffect, useState, FormEvent } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { api } from '@/lib/api'
 import { getUser } from '@/lib/auth'
+import { validateContact, normaliseContact } from '@/lib/validation'
 
 export default function StudentRequestsPage() {
   const [requests,   setRequests]   = useState<any[]>([])
@@ -42,6 +43,15 @@ export default function StudentRequestsPage() {
 
   async function submit(e: FormEvent) {
     e.preventDefault()
+
+    // The supervisor who picks this up needs a number that actually reaches
+    // the student, so a few stray digits can't get through.
+    const contactError = validateContact(contact)
+    if (contactError) {
+      setMsg({ text: contactError, ok: false })
+      return
+    }
+
     setLoading(true)
     setMsg(null)
     try {
@@ -50,7 +60,7 @@ export default function StudentRequestsPage() {
         description: desc,
         name,
         enrollment_number: enrollment,
-        contact,
+        contact: normaliseContact(contact),
         faculty_id: parseInt(facultyId),
         department_id: deptId ? parseInt(deptId) : null
       })
@@ -112,6 +122,7 @@ export default function StudentRequestsPage() {
               <div>
                 <label className="block text-sm font-medium mb-1.5">Contact Number *</label>
                 <input value={contact} onChange={e => setContact(e.target.value)} className="input" required
+                  type="tel" inputMode="tel" maxLength={20}
                   placeholder="e.g. +94771234567" />
               </div>
             </div>

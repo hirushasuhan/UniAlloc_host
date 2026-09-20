@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use App\Dao\UserDao;
 use App\Dao\AuditLogDao;
+use App\Helpers\ContactPolicy;
 use App\Helpers\JwtHelper;
 use App\Helpers\PasswordPolicy;
 use App\Helpers\Response;
@@ -83,6 +84,11 @@ class UserController
         }
         if (!filter_var($body['email'], FILTER_VALIDATE_EMAIL)) {
             Response::error('Invalid email address', 422);
+        }
+        // Optional for staff accounts, but if one is given it has to be usable.
+        if (!empty($body['contact'])) {
+            ContactPolicy::enforce((string)$body['contact']);
+            $body['contact'] = ContactPolicy::normalise((string)$body['contact']);
         }
         PasswordPolicy::enforce((string)$body['password']);
 
@@ -185,6 +191,11 @@ class UserController
             if (UserDao::emailTakenByOther((string)$data['email'], $id)) {
                 Response::error('That email address is already in use', 409);
             }
+        }
+        // Clearing the field is allowed; supplying a broken number is not.
+        if (array_key_exists('contact', $data) && trim((string)$data['contact']) !== '') {
+            ContactPolicy::enforce((string)$data['contact']);
+            $data['contact'] = ContactPolicy::normalise((string)$data['contact']);
         }
         // An admin locking themselves out is almost always a mistake.
         if ($isSelf && array_key_exists('is_active', $data) && !$data['is_active']) {

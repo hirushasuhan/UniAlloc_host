@@ -2,6 +2,7 @@
 import { useEffect, useState, FormEvent } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { api } from '@/lib/api'
+import { validateContact, normaliseContact } from '@/lib/validation'
 import { HiOutlinePlus, HiOutlineMagnifyingGlass, HiOutlineUserPlus, HiOutlineUserMinus, HiOutlineXMark, HiOutlineKey, HiOutlineTrash } from 'react-icons/hi2'
 
 const ROLES = ['system_admin','dean','department_head','lecturer','student']
@@ -56,10 +57,22 @@ export default function AdminUsersPage() {
   })
 
   async function handleCreate(e: FormEvent) {
-    e.preventDefault(); setSaving(true); setMsg(null)
+    e.preventDefault()
+
+    // Optional for a staff account, but if one is typed it has to be usable.
+    if (form.contact.trim() !== '') {
+      const contactError = validateContact(form.contact)
+      if (contactError) {
+        setMsg({ text: contactError, ok: false })
+        return
+      }
+    }
+
+    setSaving(true); setMsg(null)
     try {
       await api.post('/users', {
         ...form,
+        contact:        normaliseContact(form.contact),
         title:          form.title || null,
         position:       form.position || null,
         role_id:        parseInt(form.role_id),
@@ -381,7 +394,7 @@ export default function AdminUsersPage() {
 
                 <div className="col-span-2 md:col-span-1">
                   <label className="block text-sm font-medium mb-1">Contact</label>
-                  <input value={form.contact} onChange={e=>setForm(f=>({...f,contact:e.target.value}))} className="input" placeholder="+94 77 000 0000"/>
+                  <input type="tel" inputMode="tel" maxLength={20} value={form.contact} onChange={e=>setForm(f=>({...f,contact:e.target.value}))} className="input" placeholder="+94 77 000 0000"/>
                 </div>
                 
                 <div className="col-span-2 md:col-span-1">

@@ -3,6 +3,7 @@ import { useState, FormEvent } from 'react'
 import { api } from '@/lib/api'
 import { AuthUser, saveAuth, getToken, clearAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
+import { validateContact, normaliseContact } from '@/lib/validation'
 import { HiOutlineXMark, HiOutlineKey, HiOutlineArrowRightOnRectangle, HiOutlineDevicePhoneMobile } from 'react-icons/hi2'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 
@@ -38,12 +39,28 @@ export default function SettingsModal({ user, onClose, onChangePasswordClick, on
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    setSaving(true)
     setErr('')
     setSuccess('')
 
+    // Clearing the number is allowed; saving a broken one is not — otherwise
+    // the rule on the request form is trivially bypassed from here.
+    if (form.contact.trim() !== '') {
+      const contactError = validateContact(form.contact)
+      if (contactError) {
+        setErr(contactError)
+        return
+      }
+    }
+
+    setSaving(true)
+
     try {
-      const payload = { ...form, title: form.title || null, position: form.position || null }
+      const payload = {
+        ...form,
+        title: form.title || null,
+        position: form.position || null,
+        contact: normaliseContact(form.contact),
+      }
       await api.put(`/users/${user.id}`, payload)
 
       const updatedUser = { ...user, ...payload }
@@ -138,7 +155,9 @@ export default function SettingsModal({ user, onClose, onChangePasswordClick, on
               <div>
                 <label className="block text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-1.5">Contact Number</label>
                 <input 
-                  type="text" 
+                  type="tel" 
+                  inputMode="tel"
+                  maxLength={20}
                   value={form.contact} 
                   onChange={e => f('contact', e.target.value)} 
                   className="input disabled:opacity-50 disabled:cursor-not-allowed" 

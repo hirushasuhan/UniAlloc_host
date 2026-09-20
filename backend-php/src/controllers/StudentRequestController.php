@@ -5,6 +5,7 @@ use App\Dao\StudentRequestDao;
 use App\Dao\AuditLogDao;
 use App\Dao\NotificationDao;
 use App\Dao\UserDao;
+use App\Helpers\ContactPolicy;
 use App\Helpers\Db;
 use App\Helpers\Response;
 use App\Middleware\JwtMiddleware;
@@ -114,6 +115,16 @@ class StudentRequestController
             }
         }
 
+        // A supervisor has to be able to reach the student, so a usable number
+        // is required on every request. The form marks the field `required`,
+        // but that is a hint to the browser, not a control: without this check
+        // a handful of digits (or nothing at all) reaches the database.
+        $contact = trim((string)($body['contact'] ?? ''));
+        if ($contact === '') {
+            Response::error('Contact number is required.', 422);
+        }
+        ContactPolicy::enforce($contact);
+
         // Update student profile details (name, enrollment_number, contact) in active users table if provided
         $updateFields = [];
         $updateParams = [];
@@ -125,10 +136,8 @@ class StudentRequestController
             $updateFields[] = 'enrollment_number = :enrollment';
             $updateParams[':enrollment'] = $body['enrollment_number'];
         }
-        if (!empty($body['contact'])) {
-            $updateFields[] = 'contact = :contact';
-            $updateParams[':contact'] = $body['contact'];
-        }
+        $updateFields[] = 'contact = :contact';
+        $updateParams[':contact'] = ContactPolicy::normalise($contact);
         if (!empty($updateFields)) {
             $updateParams[':uid'] = $auth['sub'];
             $db->prepare('UPDATE users SET ' . implode(', ', $updateFields) . ' WHERE id = :uid')->execute($updateParams);
@@ -224,7 +233,13 @@ class StudentRequestController
                 if (!$assignedTo) {
                     Response::error('assigned_to (supervisor) is required when approving a request.', 422);
                 }
-                if (!empty($body['deadline']) && $body['deadline'] < date('Y-m-d')) {
+                // Every supervision assignment gets a deadline. Without one the
+                // task lands in the lecturer's queue with nothing to schedule
+                // against, and can never be flagged overdue.
+                if (empty($body['deadline'])) {
+                    Response::error('A deadline is required when assigning a supervisor.', 422);
+                }
+                if ($body['deadline'] < date('Y-m-d')) {
                     Response::error('Deadline cannot be a past date.', 422);
                 }
                 StudentRequestDao::finalise($id, 'assigned', (int)$auth['sub'], $assignedTo);
@@ -285,7 +300,12 @@ class StudentRequestController
         if (!$assignedTo) {
             Response::error('assigned_to (supervisor) is required when approving a request.', 422);
         }
-        if (!empty($body['deadline']) && $body['deadline'] < date('Y-m-d')) {
+        // Same rule as the step-1 shortcut above: approving means creating a
+        // real assignment, and an assignment without a deadline is unschedulable.
+        if (empty($body['deadline'])) {
+            Response::error('A deadline is required when assigning a supervisor.', 422);
+        }
+        if ($body['deadline'] < date('Y-m-d')) {
             Response::error('Deadline cannot be a past date.', 422);
         }
 
