@@ -29,9 +29,50 @@ class StudentRequestController
 
     public function show(array $params = []): void
     {
-        JwtMiddleware::handle();
-        $sr = StudentRequestDao::findById((int)($params['id'] ?? 0));
+        $auth = JwtMiddleware::handle();
+        $sr   = StudentRequestDao::findById((int)($params['id'] ?? 0));
         if (!$sr) Response::error('Student request not found', 404);
+
+        // Mirrors index()'s scoping for a single record. Without it any
+        // signed-in account — including another student — could read every
+        // student's request by walking the IDs.
+        $uid     = (int)$auth['sub'];
+        $allowed = false;
+
+        switch ($auth['role']) {
+            case 'system_admin':
+                $allowed = true;
+                break;
+
+            case 'student':
+                $allowed = (int)$sr['student_id'] === $uid;
+                break;
+
+            case 'dean':
+                // Dean of the target faculty, or of the student's own faculty
+                // (the final approver for a non-cross request).
+                $allowed = isset($auth['faculty']) && $auth['faculty'] !== null
+                    && ((int)($sr['faculty_id']      ?? 0) === (int)$auth['faculty']
+                     || (int)($sr['home_faculty_id'] ?? 0) === (int)$auth['faculty']);
+                break;
+
+            case 'department_head':
+                // Head of the student's home department (step 1 endorsement)
+                // or of the target department (step 2 final approval).
+                $allowed = isset($auth['dept']) && $auth['dept'] !== null
+                    && ((int)($sr['home_department_id'] ?? 0) === (int)$auth['dept']
+                     || (int)($sr['department_id']      ?? 0) === (int)$auth['dept']);
+                break;
+
+            case 'lecturer':
+                // Only once they are the assigned or suggested supervisor.
+                $allowed = (int)($sr['assigned_to']             ?? 0) === $uid
+                        || (int)($sr['suggested_supervisor_id'] ?? 0) === $uid;
+                break;
+        }
+
+        if (!$allowed) Response::error('Forbidden', 403);
+
         Response::success($sr);
     }
 

@@ -42,9 +42,17 @@ class AppealDao
 
     public static function findById(int $id): ?array
     {
+        // The lecturer's department/faculty come back with the row so the
+        // controller can check the caller is entitled to see this appeal.
+        // Without them a single-record read cannot apply the same scoping
+        // list() applies.
         $stmt = Db::connection()->prepare(
-            'SELECT wa.*, ' . UserDao::displayNameSql('u') . ' AS lecturer_name
-             FROM workload_appeals wa JOIN users u ON u.id = wa.lecturer_id
+            'SELECT wa.*, ' . UserDao::displayNameSql('u') . ' AS lecturer_name,
+                    u.department_id AS lecturer_department_id,
+                    d.faculty_id    AS lecturer_faculty_id
+             FROM workload_appeals wa
+             JOIN users u ON u.id = wa.lecturer_id
+             LEFT JOIN departments d ON d.id = u.department_id
              WHERE wa.id = :id'
         );
         $stmt->execute([':id' => $id]);

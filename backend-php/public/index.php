@@ -99,6 +99,19 @@ header('Cache-Control: no-store, no-cache, must-revalidate, private');
 header('Pragma: no-cache');
 header_remove('X-Powered-By');
 
+// These responses are pure JSON and are never meant to be rendered as a
+// document, so nothing may be loaded, framed or submitted from one if a
+// browser is pointed at an endpoint directly. This does NOT affect the
+// frontend's fetch/XHR calls — a CSP restricts the document that owns it,
+// not the JSON a script receives.
+header("Content-Security-Policy: default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+header('X-Permitted-Cross-Domain-Policies: none');
+header('Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()');
+
+// Browsers ignore HSTS on a plain-HTTP origin, so this is inert for
+// `php -S localhost:8000` and active on the HTTPS deployment.
+header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
     exit;

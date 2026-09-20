@@ -27,6 +27,26 @@ frontend/out/
 !.env.example
 !**/.env.example
 
+# Local-only credential notes (demo account passwords). Never commit these.
+*.local.md
+database/DEMO_CREDENTIALS.local.md
+
+# One-off credential-rotation script. Contains bcrypt hashes and the full list
+# of account emails. The hashes are not crackable, but a committed hash can
+# never be taken back out of git history, and the file hands over an exact
+# account list for free. Run it locally, don't ship it.
+database/rotate_demo_credentials.sql
+
+# Database dumps. A dump of a live/working database carries real user rows:
+# password hashes, personal email addresses, contact numbers and encrypted
+# TOTP secrets. Keep schema.sql / seed.sql / migration_*.sql (structure only),
+# never a snapshot of actual data.
+*.dump.sql
+*-dump.sql
+*_dump.sql
+db_backup*.sql
+backup_*.sql
+
 # PHP / Composer (if added later)
 vendor/
 

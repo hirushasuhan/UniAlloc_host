@@ -79,9 +79,33 @@ class WorkRequestController
     // ------------------------------------------------------------------
     public function show(array $params = []): void
     {
-        JwtMiddleware::handle();
-        $req = WorkRequestDao::findById((int)($params['id'] ?? 0));
+        $auth = JwtMiddleware::handle();
+        $req  = WorkRequestDao::findById((int)($params['id'] ?? 0));
         if (!$req) Response::error('Request not found', 404);
+
+        // index() returns only the requests a user is party to; a single-record
+        // read has to honour the same rule, or any signed-in account can walk
+        // the IDs and read every request in the university.
+        //
+        // Visible to: the requester, the target, and the approvers in the
+        // chain for that request (the target department's head, the target
+        // faculty's dean). Scope is checked rather than approval_step so a
+        // dean/head can still open a request they have already actioned.
+        $uid     = (int)$auth['sub'];
+        $isParty = (int)($req['requester_id']   ?? 0) === $uid
+                || (int)($req['target_user_id'] ?? 0) === $uid;
+
+        $isApprover = false;
+        if ($auth['role'] === 'dean' && isset($auth['faculty']) && $auth['faculty'] !== null) {
+            $isApprover = (int)($req['target_faculty_id'] ?? 0) === (int)$auth['faculty'];
+        } elseif ($auth['role'] === 'department_head' && isset($auth['dept']) && $auth['dept'] !== null) {
+            $isApprover = (int)($req['target_dept_id'] ?? 0) === (int)$auth['dept'];
+        }
+
+        if ($auth['role'] !== 'system_admin' && !$isParty && !$isApprover) {
+            Response::error('Forbidden', 403);
+        }
+
         Response::success($req);
     }
 

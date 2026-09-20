@@ -31,10 +31,52 @@ class AppealController
 
     public function show(array $params = []): void
     {
-        JwtMiddleware::handle();
-        $a = AppealDao::findById((int)($params['id'] ?? 0));
+        $auth = JwtMiddleware::handle();
+        $a    = AppealDao::findById((int)($params['id'] ?? 0));
         if (!$a) Response::error('Appeal not found', 404);
+
+        self::guardCanAccess($auth, $a);
+
         Response::success($a);
+    }
+
+    /**
+     * A valid token is not enough to read one appeal. The scoping index()
+     * applies to the list has to apply to a single record too: otherwise any
+     * signed-in account can walk the IDs and read every lecturer's appeal
+     * text and the department head's private review notes.
+     *
+     * Roles not named here (e.g. student) never have a legitimate reason to
+     * open an appeal, so they fall through to 403.
+     */
+    private static function guardCanAccess(array $auth, array $appeal): void
+    {
+        switch ($auth['role']) {
+            case 'system_admin':
+                return;
+
+            case 'lecturer':
+                if ((int)$appeal['lecturer_id'] === (int)$auth['sub']) return;
+                break;
+
+            case 'department_head':
+                $dept = $appeal['lecturer_department_id'] ?? null;
+                if ($dept !== null && isset($auth['dept']) && $auth['dept'] !== null
+                    && (int)$dept === (int)$auth['dept']) {
+                    return;
+                }
+                break;
+
+            case 'dean':
+                $faculty = $appeal['lecturer_faculty_id'] ?? null;
+                if ($faculty !== null && isset($auth['faculty']) && $auth['faculty'] !== null
+                    && (int)$faculty === (int)$auth['faculty']) {
+                    return;
+                }
+                break;
+        }
+
+        Response::error('Forbidden', 403);
     }
 
     public function store(array $params = []): void
@@ -72,6 +114,13 @@ class AppealController
         if (!in_array($status, ['reviewed','resolved'], true)) {
             Response::error("status must be 'reviewed' or 'resolved'", 422);
         }
+
+        // Role alone used to be enough to resolve ANY appeal, so a head of
+        // one department could review another department's. Same scope rule
+        // as show().
+        $existing = AppealDao::findById($id);
+        if (!$existing) Response::error('Appeal not found', 404);
+        self::guardCanAccess($auth, $existing);
 
         $ok     = AppealDao::update($id, $status, $auth['sub'], $body['review_note'] ?? null);
         $appeal = AppealDao::findById($id);

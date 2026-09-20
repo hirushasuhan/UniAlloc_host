@@ -73,13 +73,36 @@ class LoginAttemptDao
     }
 
     /**
-     * Source address of the current request. Deliberately ignores
-     * X-Forwarded-For: that header is attacker-controlled unless a trusted
-     * proxy is known to rewrite it, and trusting it would make the IP limit
-     * trivially bypassable.
+     * Source address of the current request.
+     *
+     * X-Forwarded-For is attacker-controlled unless a trusted proxy is known
+     * to rewrite it, so it is IGNORED BY DEFAULT and REMOTE_ADDR wins — the
+     * behaviour this app has always had.
+     *
+     * The catch: behind an edge/CDN (Wasmer, Vercel, Cloudflare) REMOTE_ADDR
+     * is the edge's own address, identical for every visitor, which silently
+     * turns the per-IP limit into one shared bucket for the whole internet.
+     * Set TRUST_PROXY=true in the deployed environment ONLY (never for a
+     * directly-exposed server) to count the real client instead.
      */
     public static function clientIp(): string
     {
-        return (string)($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+        $remote = (string)($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+
+        $cfg = require __DIR__ . '/../../config/app.php';
+        if (empty($cfg['trust_proxy'])) {
+            return $remote;
+        }
+
+        // Left-most entry is the client as the edge first saw it.
+        $forwarded = (string)($_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
+        foreach (explode(',', $forwarded) as $candidate) {
+            $candidate = trim($candidate);
+            if ($candidate !== '' && filter_var($candidate, FILTER_VALIDATE_IP)) {
+                return $candidate;
+            }
+        }
+
+        return $remote;
     }
 }

@@ -4,3 +4,28 @@ port = 80
 page-fallback = "/public/index.html"
 directory-listing = false
 compression = true
+
+# ------------------------------------------------------------------
+# Security headers for the Wasmer (static-web-server) copy of the site.
+#
+# NOT ACTIVE YET: wasmer.toml does not currently pass this config file to
+# static-web-server, so the block below changes nothing until you add
+#   "-w", "/settings/config.toml"
+# to main-args in frontend/wasmer.toml and redeploy. Left inert on purpose
+# so a deploy can't break before it has been tested.
+#
+# The Vercel deployment does not need this — frontend/next.config.js already
+# sets the same headers there.
+# ------------------------------------------------------------------
+[advanced]
+
+[[advanced.headers]]
+source = "**"
+
+[advanced.headers.headers]
+Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://backend-php.wasmer.app; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+X-Content-Type-Options = "nosniff"
+X-Frame-Options = "DENY"
+Referrer-Policy = "strict-origin-when-cross-origin"
+Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+Strict-Transport-Security = "max-age=31536000; includeSubDomains"

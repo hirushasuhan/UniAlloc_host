@@ -17,6 +17,8 @@ return [
     'jwt_ttl'                => \App\Helpers\Env::int('JWT_TTL', 480),   // minutes (8 hours)
     'app_key'                => \App\Helpers\Env::get('APP_KEY', ''),
     'cors_origins'           => \App\Helpers\Env::list('CORS_ORIGINS', ['http://localhost:3000']),
+    // Only enable behind an edge/CDN that rewrites X-Forwarded-For itself.
+    'trust_proxy'            => \App\Helpers\Env::bool('TRUST_PROXY', false),
     'registration_domain'    => \App\Helpers\Env::get('REGISTRATION_EMAIL_DOMAIN', ''),
     'overload_threshold_pct' => \App\Helpers\Env::int('OVERLOAD_THRESHOLD_PCT', 90),
 ];

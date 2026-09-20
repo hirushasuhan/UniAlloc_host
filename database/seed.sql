@@ -3,12 +3,18 @@
 -- Run AFTER schema.sql:
 --   mysql -u root uniAlloc_db < seed.sql
 -- ============================================================
--- Passwords are bcrypt hashes of the plain-text values below:
---   Admin@123   → admin
---   Dean@123    → deans
---   Head@123    → dept heads
---   Lecturer@123→ lecturers
---   Student@123 → student
+-- ⚠  DEMO DATA — NOT FOR ANY REAL DEPLOYMENT
+--
+-- These accounts ship with fixed, publicly-known passwords, so a database
+-- seeded from this file has a guessable System Administrator login. The
+-- plaintext values used to be listed here; they are kept out of the
+-- repository now, in database/DEMO_CREDENTIALS.local.md (gitignored).
+--
+-- Removing them from this file does NOT undo the exposure — they are still
+-- readable in git history. Before this system is used with real data, run:
+--     mysql -u <user> -p <database> < database/rotate_demo_credentials.sql
+-- which replaces every password below with a random one, clears enrolled
+-- authenticators and revokes outstanding sessions.
 -- ============================================================
 
 -- Select the database to use
@@ -53,7 +59,7 @@ INSERT IGNORE INTO `users`
   (`id`,`full_name`,`email`,`password_hash`,`role_id`,`department_id`,`capacity_hours`) VALUES
   (1, 'System Administrator',
    'admin@university.edu',
-   '$2b$10$nBIhCNJQfZSrEJeZjh6daeY3BWxQ1UCzUEbu8aUA.RvAkAe1FNCMG', -- Admin@123
+   '$2b$10$nBIhCNJQfZSrEJeZjh6daeY3BWxQ1UCzUEbu8aUA.RvAkAe1FNCMG',
    1, NULL, 40.00);
 
 -- Dean — Faculty of Computing  (Dr. AND a Professor)
@@ -61,7 +67,7 @@ INSERT IGNORE INTO `users`
   (`id`,`full_name`,`title`,`position`,`email`,`password_hash`,`role_id`,`department_id`,`capacity_hours`) VALUES
   (2, 'Nimal Perera', 'Dr', 'Professor',
    'dean.computing@university.edu',
-   '$2b$10$kIGutDJpAL3/MHPiFycDlOqDyK3F.CeZLNBIV96pY7zQRe6bNag7u', -- Dean@123
+   '$2b$10$kIGutDJpAL3/MHPiFycDlOqDyK3F.CeZLNBIV96pY7zQRe6bNag7u',
    2, NULL, 40.00);
 
 -- Dean — Faculty of Engineering  (Dr. AND a Professor)
@@ -69,7 +75,7 @@ INSERT IGNORE INTO `users`
   (`id`,`full_name`,`title`,`position`,`email`,`password_hash`,`role_id`,`department_id`,`capacity_hours`) VALUES
   (3, 'Sunil Fernando', 'Dr', 'Professor',
    'dean.engineering@university.edu',
-   '$2b$10$21Ltb61IZ.4tcZVM2fWrHOPkw75RR9dFHm9fcwEbM8Q.9EGc/6LqC', -- Dean@123
+   '$2b$10$21Ltb61IZ.4tcZVM2fWrHOPkw75RR9dFHm9fcwEbM8Q.9EGc/6LqC',
    2, NULL, 40.00);
 
 -- Department Head — Computer Science  (Dr. AND a Senior Lecturer — the exact case)
@@ -77,7 +83,7 @@ INSERT IGNORE INTO `users`
   (`id`,`full_name`,`title`,`position`,`email`,`password_hash`,`role_id`,`department_id`,`capacity_hours`) VALUES
   (4, 'Amal Silva', 'Dr', 'Senior Lecturer',
    'head.cs@university.edu',
-   '$2b$10$MoO.vad.FRC99Ou1ohQ18.0r4i9VLQXWB3vMB00JRjMzDdadQc0BW', -- Head@123
+   '$2b$10$MoO.vad.FRC99Ou1ohQ18.0r4i9VLQXWB3vMB00JRjMzDdadQc0BW',
    3, 1, 40.00);
 
 -- Department Head — Software Engineering  (Dr. AND a Senior Lecturer)
@@ -85,7 +91,7 @@ INSERT IGNORE INTO `users`
   (`id`,`full_name`,`title`,`position`,`email`,`password_hash`,`role_id`,`department_id`,`capacity_hours`) VALUES
   (5, 'Kasun Bandara', 'Dr', 'Senior Lecturer',
    'head.se@university.edu',
-   '$2b$10$X/jgOBsfjbO1FJCtP7G0YOhrtQXPIl4BBrrp3RDJmvf.ET12ETcRi', -- Head@123
+   '$2b$10$X/jgOBsfjbO1FJCtP7G0YOhrtQXPIl4BBrrp3RDJmvf.ET12ETcRi',
    3, 2, 40.00);
 
 -- Lecturer 1 — Computer Science
@@ -93,7 +99,7 @@ INSERT IGNORE INTO `users`
   (`id`,`full_name`,`title`,`position`,`email`,`password_hash`,`role_id`,`department_id`,`capacity_hours`) VALUES
   (6, 'Roshan Jayawardena', 'Mr', 'Lecturer',
    'lecturer1@university.edu',
-   '$2b$10$xAlRbVfrW9mkH84cQAN6q..I./BDYh0yNKuVeXSWJMLnjPGcm6qkq', -- Lecturer@123
+   '$2b$10$xAlRbVfrW9mkH84cQAN6q..I./BDYh0yNKuVeXSWJMLnjPGcm6qkq',
    4, 1, 40.00);
 
 -- Lecturer 2 — Software Engineering
@@ -101,7 +107,7 @@ INSERT IGNORE INTO `users`
   (`id`,`full_name`,`title`,`position`,`email`,`password_hash`,`role_id`,`department_id`,`capacity_hours`) VALUES
   (7, 'Dilini Rajapaksa', 'Ms', 'Lecturer',
    'lecturer2@university.edu',
-   '$2b$10$aIkvyRgiYMnJ.P6LdGbpvuk6KCgBG7kttExMpmGeF1sduVlytBdXC', -- Lecturer@123
+   '$2b$10$aIkvyRgiYMnJ.P6LdGbpvuk6KCgBG7kttExMpmGeF1sduVlytBdXC',
    4, 2, 40.00);
 
 -- Student
@@ -109,7 +115,7 @@ INSERT IGNORE INTO `users`
   (`id`,`full_name`,`email`,`password_hash`,`role_id`,`department_id`,`enrollment_number`,`capacity_hours`) VALUES
   (8, 'Saman Kumara',
    'student@university.edu',
-   '$2y$10$3FAbvfKRc1O2XYv4OOAD8OT.mlS4YjgHJ5eAFycuJxGbiU50EhkVe', -- Student@123
+   '$2y$10$3FAbvfKRc1O2XYv4OOAD8OT.mlS4YjgHJ5eAFycuJxGbiU50EhkVe',
    5, 1, 'UWU/IIT/23/099', 0.00);
 
 -- -----------------------------------------------------------
