@@ -9,6 +9,15 @@ const ROLES = ['system_admin','dean','department_head','lecturer','student']
 const TITLES = ['Prof', 'Dr', 'Mr', 'Mrs', 'Ms', 'Miss', 'Rev', 'Thero']
 const POSITIONS = ['Senior Professor', 'Professor', 'Associate Professor', 'Senior Lecturer', 'Senior Lecturer (Grade I)', 'Senior Lecturer (Grade II)', 'Lecturer', 'Lecturer (Grade I)', 'Lecturer (Grade II)', 'Probationary Lecturer', 'Assistant Lecturer', 'Temporary Lecturer', 'Visiting Lecturer', 'Instructor', 'Demonstrator', 'Research Assistant']
 
+// "Faculty of Management" -> "Management Faculty Dean". Falls back to the
+// plain faculty name + " Dean" for anything not following that convention,
+// and to a bare "Dean" badge if the account isn't linked to a faculty yet.
+function deanBadgeLabel(facultyName?: string | null): string {
+  if (!facultyName) return 'Dean'
+  const stripped = facultyName.replace(/^Faculty of\s+/i, '').trim()
+  return `${stripped} Faculty Dean`
+}
+
 export default function AdminUsersPage() {
   const [users,   setUsers]   = useState<any[]>([])
   const [depts,   setDepts]   = useState<any[]>([])
@@ -249,7 +258,9 @@ export default function AdminUsersPage() {
 
                 <td className="py-3 px-4">
                   <span className={`badge whitespace-nowrap ${roleColor[u.role_name] ?? 'bg-slate-100 text-slate-700'}`}>
-                    {(u.role_name ?? '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                    {u.role_name === 'dean'
+                      ? deanBadgeLabel(u.faculty_name)
+                      : (u.role_name ?? '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                   </span>
                 </td>
                 <td className="py-3 px-4 text-[var(--muted)] whitespace-nowrap">{u.dept_name ?? '—'}</td>
