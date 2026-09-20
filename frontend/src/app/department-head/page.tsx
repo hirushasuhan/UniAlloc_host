@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { api } from '@/lib/api'
 import { getUser } from '@/lib/auth'
@@ -107,6 +108,7 @@ export default function DeptHeadDashboard() {
   }
 
   const overloaded = workload.filter(w => w.is_overloaded)
+  const pendingInboxReqs = inboxReqs.filter(r => r.status === 'pending')
 
   // Capacity chart data: label the department head's own bar as "You"
   const workloadChartData = workload.map(w => ({
@@ -328,27 +330,61 @@ export default function DeptHeadDashboard() {
 
           {/* Cross-dept Request Inbox */}
           <div className="glass-card p-6">
-            <h2 className="font-heading font-semibold text-lg mb-4">Incoming Requests</h2>
-            {inboxReqs.length === 0
-              ? <p className="text-[var(--muted)] text-sm">No pending requests.</p>
-              : (
-                <div className="space-y-3">
-                  {inboxReqs.filter(r => r.status === 'pending').slice(0, 5).map((r: any) => (
-                    <div key={r.id} className="p-3 rounded-xl bg-[var(--bg)] flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-medium">{r.title}</p>
-                        <p className="text-xs text-[var(--muted)]">from {r.requester_name}</p>
-                        <div className="flex gap-2 mt-2">
-                          <button onClick={() => updateWorkReqStatus(r.id, 'approve')} className="text-[10px] font-semibold bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100">Approve</button>
-                          <button onClick={() => updateWorkReqStatus(r.id, 'reject')} className="text-[10px] font-semibold bg-red-50 text-red-600 px-2 py-1 rounded hover:bg-red-100">Reject</button>
-                        </div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <h2 className="font-heading font-semibold text-lg">Incoming Requests</h2>
+                {pendingInboxReqs.length > 0 && (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    {pendingInboxReqs.length}
+                  </span>
+                )}
+              </div>
+              <Link
+                href="/department-head/requests"
+                className="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
+              >
+                View All →
+              </Link>
+            </div>
+
+            {pendingInboxReqs.length === 0 ? (
+              <p className="text-[var(--muted)] text-sm py-4">No pending requests.</p>
+            ) : (
+              <div className="max-h-[380px] overflow-y-auto custom-scrollbar pr-2 -mr-1 space-y-3">
+                {pendingInboxReqs.map((r: any) => (
+                  <div
+                    key={r.id}
+                    className="group p-3.5 rounded-xl bg-[var(--bg)] hover:bg-[var(--card-solid)] border border-[var(--border)] hover:border-emerald-500/30 transition-all duration-200 flex items-start justify-between gap-4 shadow-sm"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold truncate group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors">
+                        {r.title}
+                      </p>
+                      <p className="text-xs text-[var(--muted)] mt-0.5">
+                        from <span className="font-medium text-[var(--text)]">{r.requester_name}</span>
+                      </p>
+                      <div className="flex gap-2 mt-2.5">
+                        <button
+                          onClick={() => updateWorkReqStatus(r.id, 'approve')}
+                          className="text-[11px] font-semibold bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 px-2.5 py-1 rounded-lg hover:bg-green-500/20 transition-colors"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => updateWorkReqStatus(r.id, 'reject')}
+                          className="text-[11px] font-semibold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 px-2.5 py-1 rounded-lg hover:bg-red-500/20 transition-colors"
+                        >
+                          Reject
+                        </button>
                       </div>
-                      <span className="badge bg-amber-100 text-amber-700">pending</span>
                     </div>
-                  ))}
-                </div>
-              )
-            }
+                    <span className="badge shrink-0 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 capitalize">
+                      pending
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Recent Assignments */}

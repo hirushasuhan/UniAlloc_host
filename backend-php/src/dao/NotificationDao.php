@@ -40,4 +40,22 @@ class NotificationDao
         );
         $stmt->execute([':uid' => $userId]);
     }
+
+    public static function clearRead(int $userId): int
+    {
+        $stmt = Db::connection()->prepare(
+            'DELETE FROM notifications WHERE user_id = :uid AND is_read = 1'
+        );
+        $stmt->execute([':uid' => $userId]);
+        return $stmt->rowCount();
+    }
+
+    public static function delete(int $id, int $userId): bool
+    {
+        $stmt = Db::connection()->prepare(
+            'DELETE FROM notifications WHERE id = :id AND user_id = :uid'
+        );
+        $stmt->execute([':id' => $id, ':uid' => $userId]);
+        return $stmt->rowCount() > 0;
+    }
 }

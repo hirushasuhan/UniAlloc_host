@@ -490,31 +490,71 @@ export default function DeanDashboard() {
 
           {/* Student Requests */}
           <div className="glass-card p-6">
-            <h2 className="font-heading font-semibold text-lg mb-4">Student Supervisor Requests</h2>
-            {studentReqs.length === 0
-              ? <p className="text-[var(--muted)] text-sm">No student requests yet.</p>
-              : (
-                <div className="space-y-3">
-                  {studentReqs.slice(0, 5).map((r: any) => (
-                    <div key={r.id} className="flex items-start justify-between gap-4 p-3 rounded-xl bg-[var(--bg)]">
-                      <div>
-                        <p className="text-sm font-medium">{r.title}</p>
-                        <p className="text-xs text-[var(--muted)]">by {r.student_name} ({r.dept_name ?? 'Faculty-wide'})</p>
-                        {r.status === 'pending' && (
-                          <div className="flex gap-2 mt-2">
-                            <Link href="/dean/student-requests" className="text-[10px] font-semibold bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100">Review & Assign</Link>
-                            <button onClick={() => updateStudentReqStatus(r.id, 'reject')} className="text-[10px] font-semibold bg-red-50 text-red-600 px-2 py-1 rounded hover:bg-red-100">Reject</button>
-                          </div>
-                        )}
-                      </div>
-                      <span className={`badge ${r.status === 'pending' ? 'bg-amber-100 text-amber-700' : r.status === 'assigned' || r.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {r.status}
-                      </span>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <h2 className="font-heading font-semibold text-lg">Student Supervisor Requests</h2>
+                {studentReqs.length > 0 && (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
+                    {studentReqs.length}
+                  </span>
+                )}
+              </div>
+              <Link
+                href="/dean/student-requests"
+                className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+              >
+                Manage All →
+              </Link>
+            </div>
+
+            {studentReqs.length === 0 ? (
+              <p className="text-[var(--muted)] text-sm py-4">No student requests yet.</p>
+            ) : (
+              <div className="max-h-[380px] overflow-y-auto custom-scrollbar pr-2 -mr-1 space-y-3">
+                {studentReqs.map((r: any) => (
+                  <div
+                    key={r.id}
+                    className="group p-3.5 rounded-xl bg-[var(--bg)] hover:bg-[var(--card-solid)] border border-[var(--border)] hover:border-indigo-500/30 transition-all duration-200 flex items-start justify-between gap-4 shadow-sm"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold truncate group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors">
+                        {r.title}
+                      </p>
+                      <p className="text-xs text-[var(--muted)] mt-0.5">
+                        by <span className="font-medium text-[var(--text)]">{r.student_name}</span> ({r.dept_name ?? 'Faculty-wide'})
+                      </p>
+                      {r.status === 'pending' && (
+                        <div className="flex gap-2 mt-2.5">
+                          <Link
+                            href="/dean/student-requests"
+                            className="text-[11px] font-semibold bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 px-2.5 py-1 rounded-lg hover:bg-green-500/20 transition-colors"
+                          >
+                            Review & Assign
+                          </Link>
+                          <button
+                            onClick={() => updateStudentReqStatus(r.id, 'reject')}
+                            className="text-[11px] font-semibold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 px-2.5 py-1 rounded-lg hover:bg-red-500/20 transition-colors"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )
-            }
+                    <span
+                      className={`badge shrink-0 capitalize ${
+                        r.status === 'pending'
+                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                          : r.status === 'assigned' || r.status === 'approved'
+                          ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20'
+                          : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+                      }`}
+                    >
+                      {r.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

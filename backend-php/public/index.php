@@ -197,6 +197,8 @@ $routes = [
     'GET /notifications'                   => ['NotificationController', 'index'],
     'PATCH /notifications/{id}/read'       => ['NotificationController', 'markRead'],
     'PATCH /notifications/read-all'        => ['NotificationController', 'markAllRead'],
+    'DELETE /notifications/read'           => ['NotificationController', 'clearRead'],
+    'DELETE /notifications/{id}'           => ['NotificationController', 'destroy'],
 
     // Leadership vacancies (dashboard alerts)
     'GET /vacancies'                       => ['VacancyController', 'index'],

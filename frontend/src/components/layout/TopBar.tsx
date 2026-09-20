@@ -6,7 +6,7 @@ import { AuthUser } from '@/lib/auth'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import SettingsModal from '@/components/ui/SettingsModal'
 import ChangePasswordModal from '@/components/ui/ChangePasswordModal'
-import { HiOutlineBell, HiOutlineBars3, HiOutlineCheck } from 'react-icons/hi2'
+import { HiOutlineBell, HiOutlineBars3, HiOutlineCheck, HiOutlineTrash } from 'react-icons/hi2'
 import { api } from '@/lib/api'
 
 interface Props {
@@ -161,6 +161,14 @@ export default function TopBar({ user, onUpdateUser, onOpenNav }: Props) {
       setNotifications(prev => prev.map(x => ({ ...x, is_read: 1 })))
     } catch {}
   }
+
+  const clearReadNotifications = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      await api.delete('/notifications/read')
+      setNotifications(prev => prev.filter(x => !x.is_read))
+    } catch {}
+  }
   
   const unreadCount = notifications.filter(n => !n.is_read).length
 
@@ -219,14 +227,25 @@ export default function TopBar({ user, onUpdateUser, onOpenNav }: Props) {
                       </span>
                     )}
                   </div>
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={markAllRead}
-                      className="text-xs text-[var(--accent)] hover:underline flex items-center gap-1 font-medium cursor-pointer"
-                    >
-                      <HiOutlineCheck size={13} /> Mark all read
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2.5">
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllRead}
+                        className="text-xs text-[var(--accent)] hover:underline flex items-center gap-1 font-medium cursor-pointer"
+                      >
+                        <HiOutlineCheck size={13} /> Mark all read
+                      </button>
+                    )}
+                    {notifications.some(n => n.is_read) && (
+                      <button
+                        onClick={clearReadNotifications}
+                        className="text-xs text-red-500 dark:text-red-400 hover:underline flex items-center gap-1 font-medium cursor-pointer"
+                        title="Clear read notifications"
+                      >
+                        <HiOutlineTrash size={13} /> Clear read
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="max-h-80 overflow-y-auto divide-y divide-[var(--border)]/60">

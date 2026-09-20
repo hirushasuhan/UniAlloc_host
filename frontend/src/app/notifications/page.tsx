@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { api } from '@/lib/api'
 import { getUser } from '@/lib/auth'
-import { HiOutlineBell, HiOutlineCheckBadge, HiOutlineArrowPath, HiOutlineArrowTopRightOnSquare } from 'react-icons/hi2'
+import { HiOutlineBell, HiOutlineCheckBadge, HiOutlineArrowPath, HiOutlineArrowTopRightOnSquare, HiOutlineTrash } from 'react-icons/hi2'
 
 const TYPE_COLOR: Record<string,string> = {
   assignment: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400',
@@ -62,8 +62,9 @@ function getNotificationHref(n: any, role: string): string {
 export default function NotificationsPage() {
   const router = useRouter()
   const user = getUser()
-  const [notifs,  setNotifs]  = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
+  const [notifs,   setNotifs]   = useState<any[]>([])
+  const [loading,  setLoading]  = useState(false)
+  const [clearing, setClearing] = useState(false)
 
   const load = () => {
     setLoading(true)
@@ -82,6 +83,27 @@ export default function NotificationsPage() {
     setNotifs(n => n.map(x => ({ ...x, is_read: 1 })))
   }
 
+  async function clearReadNotifications() {
+    if (!confirm('Clear all read notifications?')) return
+    setClearing(true)
+    try {
+      await api.delete('/notifications/read')
+      setNotifs(n => n.filter(x => !x.is_read))
+    } catch {
+      load()
+    } finally {
+      setClearing(false)
+    }
+  }
+
+  async function deleteNotification(id: number, e?: React.MouseEvent) {
+    if (e) e.stopPropagation()
+    try {
+      await api.delete(`/notifications/${id}`)
+      setNotifs(n => n.filter(x => x.id !== id))
+    } catch {}
+  }
+
   const handleCardClick = async (n: any) => {
     if (!n.is_read) {
       markRead(n.id)
@@ -93,6 +115,7 @@ export default function NotificationsPage() {
   }
 
   const unread = notifs.filter(n => !n.is_read).length
+  const readCount = notifs.filter(n => !!n.is_read).length
 
   return (
     <DashboardLayout>
@@ -106,10 +129,20 @@ export default function NotificationsPage() {
             <p className="text-[var(--muted)] text-sm">{unread} unread</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {unread > 0 && (
             <button onClick={markAllRead} className="btn-secondary text-sm">
               <HiOutlineCheckBadge size={15}/> Mark all read
+            </button>
+          )}
+          {readCount > 0 && (
+            <button 
+              onClick={clearReadNotifications} 
+              disabled={clearing} 
+              className="btn-secondary text-sm text-red-500 dark:text-red-400 hover:border-red-500/30 hover:bg-red-500/10 active:scale-95 transition-all"
+              title="Clear all read notifications"
+            >
+              <HiOutlineTrash size={15} className={clearing ? 'animate-spin' : ''}/> Clear read ({readCount})
             </button>
           )}
           <button onClick={load} disabled={loading} className="btn-secondary text-sm">
@@ -145,10 +178,18 @@ export default function NotificationsPage() {
                 <span className="text-xs text-[var(--muted)] whitespace-nowrap">
                   {new Date(n.created_at).toLocaleString()}
                 </span>
-                {!n.is_read && (
+                {!n.is_read ? (
                   <button onClick={(e) => markRead(n.id, e)}
                     className="text-xs text-indigo-500 hover:underline whitespace-nowrap font-medium">
                     Mark read
+                  </button>
+                ) : (
+                  <button 
+                    onClick={(e) => deleteNotification(n.id, e)}
+                    title="Delete notification"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                  >
+                    <HiOutlineTrash size={14}/>
                   </button>
                 )}
               </div>

@@ -207,22 +207,28 @@ export default function AdminUsersPage() {
         </select>
       </div>
 
-      {/* Table */}
-      <div className="glass-card overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
+      {/* Table Container with Visible Horizontal Scroll & Sticky Header/Actions */}
+      <div className="glass-card overflow-auto max-h-[calc(100vh-250px)] min-h-[420px] custom-scrollbar relative border border-[var(--border)] rounded-2xl shadow-sm">
+        <table className="w-full text-sm border-separate border-spacing-0">
+          <thead className="sticky top-0 z-20 bg-[var(--card-solid)] dark:bg-[#161a26] shadow-sm">
             <tr className="border-b border-[var(--border)]">
-              {['User','Title / Position','Role','Department','Capacity','Status','Actions'].map(h=>(
-                <th key={h} className="text-left py-3 px-4 text-[var(--muted)] font-medium whitespace-nowrap">{h}</th>
-              ))}
+              <th className="text-left py-3 px-4 text-[var(--muted)] font-medium whitespace-nowrap bg-[var(--card-solid)] dark:bg-[#161a26]">User</th>
+              <th className="text-left py-3 px-4 text-[var(--muted)] font-medium whitespace-nowrap bg-[var(--card-solid)] dark:bg-[#161a26]">Title / Position</th>
+              <th className="text-left py-3 px-4 text-[var(--muted)] font-medium whitespace-nowrap bg-[var(--card-solid)] dark:bg-[#161a26]">Role</th>
+              <th className="text-left py-3 px-4 text-[var(--muted)] font-medium whitespace-nowrap bg-[var(--card-solid)] dark:bg-[#161a26]">Department</th>
+              <th className="text-left py-3 px-4 text-[var(--muted)] font-medium whitespace-nowrap bg-[var(--card-solid)] dark:bg-[#161a26]">Capacity</th>
+              <th className="text-left py-3 px-4 text-[var(--muted)] font-medium whitespace-nowrap bg-[var(--card-solid)] dark:bg-[#161a26]">Status</th>
+              <th className="sticky right-0 top-0 z-30 text-right py-3 px-4 text-[var(--muted)] font-medium whitespace-nowrap bg-[var(--card-solid)] dark:bg-[#161a26] shadow-[-6px_0_12px_rgba(0,0,0,0.06)] border-l border-[var(--border)]/40">
+                Actions
+              </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-[var(--border)]/50">
             {filtered.map((u:any) => (
-              <tr key={u.id} className="border-b border-[var(--border)]/50 hover:bg-[var(--bg)]/50 align-top">
+              <tr key={u.id} className="hover:bg-[var(--bg)]/60 transition-colors align-middle group">
                 {/* User: display name (title + name) + email underneath */}
-                <td className="py-3 px-4">
-                  <div className="flex items-center gap-3 min-w-[180px]">
+                <td className="py-2.5 px-4">
+                  <div className="flex items-center gap-3 min-w-[170px]">
                     <div className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-white text-xs font-bold"
                       style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-2))' }}>
                       {(u.full_name?.[0] ?? '?').toUpperCase()}
@@ -235,12 +241,12 @@ export default function AdminUsersPage() {
                 </td>
 
                 {/* Title / Position: two compact stacked quick-edit dropdowns */}
-                <td className="py-3 px-4">
-                  <div className="flex flex-col gap-1.5 min-w-[185px]">
+                <td className="py-2.5 px-4">
+                  <div className="flex flex-col gap-1 min-w-[160px]">
                     <select
                       value={u.title ?? ''}
                       onChange={e => updateTitle(u.id, e.target.value)}
-                      className="input py-1 px-2 text-xs"
+                      className="input py-0.5 px-2 text-xs rounded-lg bg-[var(--bg)] border border-[var(--border)]"
                     >
                       <option value="">— Title —</option>
                       {TITLES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -248,7 +254,7 @@ export default function AdminUsersPage() {
                     <select
                       value={u.position ?? ''}
                       onChange={e => updatePosition(u.id, e.target.value)}
-                      className="input py-1 px-2 text-xs"
+                      className="input py-0.5 px-2 text-xs rounded-lg bg-[var(--bg)] border border-[var(--border)]"
                     >
                       <option value="">— Position —</option>
                       {POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}
@@ -256,40 +262,49 @@ export default function AdminUsersPage() {
                   </div>
                 </td>
 
-                <td className="py-3 px-4">
-                  <span className={`badge whitespace-nowrap ${roleColor[u.role_name] ?? 'bg-slate-100 text-slate-700'}`}>
+                {/* Role */}
+                <td className="py-2.5 px-4 whitespace-nowrap">
+                  <span className={`badge ${roleColor[u.role_name] ?? 'bg-slate-100 text-slate-700'}`}>
                     {u.role_name === 'dean'
                       ? deanBadgeLabel(u.faculty_name)
                       : (u.role_name ?? '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                   </span>
                 </td>
-                <td className="py-3 px-4 text-[var(--muted)] whitespace-nowrap">{u.dept_name ?? '—'}</td>
-                <td className="py-3 px-4 text-[var(--muted)] whitespace-nowrap">{u.capacity_hours}h</td>
-                <td className="py-3 px-4">
+
+                {/* Department */}
+                <td className="py-2.5 px-4 text-[var(--muted)] whitespace-nowrap text-xs">{u.dept_name ?? '—'}</td>
+
+                {/* Capacity */}
+                <td className="py-2.5 px-4 text-[var(--muted)] whitespace-nowrap text-xs font-semibold">{u.capacity_hours}h</td>
+
+                {/* Status */}
+                <td className="py-2.5 px-4 whitespace-nowrap">
                   <div className="flex flex-col gap-1 items-start">
-                    <span className={`badge whitespace-nowrap ${u.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <span className={`badge ${u.is_active ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400'}`}>
                       {u.is_active ? 'Active' : 'Inactive'}
                     </span>
-                    <span className={`badge whitespace-nowrap ${u.totp_enabled ? 'bg-cyan-100 text-cyan-700' : 'bg-amber-100 text-amber-700'}`} title="Self-service password recovery via authenticator app">
+                    <span className={`badge ${u.totp_enabled ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'}`} title="Self-service password recovery via authenticator app">
                       {u.totp_enabled ? '2FA Enrolled' : '2FA Not Set'}
                     </span>
                   </div>
                 </td>
-                <td className="py-3 px-4">
-                  <div className="flex items-center gap-1.5">
+
+                {/* Actions - Sticky Right Column */}
+                <td className="sticky right-0 z-10 bg-[var(--card-solid)] dark:bg-[#161a26] group-hover:bg-[var(--card-solid)] dark:group-hover:bg-[#161a26] py-2.5 px-4 shadow-[-6px_0_12px_rgba(0,0,0,0.06)] border-l border-[var(--border)]/40 whitespace-nowrap">
+                  <div className="flex items-center justify-end gap-1.5">
                     <button onClick={() => resetPassword(u.id)} title="Reset Password"
-                      className="inline-flex items-center justify-center w-7 h-7 bg-white/5 hover:bg-cyan-500/20 text-cyan-500 rounded-md transition-colors border border-white/5 hover:border-cyan-500/30">
+                      className="inline-flex items-center justify-center w-7 h-7 bg-white/5 hover:bg-cyan-500/20 text-cyan-500 rounded-lg transition-colors border border-white/5 hover:border-cyan-500/30 active:scale-95">
                       <HiOutlineKey size={14} />
                     </button>
                     <button onClick={() => toggleActive(u.id, u.is_active)} title={u.is_active ? 'Deactivate' : 'Activate'}
-                      className={`inline-flex items-center justify-center w-7 h-7 rounded-md border transition-colors
+                      className={`inline-flex items-center justify-center w-7 h-7 rounded-lg border transition-colors active:scale-95
                         ${u.is_active
                           ? 'text-red-500 bg-white/5 hover:bg-red-500/20 border-white/5 hover:border-red-500/30'
                           : 'text-green-500 bg-white/5 hover:bg-green-500/20 border-white/5 hover:border-green-500/30'}`}>
                       {u.is_active ? <HiOutlineUserMinus size={14}/> : <HiOutlineUserPlus size={14}/>}
                     </button>
                     <button onClick={() => deleteUser(u)} title="Permanently delete this user and all their data"
-                      className="inline-flex items-center justify-center w-7 h-7 bg-white/5 hover:bg-red-500/20 text-red-500 rounded-md transition-colors border border-white/5 hover:border-red-500/30">
+                      className="inline-flex items-center justify-center w-7 h-7 bg-white/5 hover:bg-red-500/20 text-red-500 rounded-lg transition-colors border border-white/5 hover:border-red-500/30 active:scale-95">
                       <HiOutlineTrash size={14} />
                     </button>
                   </div>
@@ -297,7 +312,7 @@ export default function AdminUsersPage() {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={7} className="py-8 text-center text-[var(--muted)]">No users found.</td></tr>
+              <tr><td colSpan={7} className="py-12 text-center text-[var(--muted)]">No users found.</td></tr>
             )}
           </tbody>
         </table>
