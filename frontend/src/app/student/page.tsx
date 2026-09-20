@@ -62,8 +62,22 @@ export default function StudentDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* My Supervisor(s) */}
-        <div className="glass-card p-6">
-          <h2 className="font-heading font-semibold text-lg mb-4">My Supervisor</h2>
+        <div className="glass-card p-6 flex flex-col">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-[var(--border)]/50">
+            <div className="flex items-center gap-2">
+              <h2 className="font-heading font-semibold text-lg">My Supervisor</h2>
+              {supervisors.length > 0 && (
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 font-semibold border border-indigo-500/20">
+                  {supervisors.length}
+                </span>
+              )}
+            </div>
+            {supervisors.length > 0 && (
+              <Link href="/student/requests" className="text-xs font-semibold text-indigo-500 hover:underline">
+                View details →
+              </Link>
+            )}
+          </div>
           {supervisors.length === 0 ? (
             <div className="text-center py-8">
               <div className="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 text-indigo-500 flex items-center justify-center mb-3">
@@ -82,7 +96,7 @@ export default function StudentDashboard() {
               )}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="max-h-[380px] overflow-y-auto custom-scrollbar pr-2 -mr-1 space-y-3">
               {supervisors.map((r: any) => (
                 <div key={r.id} className="p-4 rounded-xl bg-[var(--bg)] border border-[var(--border)] space-y-3">
                   <div className="flex items-center gap-4">
@@ -136,18 +150,18 @@ export default function StudentDashboard() {
         </div>
 
         {/* Recent Requests */}
-        <div className="glass-card p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="glass-card p-6 flex flex-col">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-[var(--border)]/50">
             <h2 className="font-heading font-semibold text-lg">Recent Requests</h2>
             <Link href="/student/requests" className="text-xs font-semibold text-indigo-500 hover:underline">
               View all →
             </Link>
           </div>
           {requests.length === 0
-            ? <p className="text-[var(--muted)] text-sm">No requests submitted yet.</p>
+            ? <p className="text-[var(--muted)] text-sm py-4">No requests submitted yet.</p>
             : (
-              <div className="space-y-3">
-                {requests.slice(0, 5).map((r: any) => (
+              <div className="max-h-[380px] overflow-y-auto custom-scrollbar pr-2 -mr-1 space-y-3">
+                {requests.map((r: any) => (
                   <div key={r.id} className="p-3.5 rounded-xl bg-[var(--bg)] border border-[var(--border)]">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">

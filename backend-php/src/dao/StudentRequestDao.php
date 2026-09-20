@@ -29,7 +29,7 @@ class StudentRequestDao
                     asn.deadline         AS assignment_deadline,
                     COALESCE(
                         (SELECT ap.progress_percent FROM assignment_progress ap WHERE ap.assignment_id = COALESCE(sr.assignment_id, asn.id) ORDER BY ap.id DESC LIMIT 1),
-                        IF(asn.status = 'completed', 100, 0)
+                        IF(asn.status = \'completed\', 100, 0)
                     ) AS progress_percent
              FROM student_requests sr
              JOIN  users us       ON us.id = sr.student_id
