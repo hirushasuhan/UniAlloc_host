@@ -31,7 +31,10 @@ export default function AdminFacultiesPage() {
   // showing someone who isn't actually a valid choice.
   const availableDeans = (currentFacultyId: number | null) =>
     users.filter(u => u.role_name === 'dean' && (!u.faculty_id || u.faculty_id === currentFacultyId))
-  const heads = users.filter(u => u.role_name === 'department_head')
+  // Same idea for department heads — a head already leading another
+  // department shouldn't be offered when creating a new one.
+  const availableHeads = (currentDeptId: number | null) =>
+    users.filter(u => u.role_name === 'department_head' && (!u.department_id || u.department_id === currentDeptId))
 
   async function createFaculty(e: FormEvent) {
     e.preventDefault(); setSaving(true); setMsg(null)
@@ -209,7 +212,7 @@ export default function AdminFacultiesPage() {
                 <label className="block text-sm font-medium mb-1">Assign Department Head</label>
                 <select value={deptForm.head_id} onChange={e=>setDeptForm(f=>({...f,head_id:e.target.value}))} className="input">
                   <option value="">— None —</option>
-                  {heads.map((h:any) => <option key={h.id} value={h.id}>{h.position ? `${h.position}. ` : ''}{h.full_name}</option>)}
+                  {availableHeads(null).map((h:any) => <option key={h.id} value={h.id}>{h.position ? `${h.position}. ` : ''}{h.full_name}</option>)}
                 </select>
               </div>
               <button type="submit" disabled={saving} className="btn-primary w-full justify-center">{saving?'Creating…':'Add Department'}</button>

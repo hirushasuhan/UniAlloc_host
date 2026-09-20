@@ -38,6 +38,34 @@ class DepartmentDao
         return $row ?: null;
     }
 
+    /**
+     * Is $headId already the (active) Head of some other department?
+     * Checks both departments.head_id and the head's own users.department_id
+     * (the two can drift — see UserDao::departmentHeadId's fallback comment —
+     * so both are treated as "already leading that department").
+     * Returns that department's {id, dept_name} if so, otherwise null.
+     * $excludeDepartmentId lets an update skip the department being edited so
+     * re-saving its own current head doesn't trip the check.
+     * A head who is inactive or On Study Leave doesn't count as "taken" —
+     * mirrors the same rule PromotionController uses for head promotions.
+     */
+    public static function headConflict(int $headId, int $excludeDepartmentId = 0): ?array
+    {
+        $stmt = Db::connection()->prepare(
+            'SELECT d.id, d.dept_name
+             FROM departments d
+             JOIN users u ON u.id = :head_id_a
+             WHERE d.id != :exclude_id
+               AND u.is_active = 1
+               AND u.operational_status != \'On Study Leave\'
+               AND (d.head_id = :head_id_b OR u.department_id = d.id)
+             LIMIT 1'
+        );
+        $stmt->execute([':head_id_a' => $headId, ':exclude_id' => $excludeDepartmentId, ':head_id_b' => $headId]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
     public static function create(string $deptName, int $facultyId, ?int $headId = null): int
     {
         $db   = Db::connection();
