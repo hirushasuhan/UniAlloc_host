@@ -47,6 +47,11 @@ database/rotate_demo_credentials.sql
 db_backup*.sql
 backup_*.sql
 
+# phpMyAdmin export of the working database. Untracked on 2026-09-20: it held
+# 13 password hashes and real account emails. The file stays on disk for local
+# use; the database is rebuilt from schema.sql + seed.sql + migration_*.sql.
+database/unialloc_db.sql
+
 # PHP / Composer (if added later)
 vendor/
 
