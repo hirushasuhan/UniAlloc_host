@@ -11,6 +11,7 @@ import {
   HiOutlineCheckCircle,
   HiOutlineClipboardDocumentList,
 } from 'react-icons/hi2'
+import ConfirmCompletionModal from '@/components/ui/ConfirmCompletionModal'
 
 export default function DeptHeadMyWorkPage() {
   const user = getUser()
@@ -20,6 +21,8 @@ export default function DeptHeadMyWorkPage() {
   const [note,        setNote]        = useState('')
   const [msg,         setMsg]         = useState<{ text: string; ok: boolean } | null>(null)
   const [activeTab,   setActiveTab]   = useState<'active' | 'completed'>('active')
+  const [confirmModal, setConfirmModal] = useState<{ id: number; title: string; pct: number; note: string } | null>(null)
+  const [savingProgress, setSavingProgress] = useState(false)
 
   // Self-allocation modal
   const [showSelf, setShowSelf] = useState(false)
@@ -45,7 +48,7 @@ export default function DeptHeadMyWorkPage() {
         description:     selfForm.description || null,
         assigned_to:     user?.id,
         priority:        selfForm.priority,
-        estimated_hours: parseFloat(selfForm.estimated_hours) || 4,
+        estimated_hours: Number(selfForm.estimated_hours),
         deadline:        selfForm.deadline || null,
       })
       setMsg({ text: 'Task allocated to yourself — it now counts towards your workload.', ok: true })
@@ -57,22 +60,29 @@ export default function DeptHeadMyWorkPage() {
     } finally { setSelfSaving(false) }
   }
 
-  async function saveProgress(id: number) {
-    if (pct === 100) {
-      const confirmed = window.confirm(
-        'Are you sure you want to mark this assignment as 100% completed?'
-      )
-      if (!confirmed) return
-    }
+  async function executeSaveProgress(id: number, savePct: number, saveNote: string) {
+    setSavingProgress(true)
     setMsg(null)
     try {
-      await api.patch(`/assignments/${id}/progress`, { progress_percent: pct, note })
+      await api.patch(`/assignments/${id}/progress`, { progress_percent: savePct, note: saveNote })
       setMsg({ text: 'Progress updated.', ok: true })
       setUpdating(null)
+      setConfirmModal(null)
       load()
     } catch (e: any) {
       setMsg({ text: e.response?.data?.message ?? 'Error', ok: false })
+    } finally {
+      setSavingProgress(false)
     }
+  }
+
+  async function saveProgress(id: number) {
+    if (pct === 100) {
+      const assignment = assignments.find(a => a.id === id)
+      setConfirmModal({ id, title: assignment?.title || '', pct, note })
+      return
+    }
+    await executeSaveProgress(id, pct, note)
   }
 
   const active    = assignments.filter(a => a.status !== 'completed' && a.status !== 'cancelled')
@@ -246,6 +256,18 @@ export default function DeptHeadMyWorkPage() {
           </div>
         </div>
       )}
+
+      <ConfirmCompletionModal
+        isOpen={!!confirmModal}
+        taskTitle={confirmModal?.title}
+        loading={savingProgress}
+        onConfirm={() => {
+          if (confirmModal) {
+            executeSaveProgress(confirmModal.id, confirmModal.pct, confirmModal.note)
+          }
+        }}
+        onCancel={() => setConfirmModal(null)}
+      />
     </DashboardLayout>
   )
 }

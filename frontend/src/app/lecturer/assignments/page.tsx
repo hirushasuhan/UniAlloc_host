@@ -4,6 +4,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import DeadlineAlerts from '@/components/ui/DeadlineAlerts'
 import { api } from '@/lib/api'
 import { HiOutlineBriefcase, HiOutlineCheckCircle, HiOutlineClipboardDocumentList, HiOutlineXMark } from 'react-icons/hi2'
+import ConfirmCompletionModal from '@/components/ui/ConfirmCompletionModal'
 
 const PRIORITY_COLOR: Record<string,string> = {
   urgent:'bg-red-100 text-red-700', high:'bg-orange-100 text-orange-700',
@@ -32,22 +33,34 @@ export default function LecturerAssignmentsPage() {
   const [note,        setNote]        = useState('')
   const [msg,         setMsg]         = useState<{text:string;ok:boolean}|null>(null)
   const [activeTab,   setActiveTab]   = useState<'active' | 'completed'>('active')
+  const [confirmModal, setConfirmModal] = useState<{ id: number; title: string; pct: number; note: string } | null>(null)
+  const [savingProgress, setSavingProgress] = useState(false)
 
   const load = () => api.get('/assignments').then(r => setAssignments(r.data.data ?? []))
   useEffect(() => { load() }, [])
 
+  async function executeSaveProgress(id: number, savePct: number, saveNote: string) {
+    setSavingProgress(true)
+    try {
+      await api.patch(`/assignments/${id}/progress`, { progress_percent: savePct, note: saveNote })
+      setMsg({ text: 'Progress updated.', ok: true })
+      setUpdating(null)
+      setConfirmModal(null)
+      load()
+    } catch(e:any) {
+      setMsg({ text: e.response?.data?.message ?? 'Error', ok: false })
+    } finally {
+      setSavingProgress(false)
+    }
+  }
+
   async function saveProgress(id: number) {
     if (pct === 100) {
-      const confirmed = window.confirm(
-        'Are you sure you want to mark this assignment as 100% completed?'
-      )
-      if (!confirmed) return
+      const assignment = assignments.find(a => a.id === id)
+      setConfirmModal({ id, title: assignment?.title || '', pct, note })
+      return
     }
-    try {
-      await api.patch(`/assignments/${id}/progress`, { progress_percent: pct, note })
-      setMsg({ text: 'Progress updated.', ok: true })
-      setUpdating(null); load()
-    } catch(e:any) { setMsg({ text: e.response?.data?.message ?? 'Error', ok: false }) }
+    await executeSaveProgress(id, pct, note)
   }
 
   const active    = assignments.filter(a => a.status !== 'completed' && a.status !== 'cancelled')
@@ -174,6 +187,18 @@ export default function LecturerAssignmentsPage() {
           )}
         </>
       )}
+
+      <ConfirmCompletionModal
+        isOpen={!!confirmModal}
+        taskTitle={confirmModal?.title}
+        loading={savingProgress}
+        onConfirm={() => {
+          if (confirmModal) {
+            executeSaveProgress(confirmModal.id, confirmModal.pct, confirmModal.note)
+          }
+        }}
+        onCancel={() => setConfirmModal(null)}
+      />
     </DashboardLayout>
   )
 }

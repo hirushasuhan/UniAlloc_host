@@ -5,6 +5,7 @@ import { api } from '@/lib/api'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { getUser } from '@/lib/auth'
 import DashboardBanner from '@/components/ui/DashboardBanner'
+import ConfirmCompletionModal from '@/components/ui/ConfirmCompletionModal'
 
 const ASSIGNMENT_PALETTE = [
   '#6366f1', // Indigo
@@ -23,6 +24,8 @@ export default function LecturerDashboard() {
   const [capacity,    setCapacity]    = useState<any>(null)
   const [updating,    setUpdating]    = useState<number | null>(null)
   const [progress,    setProgress]    = useState<Record<number,{pct:number,note:string}>>({})
+  const [confirmModal, setConfirmModal] = useState<{ id: number; title: string; pct: number; note: string } | null>(null)
+  const [savingProgress, setSavingProgress] = useState(false)
 
   const user = getUser()
 
@@ -31,18 +34,27 @@ export default function LecturerDashboard() {
     if (user) api.get(`/capacity/${user.id}`).then(r => setCapacity(r.data.data?.capacity))
   }, [])
 
+  async function executeProgressUpdate(id: number, pct: number, note: string) {
+    setSavingProgress(true)
+    try {
+      await api.patch(`/assignments/${id}/progress`, { progress_percent: pct, note })
+      setUpdating(null)
+      setConfirmModal(null)
+      api.get('/assignments').then(r => setAssignments(r.data.data ?? []))
+      if (user) api.get(`/capacity/${user.id}`).then(r => setCapacity(r.data.data?.capacity))
+    } finally {
+      setSavingProgress(false)
+    }
+  }
+
   async function updateProgress(id: number) {
     const p = progress[id] ?? { pct: 0, note: '' }
     if (p.pct === 100) {
-      const confirmed = window.confirm(
-        'Are you sure you want to mark this assignment as 100% completed?'
-      )
-      if (!confirmed) return
+      const assignment = assignments.find(a => a.id === id)
+      setConfirmModal({ id, title: assignment?.title || '', pct: p.pct, note: p.note })
+      return
     }
-    await api.patch(`/assignments/${id}/progress`, { progress_percent: p.pct, note: p.note })
-    setUpdating(null)
-    api.get('/assignments').then(r => setAssignments(r.data.data ?? []))
-    if (user) api.get(`/capacity/${user.id}`).then(r => setCapacity(r.data.data?.capacity))
+    await executeProgressUpdate(id, p.pct, p.note)
   }
 
   // Active assignments that contribute to workload capacity
@@ -353,6 +365,18 @@ export default function LecturerDashboard() {
           )}
         </div>
       </div>
+
+      <ConfirmCompletionModal
+        isOpen={!!confirmModal}
+        taskTitle={confirmModal?.title}
+        loading={savingProgress}
+        onConfirm={() => {
+          if (confirmModal) {
+            executeProgressUpdate(confirmModal.id, confirmModal.pct, confirmModal.note)
+          }
+        }}
+        onCancel={() => setConfirmModal(null)}
+      />
     </DashboardLayout>
   )
 }
