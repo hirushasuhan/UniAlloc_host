@@ -34,7 +34,7 @@ class AuthController
         $db   = Db::connection();
         $stmt = $db->prepare(
             'SELECT u.id, u.full_name, u.title, u.position, u.email, u.password_hash, u.is_active, u.totp_enabled, u.token_version,
-                    u.capacity_hours, u.operational_status, u.department_id, u.enrollment_number,
+                    u.capacity_hours, u.operational_status, u.department_id, u.enrollment_number, u.contact,
                     r.role_name,
                     d.faculty_id,
                     f.faculty_name
@@ -101,6 +101,11 @@ class AuthController
                 'faculty_id'        => $facultyId ? (int)$facultyId : null,
                 'faculty_name'      => $facultyName,
                 'enrollment_number' => $user['enrollment_number'] ?? null,
+                // u.contact must be in the SELECT above — otherwise this is
+                // always null regardless of what's actually on file, and a
+                // number the student just set in Settings appears to have
+                // reverted the next time they log in (it never did; login
+                // was just never sending it back).
                 'contact'           => $user['contact'] ?? null,
                 'totp_enabled'      => (bool)$user['totp_enabled'],
             ],
