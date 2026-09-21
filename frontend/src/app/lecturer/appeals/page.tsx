@@ -28,8 +28,20 @@ export default function LecturerAppealsPage() {
     finally { setSaving(false) }
   }
 
-  const STATUS_COLOR: Record<string,string> = {
-    pending:'bg-amber-100 text-amber-700', reviewed:'bg-blue-100 text-blue-700', resolved:'bg-green-100 text-green-700'
+  const STATUS_COLOR: Record<string, string> = {
+    pending:  'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold',
+    reviewed: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20',
+    resolved: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+  }
+  const STATUS_DOT: Record<string, string> = {
+    pending:  'bg-amber-400 animate-pulse',
+    reviewed: 'bg-sky-400',
+    resolved: 'bg-emerald-500',
+  }
+  const STATUS_LABEL: Record<string, string> = {
+    pending:  'Awaiting Review',
+    reviewed: 'Reviewed',
+    resolved: 'Resolved',
   }
 
   return (
@@ -56,7 +68,10 @@ export default function LecturerAppealsPage() {
                 <p className="font-semibold">{a.assignment_title ? `Re: ${a.assignment_title}` : 'General Workload Appeal'}</p>
                 <p className="text-xs text-[var(--muted)] mt-0.5">{new Date(a.created_at).toLocaleDateString()}</p>
               </div>
-              <span className={`badge flex-shrink-0 ${STATUS_COLOR[a.status]}`}>{a.status}</span>
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap shrink-0 ${STATUS_COLOR[a.status] || 'bg-zinc-500/10 text-zinc-400'}`}>
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[a.status] || 'bg-zinc-400'}`} />
+                {STATUS_LABEL[a.status] || a.status}
+              </span>
             </div>
             <p className="text-sm text-[var(--muted)]">{a.reason}</p>
             {a.review_note && (

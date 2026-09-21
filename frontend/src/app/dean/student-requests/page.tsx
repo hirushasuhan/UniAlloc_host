@@ -71,12 +71,30 @@ export default function DeanStudentRequestsPage() {
 
   // Two-step chain: the Dean only acts once the student's own department head
   // has endorsed (approval_step === 'pending_final').
-  const stageLabel = (r: any): { text: string; cls: string } => {
-    if (r.approval_step === 'approved' || r.status === 'assigned') return { text: 'Approved', cls: 'bg-green-100 text-green-700' }
-    if (r.approval_step === 'rejected' || r.status === 'rejected') return { text: 'Rejected', cls: 'bg-red-100 text-red-700' }
-    if (r.approval_step === 'pending_home_head') return { text: 'Awaiting dept endorsement', cls: 'bg-slate-100 text-slate-600' }
-    return { text: 'Awaiting your approval', cls: 'bg-amber-100 text-amber-700' }
+  const stageLabel = (r: any): { text: string; cls: string; dot: string } => {
+    if (r.approval_step === 'approved' || r.status === 'assigned') {
+      return { text: 'Approved & Assigned', cls: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20', dot: 'bg-emerald-500' }
+    }
+    if (r.approval_step === 'rejected' || r.status === 'rejected') {
+      return { text: 'Rejected', cls: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20', dot: 'bg-rose-500' }
+    }
+    if (r.approval_step === 'pending_home_head') {
+      return { text: 'Awaiting Dept Endorsement', cls: 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20', dot: 'bg-zinc-400' }
+    }
+    return { text: 'Awaiting Your Approval', cls: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold', dot: 'bg-amber-400 animate-pulse' }
   }
+
+  const canAct = (r: any) => r.approval_step === 'pending_final' && r.status !== 'assigned' && r.status !== 'rejected'
+
+  const sortedRequests = [...requests].sort((a, b) => {
+    const aAction = canAct(a) ? 1 : 0
+    const bAction = canAct(b) ? 1 : 0
+    if (aAction !== bAction) return bAction - aAction
+    const aDone = (a.approval_step === 'approved' || a.approval_step === 'rejected' || a.status === 'assigned' || a.status === 'rejected') ? 1 : 0
+    const bDone = (b.approval_step === 'approved' || b.approval_step === 'rejected' || b.status === 'assigned' || b.status === 'rejected') ? 1 : 0
+    if (aDone !== bDone) return aDone - bDone
+    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+  })
 
   return (
     <DashboardLayout requiredRole="dean">
@@ -93,29 +111,57 @@ export default function DeanStudentRequestsPage() {
         <table className="w-full text-sm">
           <thead><tr className="border-b border-[var(--border)]">
             {['Student','Title','Department','Description','Stage','Supervisor','Action'].map(h=>(
-              <th key={h} className="text-left py-3 px-4 text-[var(--muted)] font-medium">{h}</th>
+              <th key={h} className="text-left py-3 px-4 text-[var(--muted)] font-medium whitespace-nowrap">{h}</th>
             ))}
           </tr></thead>
           <tbody>
-            {requests.map((r:any) => (
-              <tr key={r.id} className="border-b border-[var(--border)]/50 hover:bg-[var(--bg)]/50">
-                <td className="py-3 px-4 font-medium">{r.student_name}</td>
-                <td className="py-3 px-4 max-w-[180px] truncate font-medium">{r.title}</td>
-                <td className="py-3 px-4 text-[var(--muted)]">{r.dept_name ?? 'Faculty-wide'}</td>
-                <td className="py-3 px-4 text-[var(--muted)] max-w-[200px] truncate">{r.description ?? '—'}</td>
-                <td className="py-3 px-4">{(() => { const st = stageLabel(r); return <span className={`badge ${st.cls}`}>{st.text}</span> })()}</td>
-                <td className="py-3 px-4 text-[var(--muted)]">{r.assigned_to_name ?? '—'}</td>
-                <td className="py-3 px-4">
-                  {r.approval_step === 'pending_final' && (
-                    <button onClick={() => openReview(r)}
-                      className="text-xs text-indigo-500 hover:underline font-medium">
-                      Review
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {requests.length === 0 && (
+            {sortedRequests.map((r:any) => {
+              const st = stageLabel(r)
+              const actionNeeded = canAct(r)
+              return (
+                <tr
+                  key={r.id}
+                  className={`border-b border-[var(--border)]/50 transition-colors ${
+                    actionNeeded
+                      ? 'bg-amber-500/[0.04] dark:bg-amber-500/[0.06] hover:bg-amber-500/[0.08]'
+                      : 'hover:bg-[var(--bg)]/50'
+                  }`}
+                >
+                  <td className="py-3 px-4 font-medium whitespace-nowrap">{r.student_name}</td>
+                  <td className="py-3 px-4 max-w-[180px] truncate font-medium">{r.title}</td>
+                  <td className="py-3 px-4 text-[var(--muted)] whitespace-nowrap">{r.dept_name ?? 'Faculty-wide'}</td>
+                  <td className="py-3 px-4 text-[var(--muted)] max-w-[200px] truncate">{r.description ?? '—'}</td>
+                  <td className="py-3 px-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap ${st.cls}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${st.dot}`} />
+                      {st.text}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-[var(--muted)] whitespace-nowrap">{r.assigned_to_name ?? '—'}</td>
+                  <td className="py-3 px-4 whitespace-nowrap">
+                    {actionNeeded ? (
+                      <button
+                        onClick={() => openReview(r)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-500/20 active:scale-[0.98] transition-all"
+                      >
+                        Review & Assign
+                      </button>
+                    ) : (
+                      <span className="text-xs text-[var(--muted)] font-medium">
+                        {r.approval_step === 'approved' || r.status === 'assigned' ? (
+                          <span className="text-emerald-600 dark:text-emerald-400">✓ Assigned</span>
+                        ) : r.approval_step === 'rejected' || r.status === 'rejected' ? (
+                          <span className="text-rose-600 dark:text-rose-400">✕ Rejected</span>
+                        ) : (
+                          <span>In Review</span>
+                        )}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
+            {sortedRequests.length === 0 && (
               <tr><td colSpan={7} className="py-8 text-center text-[var(--muted)]">No student requests.</td></tr>
             )}
           </tbody>

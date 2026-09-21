@@ -18,6 +18,8 @@ export default function DeptHeadStudentRequestsPage() {
   const [estHours, setEstHours] = useState('4')
   const [deadline, setDeadline] = useState('')
   const [msg,      setMsg]      = useState<{text:string;ok:boolean}|null>(null)
+  const [tabFilter, setTabFilter] = useState<'all' | 'action_required' | 'resolved'>('all')
+  const [search,    setSearch]    = useState('')
 
   const myDept    = getUser()?.dept_id ?? null
 
@@ -122,17 +124,106 @@ export default function DeptHeadStudentRequestsPage() {
   }
 
   // Human-readable stage for this head's perspective
-  const stageLabel = (r: any): { text: string; cls: string } => {
-    if (r.approval_step === 'approved')  return { text: 'Approved',  cls: 'bg-green-100 text-green-700' }
-    if (r.approval_step === 'rejected')  return { text: 'Rejected',  cls: 'bg-red-100 text-red-700' }
-    if (isOwnDeptDirect(r))              return { text: 'Awaiting your approval', cls: 'bg-amber-100 text-amber-700' }
-    if (isHomeStage(r))                  return { text: 'Awaiting your endorsement', cls: 'bg-amber-100 text-amber-700' }
-    if (r.approval_step === 'pending_home_head') return { text: 'Awaiting dept endorsement', cls: 'bg-slate-100 text-slate-600' }
-    if (isFinalStage(r))                 return { text: 'Awaiting your final approval', cls: 'bg-indigo-100 text-indigo-700' }
-    return { text: 'Awaiting final approval', cls: 'bg-slate-100 text-slate-600' }
+  const stageLabel = (r: any): { text: string; cls: string; dot: string } => {
+    if (r.approval_step === 'approved' || r.status === 'assigned') {
+      return {
+        text: 'Approved & Assigned',
+        cls: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+        dot: 'bg-emerald-500'
+      }
+    }
+    if (r.approval_step === 'rejected' || r.status === 'rejected') {
+      return {
+        text: 'Rejected',
+        cls: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20',
+        dot: 'bg-rose-500'
+      }
+    }
+    if (isOwnDeptDirect(r)) {
+      return {
+        text: 'Awaiting Your Approval',
+        cls: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold',
+        dot: 'bg-amber-400 animate-pulse'
+      }
+    }
+    if (isHomeStage(r)) {
+      return {
+        text: 'Awaiting Your Endorsement',
+        cls: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold',
+        dot: 'bg-amber-400 animate-pulse'
+      }
+    }
+    if (isFinalStage(r)) {
+      return {
+        text: 'Awaiting Your Final Approval',
+        cls: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 font-semibold',
+        dot: 'bg-indigo-400 animate-pulse'
+      }
+    }
+    if (r.home_head_approved_by) {
+      return {
+        text: 'Endorsed (Awaiting Dean)',
+        cls: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20',
+        dot: 'bg-sky-400'
+      }
+    }
+    if (r.approval_step === 'pending_home_head') {
+      return {
+        text: 'Awaiting Dept Endorsement',
+        cls: 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20',
+        dot: 'bg-zinc-400'
+      }
+    }
+    return {
+      text: 'Awaiting Final Approval',
+      cls: 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20',
+      dot: 'bg-zinc-400'
+    }
   }
 
-  const canAct = (r: any) => isHomeStage(r) || isFinalStage(r)
+  const canAct = (r: any) =>
+    (isHomeStage(r) || isFinalStage(r)) &&
+    r.approval_step !== 'approved' &&
+    r.approval_step !== 'rejected' &&
+    r.status !== 'assigned' &&
+    r.status !== 'rejected'
+
+  const actionRequiredCount = requests.filter(canAct).length
+  const resolvedCount = requests.length - actionRequiredCount
+
+  // Filter requests
+  const filtered = requests.filter(r => {
+    if (tabFilter === 'action_required' && !canAct(r)) return false
+    if (tabFilter === 'resolved' && canAct(r)) return false
+    if (search) {
+      const q = search.toLowerCase()
+      return (
+        r.student_name?.toLowerCase().includes(q) ||
+        r.title?.toLowerCase().includes(q) ||
+        r.description?.toLowerCase().includes(q) ||
+        r.assigned_to_name?.toLowerCase().includes(q)
+      )
+    }
+    return true
+  })
+
+  // Sort requests: Action required at the top, action taken / completed below
+  const sortedRequests = [...filtered].sort((a, b) => {
+    const aAction = canAct(a) ? 1 : 0
+    const bAction = canAct(b) ? 1 : 0
+    if (aAction !== bAction) {
+      return bAction - aAction // 1 (action needed) comes before 0 (action taken)
+    }
+    const aDone = (a.approval_step === 'approved' || a.approval_step === 'rejected' || a.status === 'assigned' || a.status === 'rejected') ? 1 : 0
+    const bDone = (b.approval_step === 'approved' || b.approval_step === 'rejected' || b.status === 'assigned' || b.status === 'rejected') ? 1 : 0
+    if (aDone !== bDone) {
+      return aDone - bDone
+    }
+    const dateA = new Date(a.created_at || 0).getTime()
+    const dateB = new Date(b.created_at || 0).getTime()
+    if (dateB !== dateA) return dateB - dateA
+    return (b.id ?? 0) - (a.id ?? 0)
+  })
 
   return (
     <DashboardLayout requiredRole="department_head">
@@ -147,36 +238,120 @@ export default function DeptHeadStudentRequestsPage() {
         </div>
       )}
 
+      {/* Filter Tabs & Search */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div className="flex items-center gap-1.5 bg-[var(--card)] p-1 rounded-xl border border-[var(--border)]">
+          <button
+            onClick={() => setTabFilter('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              tabFilter === 'all'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-[var(--muted)] hover:text-[var(--text)]'
+            }`}
+          >
+            All Requests ({requests.length})
+          </button>
+          <button
+            onClick={() => setTabFilter('action_required')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              tabFilter === 'action_required'
+                ? 'bg-amber-600 text-white shadow-sm'
+                : 'text-[var(--muted)] hover:text-[var(--text)]'
+            }`}
+          >
+            <span>Action Required</span>
+            {actionRequiredCount > 0 && (
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                tabFilter === 'action_required' ? 'bg-white text-amber-700' : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+              }`}>
+                {actionRequiredCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setTabFilter('resolved')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              tabFilter === 'resolved'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-[var(--muted)] hover:text-[var(--text)]'
+            }`}
+          >
+            Action Taken ({resolvedCount})
+          </button>
+        </div>
+
+        {requests.length > 3 && (
+          <div className="relative flex-1 max-w-xs">
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="input text-xs py-1.5 pl-3 w-full"
+              placeholder="Search student or title…"
+            />
+          </div>
+        )}
+      </div>
+
       <div className="glass-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead><tr className="border-b border-[var(--border)]">
-            {['Student','Title','Description','Stage','Supervisor','Action'].map(h=>(
-              <th key={h} className="text-left py-3 px-4 text-[var(--muted)] font-medium">{h}</th>
+            {['Student','Title','Description','Stage','Supervisor','Date','Action'].map(h=>(
+              <th key={h} className="text-left py-3 px-4 text-[var(--muted)] font-medium whitespace-nowrap">{h}</th>
             ))}
           </tr></thead>
           <tbody>
-            {requests.map((r:any) => {
+            {sortedRequests.map((r:any) => {
               const st = stageLabel(r)
+              const actionNeeded = canAct(r)
               return (
-                <tr key={r.id} className="border-b border-[var(--border)]/50 hover:bg-[var(--bg)]/50">
-                  <td className="py-3 px-4 font-medium">{r.student_name}</td>
+                <tr
+                  key={r.id}
+                  className={`border-b border-[var(--border)]/50 transition-colors ${
+                    actionNeeded
+                      ? 'bg-amber-500/[0.04] dark:bg-amber-500/[0.06] hover:bg-amber-500/[0.08]'
+                      : 'hover:bg-[var(--bg)]/50'
+                  }`}
+                >
+                  <td className="py-3 px-4 font-medium whitespace-nowrap">{r.student_name}</td>
                   <td className="py-3 px-4 max-w-[180px] truncate font-medium">{r.title}</td>
                   <td className="py-3 px-4 text-[var(--muted)] max-w-[200px] truncate">{r.description ?? '—'}</td>
-                  <td className="py-3 px-4"><span className={`badge ${st.cls}`}>{st.text}</span></td>
-                  <td className="py-3 px-4 text-[var(--muted)]">{r.assigned_to_name ?? '—'}</td>
-                  <td className="py-3 px-4">
-                    {canAct(r) && (
-                      <button onClick={() => openReview(r)}
-                        className="text-xs text-indigo-500 hover:underline font-medium">
-                        {isHomeStage(r) && !isOwnDeptDirect(r) ? 'Endorse' : 'Review'}
+                  <td className="py-3 px-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap ${st.cls}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${st.dot}`} />
+                      {st.text}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-[var(--muted)] whitespace-nowrap">{r.assigned_to_name ?? '—'}</td>
+                  <td className="py-3 px-4 text-xs text-[var(--muted)] whitespace-nowrap">
+                    {r.created_at ? new Date(r.created_at).toLocaleDateString() : '—'}
+                  </td>
+                  <td className="py-3 px-4 whitespace-nowrap">
+                    {actionNeeded ? (
+                      <button
+                        onClick={() => openReview(r)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-500/20 active:scale-[0.98] transition-all"
+                      >
+                        {isHomeStage(r) && !isOwnDeptDirect(r) ? 'Endorse' : 'Review & Assign'}
                       </button>
+                    ) : (
+                      <span className="text-xs text-[var(--muted)] font-medium inline-flex items-center gap-1">
+                        {r.approval_step === 'approved' || r.status === 'assigned' ? (
+                          <span className="text-emerald-600 dark:text-emerald-400">✓ Assigned</span>
+                        ) : r.approval_step === 'rejected' || r.status === 'rejected' ? (
+                          <span className="text-rose-600 dark:text-rose-400">✕ Rejected</span>
+                        ) : r.home_head_approved_by ? (
+                          <span className="text-sky-600 dark:text-sky-400">✓ Endorsed</span>
+                        ) : (
+                          <span className="text-[var(--muted)]">In Progress</span>
+                        )}
+                      </span>
                     )}
                   </td>
                 </tr>
               )
             })}
-            {requests.length === 0 && (
-              <tr><td colSpan={6} className="py-8 text-center text-[var(--muted)]">No student requests for your department.</td></tr>
+            {sortedRequests.length === 0 && (
+              <tr><td colSpan={7} className="py-8 text-center text-[var(--muted)]">No student requests found.</td></tr>
             )}
           </tbody>
         </table>

@@ -9,6 +9,8 @@ export default function DeptHeadAppealsPage() {
   const [selected, setSelected] = useState<any>(null)
   const [note,     setNote]     = useState('')
   const [msg,      setMsg]      = useState<{text:string;ok:boolean}|null>(null)
+  const [tabFilter, setTabFilter] = useState<'all' | 'action_required' | 'resolved'>('all')
+  const [search,    setSearch]    = useState('')
 
   // Appealed assignment + remedial action controls
   const [task,         setTask]         = useState<any>(null)
@@ -111,8 +113,56 @@ export default function DeptHeadAppealsPage() {
     } catch(e:any) { setMsg({ text: e.response?.data?.message ?? 'Error', ok: false }) }
   }
 
-  const STATUS_COLOR: Record<string,string> = {
-    pending:'bg-amber-100 text-amber-700', reviewed:'bg-blue-100 text-blue-700', resolved:'bg-green-100 text-green-700'
+  const canAct = (a: any) => a.status === 'pending'
+  const actionRequiredCount = appeals.filter(canAct).length
+  const resolvedCount = appeals.length - actionRequiredCount
+
+  const filtered = appeals.filter(a => {
+    if (tabFilter === 'action_required' && !canAct(a)) return false
+    if (tabFilter === 'resolved' && canAct(a)) return false
+    if (search) {
+      const q = search.toLowerCase()
+      return (
+        a.lecturer_name?.toLowerCase().includes(q) ||
+        a.assignment_title?.toLowerCase().includes(q) ||
+        a.reason?.toLowerCase().includes(q)
+      )
+    }
+    return true
+  })
+
+  // Sort: Action required (pending) at the top, resolved/reviewed below.
+  // Within each group: newest first.
+  const sortedAppeals = [...filtered].sort((a, b) => {
+    const aAction = canAct(a) ? 1 : 0
+    const bAction = canAct(b) ? 1 : 0
+    if (aAction !== bAction) {
+      return bAction - aAction // Action required (1) comes before resolved (0)
+    }
+    if (a.status !== b.status) {
+      if (a.status === 'reviewed') return -1
+      if (b.status === 'reviewed') return 1
+    }
+    const dateA = new Date(a.created_at || 0).getTime()
+    const dateB = new Date(b.created_at || 0).getTime()
+    if (dateB !== dateA) return dateB - dateA
+    return (b.id ?? 0) - (a.id ?? 0)
+  })
+
+  const STATUS_COLOR: Record<string, string> = {
+    pending:  'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold',
+    reviewed: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20',
+    resolved: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+  }
+  const STATUS_DOT: Record<string, string> = {
+    pending:  'bg-amber-400 animate-pulse',
+    reviewed: 'bg-sky-400',
+    resolved: 'bg-emerald-500',
+  }
+  const STATUS_LABEL: Record<string, string> = {
+    pending:  'Awaiting Review',
+    reviewed: 'Reviewed',
+    resolved: 'Resolved',
   }
 
   return (
@@ -126,30 +176,111 @@ export default function DeptHeadAppealsPage() {
         </div>
       )}
 
+      {/* Filter Tabs & Search */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div className="flex items-center gap-1.5 bg-[var(--card)] p-1 rounded-xl border border-[var(--border)]">
+          <button
+            onClick={() => setTabFilter('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              tabFilter === 'all'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-[var(--muted)] hover:text-[var(--text)]'
+            }`}
+          >
+            All Appeals ({appeals.length})
+          </button>
+          <button
+            onClick={() => setTabFilter('action_required')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              tabFilter === 'action_required'
+                ? 'bg-amber-600 text-white shadow-sm'
+                : 'text-[var(--muted)] hover:text-[var(--text)]'
+            }`}
+          >
+            <span>Action Required</span>
+            {actionRequiredCount > 0 && (
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                tabFilter === 'action_required' ? 'bg-white text-amber-700' : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+              }`}>
+                {actionRequiredCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setTabFilter('resolved')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              tabFilter === 'resolved'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-[var(--muted)] hover:text-[var(--text)]'
+            }`}
+          >
+            Action Taken ({resolvedCount})
+          </button>
+        </div>
+
+        {appeals.length > 3 && (
+          <div className="relative flex-1 max-w-xs">
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="input text-xs py-1.5 pl-3 w-full"
+              placeholder="Search lecturer, task, reason…"
+            />
+          </div>
+        )}
+      </div>
+
       <div className="glass-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead><tr className="border-b border-[var(--border)]">
             {['Lecturer','Assignment','Reason','Status','Submitted','Action'].map(h=>(
-              <th key={h} className="text-left py-3 px-4 text-[var(--muted)] font-medium">{h}</th>
+              <th key={h} className="text-left py-3 px-4 text-[var(--muted)] font-medium whitespace-nowrap">{h}</th>
             ))}
           </tr></thead>
           <tbody>
-            {appeals.map((a:any) => (
-              <tr key={a.id} className="border-b border-[var(--border)]/50 hover:bg-[var(--bg)]/50">
-                <td className="py-3 px-4 font-medium">{a.lecturer_name}</td>
-                <td className="py-3 px-4 text-[var(--muted)]">{a.assignment_title ?? '—'}</td>
-                <td className="py-3 px-4 max-w-[220px] truncate text-[var(--muted)]">{a.reason}</td>
-                <td className="py-3 px-4"><span className={`badge ${STATUS_COLOR[a.status]}`}>{a.status}</span></td>
-                <td className="py-3 px-4 text-[var(--muted)]">{new Date(a.created_at).toLocaleDateString()}</td>
-                <td className="py-3 px-4">
-                  {a.status === 'pending' && (
-                    <button onClick={() => openReview(a)}
-                      className="text-xs text-indigo-500 hover:underline">Review</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {appeals.length === 0 && (
+            {sortedAppeals.map((a:any) => {
+              const actionNeeded = canAct(a)
+              return (
+                <tr
+                  key={a.id}
+                  className={`border-b border-[var(--border)]/50 transition-colors ${
+                    actionNeeded
+                      ? 'bg-amber-500/[0.04] dark:bg-amber-500/[0.06] hover:bg-amber-500/[0.08]'
+                      : 'hover:bg-[var(--bg)]/50'
+                  }`}
+                >
+                  <td className="py-3 px-4 font-medium whitespace-nowrap">{a.lecturer_name}</td>
+                  <td className="py-3 px-4 text-[var(--muted)] whitespace-nowrap">{a.assignment_title ?? '—'}</td>
+                  <td className="py-3 px-4 max-w-[220px] truncate text-[var(--muted)]">{a.reason}</td>
+                  <td className="py-3 px-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap ${STATUS_COLOR[a.status] || 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[a.status] || 'bg-zinc-400'}`} />
+                      {STATUS_LABEL[a.status] || a.status}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-xs text-[var(--muted)] whitespace-nowrap">{new Date(a.created_at).toLocaleDateString()}</td>
+                  <td className="py-3 px-4 whitespace-nowrap">
+                    {actionNeeded ? (
+                      <button
+                        onClick={() => openReview(a)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-500/20 active:scale-[0.98] transition-all"
+                      >
+                        Review Appeal
+                      </button>
+                    ) : (
+                      <span className="text-xs text-[var(--muted)] font-medium inline-flex items-center gap-1">
+                        {a.status === 'resolved' ? (
+                          <span className="text-emerald-600 dark:text-emerald-400">✓ Resolved</span>
+                        ) : (
+                          <span className="text-sky-600 dark:text-sky-400">✓ Reviewed</span>
+                        )}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
+            {sortedAppeals.length === 0 && (
               <tr><td colSpan={6} className="py-8 text-center text-[var(--muted)]">No appeals found.</td></tr>
             )}
           </tbody>
