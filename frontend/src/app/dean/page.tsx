@@ -4,6 +4,7 @@ import Link from 'next/link'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { api } from '@/lib/api'
 import { getUser } from '@/lib/auth'
+import { validateName, sanitizeNameInput } from '@/lib/validation'
 import DashboardBanner from '@/components/ui/DashboardBanner'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
@@ -228,6 +229,13 @@ export default function DeanDashboard() {
   // Staff creation form submit
   async function handleCreateStaff(e: React.FormEvent) {
     e.preventDefault()
+
+    const nameError = validateName(newStaffForm.full_name, 'Full name')
+    if (nameError) {
+      setStaffMsg({ text: nameError, ok: false })
+      return
+    }
+
     setStaffSaving(true)
     setStaffMsg(null)
     try {
@@ -978,7 +986,7 @@ export default function DeanDashboard() {
                     type="text"
                     required
                     value={newStaffForm.full_name}
-                    onChange={e => setNewStaffForm(f => ({ ...f, full_name: e.target.value }))}
+                    onChange={e => setNewStaffForm(f => ({ ...f, full_name: sanitizeNameInput(e.target.value) }))}
                     placeholder="e.g. Samantha Peiris"
                     className="input"
                   />

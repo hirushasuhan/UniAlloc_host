@@ -3,7 +3,7 @@ import { useState, FormEvent } from 'react'
 import { api } from '@/lib/api'
 import { AuthUser, saveAuth, getToken, clearAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
-import { validateContact, normaliseContact } from '@/lib/validation'
+import { validateContact, normaliseContact, validateName, sanitizeNameInput } from '@/lib/validation'
 import { HiOutlineXMark, HiOutlineKey, HiOutlineArrowRightOnRectangle, HiOutlineDevicePhoneMobile } from 'react-icons/hi2'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 
@@ -43,6 +43,12 @@ export default function SettingsModal({ user, onClose, onChangePasswordClick, on
     e.preventDefault()
     setErr('')
     setSuccess('')
+
+    const nameError = validateName(form.full_name, 'Full name')
+    if (nameError) {
+      setErr(nameError)
+      return
+    }
 
     // Clearing the number is allowed; saving a broken one is not — otherwise
     // the rule on the request form is trivially bypassed from here.
@@ -139,7 +145,7 @@ export default function SettingsModal({ user, onClose, onChangePasswordClick, on
                 <input 
                   type="text" 
                   value={form.full_name} 
-                  onChange={e => f('full_name', e.target.value)} 
+                  onChange={e => f('full_name', sanitizeNameInput(e.target.value))} 
                   className="input disabled:opacity-50 disabled:cursor-not-allowed" 
                   required 
                   disabled={!isEditing}

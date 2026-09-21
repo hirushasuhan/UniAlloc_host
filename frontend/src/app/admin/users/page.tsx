@@ -2,7 +2,7 @@
 import { useEffect, useState, FormEvent } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { api } from '@/lib/api'
-import { validateContact, normaliseContact } from '@/lib/validation'
+import { validateContact, normaliseContact, validateName, sanitizeNameInput } from '@/lib/validation'
 import { HiOutlinePlus, HiOutlineMagnifyingGlass, HiOutlineUserPlus, HiOutlineUserMinus, HiOutlineXMark, HiOutlineKey, HiOutlineTrash } from 'react-icons/hi2'
 
 const ROLES = ['system_admin','dean','department_head','lecturer','student']
@@ -67,6 +67,12 @@ export default function AdminUsersPage() {
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault()
+
+    const nameError = validateName(form.full_name, 'Full name')
+    if (nameError) {
+      setMsg({ text: nameError, ok: false })
+      return
+    }
 
     // Optional for a staff account, but if one is typed it has to be usable.
     if (form.contact.trim() !== '') {
@@ -330,7 +336,7 @@ export default function AdminUsersPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2 md:col-span-1">
                   <label className="block text-sm font-medium mb-1">Full Name *</label>
-                  <input value={form.full_name} onChange={e=>setForm(f=>({...f,full_name:e.target.value}))} className="input" required placeholder="John Smith"/>
+                  <input value={form.full_name} onChange={e=>setForm(f=>({...f,full_name:sanitizeNameInput(e.target.value)}))} className="input" required placeholder="John Smith"/>
                 </div>
                 <div className="col-span-2 md:col-span-1 grid grid-cols-2 gap-3">
                   <div>

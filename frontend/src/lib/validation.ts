@@ -42,3 +42,33 @@ export function validateContact(value: string): string | null {
 
   return null
 }
+
+/** Strips numeric digits in real-time as the user types or pastes into name fields. */
+export function sanitizeNameInput(value: string): string {
+  return value.replace(/[0-9]/g, '')
+}
+
+/**
+ * Validates that a name does not contain numbers and consists only of valid
+ * name characters (letters, spaces, periods, hyphens, apostrophes).
+ * Returns an error string or null if valid.
+ */
+export function validateName(value: string, fieldName = 'Full name'): string | null {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return `${fieldName} is required.`
+  }
+  if (/[0-9]/.test(trimmed)) {
+    return `${fieldName} cannot contain numbers.`
+  }
+  if (trimmed.length < 2) {
+    return `${fieldName} must be at least 2 characters.`
+  }
+  if (trimmed.length > 100) {
+    return `${fieldName} cannot exceed 100 characters.`
+  }
+  if (!/^[a-zA-Z\s.'-]+$/.test(trimmed)) {
+    return `${fieldName} can only contain letters, spaces, dots, and hyphens.`
+  }
+  return null
+}

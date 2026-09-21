@@ -9,6 +9,7 @@ use App\Middleware\JwtMiddleware;
 use App\Dao\AuditLogDao;
 use App\Dao\LoginAttemptDao;
 use App\Dao\UserDao;
+use App\Helpers\NamePolicy;
 use App\Helpers\PasswordPolicy;
 
 class AuthController
@@ -130,6 +131,8 @@ class AuthController
         if (!$fullName || !$email || !$pass || !$deptId || !$enrollNo) {
             Response::error('All fields (Full Name, Email, Password, Department, Enrollment Number) are required', 422);
         }
+
+        NamePolicy::enforce($fullName, 'Full name');
 
         // Registration is public, so it gets the same throttling as login.
         $ip = LoginAttemptDao::clientIp();

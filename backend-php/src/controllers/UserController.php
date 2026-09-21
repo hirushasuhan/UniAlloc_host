@@ -5,6 +5,7 @@ use App\Dao\UserDao;
 use App\Dao\AuditLogDao;
 use App\Helpers\ContactPolicy;
 use App\Helpers\JwtHelper;
+use App\Helpers\NamePolicy;
 use App\Helpers\PasswordPolicy;
 use App\Helpers\Response;
 use App\Middleware\JwtMiddleware;
@@ -75,6 +76,8 @@ class UserController
         foreach (['full_name','email','password','role_id'] as $req) {
             if (empty($body[$req])) Response::error("Field '$req' is required", 422);
         }
+
+        NamePolicy::enforce((string)$body['full_name'], 'Full name');
 
         if (!empty($body['title']) && !in_array($body['title'], UserDao::TITLES, true)) {
             Response::error('Invalid title value', 422);
@@ -203,6 +206,10 @@ class UserController
 
         if (empty($data)) {
             Response::error('No updatable fields supplied', 422);
+        }
+
+        if (array_key_exists('full_name', $data)) {
+            NamePolicy::enforce((string)$data['full_name'], 'Full name');
         }
 
         if (array_key_exists('title', $data) && !empty($data['title']) && !in_array($data['title'], UserDao::TITLES, true)) {

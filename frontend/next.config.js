@@ -14,11 +14,11 @@ try {
 // further means moving to a nonce-based CSP via middleware.
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-  "style-src 'self' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://ajax.cloudflare.com https://static.cloudflareinsights.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob:",
-  "font-src 'self' data:",
-  `connect-src 'self' ${apiOrigin} https://backend-php.wasmer.app`,
+  "font-src 'self' data: https://fonts.gstatic.com",
+  `connect-src 'self' ${apiOrigin} https://backend-php.wasmer.app https://cloudflareinsights.com`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

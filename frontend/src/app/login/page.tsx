@@ -3,6 +3,7 @@ import { useState, useEffect, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
 import { saveAuth, roleHome } from '@/lib/auth'
+import { sanitizeNameInput, validateName } from '@/lib/validation'
 
 // Icons from react-icons
 import { HiOutlineUserGroup, HiOutlineAcademicCap, HiOutlineChevronRight, HiOutlineChevronLeft, HiOutlineExclamationCircle, HiOutlineEye, HiOutlineEyeSlash } from 'react-icons/hi2'
@@ -91,6 +92,13 @@ export default function LoginPage() {
   async function handleRegister(e: FormEvent) {
     e.preventDefault()
     setError('')
+
+    const nameError = validateName(fullName, 'Full name')
+    if (nameError) {
+      setError(nameError)
+      return
+    }
+
     setLoading(true)
     try {
       const payload = {
@@ -292,7 +300,7 @@ export default function LoginPage() {
           <input
             type="text"
             value={fullName}
-            onChange={e => setFullName(e.target.value)}
+            onChange={e => setFullName(sanitizeNameInput(e.target.value))}
             className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white
                        placeholder:text-zinc-600 outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
             placeholder="John Doe"
