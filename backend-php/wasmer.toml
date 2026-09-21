@@ -1,6 +1,6 @@
 [package]
 name = "hirushasuhan/backend"
-version = "0.1.29"
+version = "0.1.30"
 description = "UniAlloc PHP Backend API for Wasmer Edge"
 
 [dependencies]
@@ -16,4 +16,4 @@ runner = "https://webc.org/runner/wcgi"
 
 [command.annotations.wasi]
 main-args = ["-t", "/app/public", "-S", "0.0.0.0:80", "/app/public/index.php"]
-env = ["PORT=80", "APP_NAME=UniAlloc", "APP_DEBUG=false", "DB_HOST=db.fr-roub1.bengt.wasmernet.com", "DB_PORT=20184", "DB_NAME=uniAlloc_db", "DB_USER=user_35d68140", "CORS_ORIGINS=https://unialloc.vercel.app,https://unialloc.wasmer.app,http://localhost:3000"]
+env = ["PORT=80", "APP_NAME=UniAlloc", "APP_DEBUG=false", "DB_HOST=db.fr-roub1.bengt.wasmernet.com", "DB_PORT=20184", "DB_NAME=uniAlloc_db", "DB_USER=user_35d68140", "CORS_ORIGINS=https://unialloc.app,https://www.unialloc.app,https://unialloc.vercel.app,https://unialloc.wasmer.app,http://localhost:3000"]

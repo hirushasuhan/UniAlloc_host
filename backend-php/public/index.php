@@ -74,6 +74,8 @@ $isAllowedOrigin = false;
 if ($origin !== '') {
     $originHost = parse_url($origin, PHP_URL_HOST) ?? '';
     if (in_array($origin, $cfg['cors_origins'], true) ||
+        $originHost === 'unialloc.app' ||
+        str_ends_with($originHost, '.unialloc.app') ||
         str_ends_with($originHost, 'vercel.app') ||
         str_ends_with($originHost, 'wasmer.app')) {
         $isAllowedOrigin = true;
