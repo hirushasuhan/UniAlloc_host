@@ -206,11 +206,11 @@ class AssignmentController
             }
         }
 
-        // If the assignment is already cancelled, hard delete it permanently
-        if ($a['status'] === 'cancelled') {
+        // If the assignment is already cancelled or completed, hard delete it permanently
+        if (in_array($a['status'], ['cancelled', 'completed'])) {
             $ok = AssignmentDao::hardDelete($id);
             AuditLogDao::log($auth['sub'], 'delete_assignment', 'assignments', $id);
-            Response::success(['deleted' => $ok], 'Cancelled assignment deleted permanently');
+            Response::success(['deleted' => $ok], 'Assignment deleted permanently');
             return;
         }
 

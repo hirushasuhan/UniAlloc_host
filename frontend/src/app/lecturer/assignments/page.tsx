@@ -7,13 +7,31 @@ import { HiOutlineBriefcase, HiOutlineCheckCircle, HiOutlineClipboardDocumentLis
 import ConfirmCompletionModal from '@/components/ui/ConfirmCompletionModal'
 
 const PRIORITY_COLOR: Record<string,string> = {
-  urgent:'bg-red-100 text-red-700', high:'bg-orange-100 text-orange-700',
-  medium:'bg-amber-100 text-amber-700', low:'bg-slate-100 text-slate-700'
+  urgent: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20',
+  high: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
+  medium: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20',
+  low: 'bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border border-zinc-500/20'
 }
 const STATUS_COLOR: Record<string,string> = {
-  completed: 'bg-green-100 text-green-700', in_progress: 'bg-blue-100 text-blue-700',
-  pending: 'bg-amber-100 text-amber-700', cancelled: 'bg-red-100 text-red-700',
-  review_pending: 'bg-purple-100 text-purple-700'
+  completed: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+  in_progress: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20',
+  pending: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
+  cancelled: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20',
+  review_pending: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20'
+}
+const STATUS_DOT: Record<string,string> = {
+  completed: 'bg-emerald-500',
+  in_progress: 'bg-cyan-400 animate-pulse',
+  pending: 'bg-amber-400',
+  cancelled: 'bg-rose-400',
+  review_pending: 'bg-purple-400'
+}
+const STATUS_LABEL: Record<string,string> = {
+  completed: 'Completed',
+  in_progress: 'In Progress',
+  pending: 'Pending',
+  cancelled: 'Cancelled',
+  review_pending: 'Under Review'
 }
 
 const isOverdue = (deadline: string | null, status: string) => {
@@ -210,25 +228,28 @@ function AssignmentCard({ a, updating, pct, note, onOpen, onPct, onNote, onSave,
     <div className={`glass-card p-5 ${a.status === 'completed' || isCancelled ? 'opacity-75' : ''}`}>
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className={`badge text-xs ${PRIORITY_COLOR[a.priority]}`}>{a.priority}</span>
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className={`badge uppercase tracking-wider text-[10px] font-bold ${PRIORITY_COLOR[a.priority] || 'bg-zinc-500/10 text-zinc-400'}`}>{a.priority}</span>
             {a.deadline && (
-              <span className={`text-xs ${isOverdue(a.deadline, a.status) ? 'text-red-600 font-semibold' : 'text-[var(--muted)]'}`}>
-                Due: {a.deadline}
-                {isOverdue(a.deadline, a.status) && (
-                  <span className="ml-1.5 text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400">
+              isOverdue(a.deadline, a.status) ? (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-500 dark:text-rose-400 whitespace-nowrap text-xs">
+                  <span className="font-semibold tracking-tight">Due: {a.deadline}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-600 dark:text-rose-300">
                     Overdue
                   </span>
-                )}
-              </span>
+                </div>
+              ) : (
+                <span className="text-xs text-[var(--muted)] font-medium">Due: {a.deadline}</span>
+              )
             )}
           </div>
           <h3 className="font-semibold">{a.title}</h3>
           {a.description && <p className="text-sm text-[var(--muted)] mt-1">{a.description}</p>}
           <p className="text-xs text-[var(--muted)] mt-1">Assigned by: {a.assigned_by_name} · {a.estimated_hours}h estimated</p>
         </div>
-        <span className={`badge flex-shrink-0 ${STATUS_COLOR[a.status] || 'bg-slate-100 text-slate-700'}`}>
-          {a.status.replace('_',' ')}
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap shrink-0 ${STATUS_COLOR[a.status] || 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'}`}>
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[a.status] || 'bg-zinc-400'}`} />
+          {STATUS_LABEL[a.status] || a.status.replace('_',' ')}
         </span>
       </div>
 

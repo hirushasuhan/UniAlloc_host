@@ -140,7 +140,11 @@ class AssignmentDao
 
     public static function hardDelete(int $id): bool
     {
-        $stmt = Db::connection()->prepare('DELETE FROM assignments WHERE id = :id');
+        $db = Db::connection();
+        try {
+            $db->prepare('DELETE FROM assignment_progress WHERE assignment_id = :id')->execute([':id' => $id]);
+        } catch (\Throwable $e) {}
+        $stmt = $db->prepare('DELETE FROM assignments WHERE id = :id');
         $stmt->execute([':id' => $id]);
         return $stmt->rowCount() > 0;
     }
