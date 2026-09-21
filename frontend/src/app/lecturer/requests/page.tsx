@@ -12,11 +12,18 @@ const STEP_LABEL: Record<string, string> = {
   rejected:          'Rejected',
 }
 const STEP_COLOR: Record<string, string> = {
-  pending_dean:      'bg-purple-100 text-purple-700',
-  pending_dept_head: 'bg-blue-100 text-blue-700',
-  pending_assignee:  'bg-amber-100 text-amber-700',
-  approved:          'bg-green-100 text-green-700',
-  rejected:          'bg-red-100 text-red-700',
+  pending_dean:      'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20',
+  pending_dept_head: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20',
+  pending_assignee:  'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
+  approved:          'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+  rejected:          'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20',
+}
+const STEP_DOT: Record<string, string> = {
+  pending_dean:      'bg-purple-400 animate-pulse',
+  pending_dept_head: 'bg-sky-400 animate-pulse',
+  pending_assignee:  'bg-amber-400 animate-pulse',
+  approved:          'bg-emerald-500',
+  rejected:          'bg-rose-500',
 }
 
 export default function LecturerRequestsPage() {
@@ -117,7 +124,7 @@ export default function LecturerRequestsPage() {
             <thead>
               <tr className="border-b border-[var(--border)]">
                 {['Title', 'From', 'Type', 'Step / Status', 'Date'].map(h => (
-                  <th key={h} className="text-left py-3 px-4 text-[var(--muted)] font-medium">{h}</th>
+                  <th key={h} className="text-left py-3 px-4 text-[var(--muted)] font-medium whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -125,14 +132,31 @@ export default function LecturerRequestsPage() {
               {other.map((r: any) => (
                 <tr key={r.id} className="border-b border-[var(--border)]/50 hover:bg-[var(--bg)]/50">
                   <td className="py-3 px-4 font-medium">{r.title}</td>
-                  <td className="py-3 px-4 text-[var(--muted)]">{r.requester_name}</td>
-                  <td className="py-3 px-4 text-xs">{r.request_type?.replace(/_/g, '-')}</td>
-                  <td className="py-3 px-4">
-                    <span className={`badge text-xs ${STEP_COLOR[r.approval_step] ?? 'bg-slate-100 text-slate-700'}`}>
+                  <td className="py-3 px-4 text-[var(--muted)] whitespace-nowrap">{r.requester_name}</td>
+                  <td className="py-3 px-4 whitespace-nowrap">
+                    {r.request_type === 'cross_faculty' ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 shadow-sm">
+                        <span className="text-xs">🌐</span>
+                        <span>Cross-Faculty</span>
+                      </span>
+                    ) : r.request_type === 'cross_department' ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 shadow-sm">
+                        <span className="text-xs">🏛️</span>
+                        <span>Cross-Dept</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-zinc-500/10 text-zinc-400 border border-zinc-500/20">
+                        {r.request_type?.replace(/_/g, '-')}
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-3 px-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap ${STEP_COLOR[r.approval_step] ?? 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STEP_DOT[r.approval_step] ?? 'bg-zinc-400'}`} />
                       {STEP_LABEL[r.approval_step] ?? r.approval_step}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-[var(--muted)]">
+                  <td className="py-3 px-4 text-[var(--muted)] whitespace-nowrap text-xs">
                     {new Date(r.created_at).toLocaleDateString()}
                   </td>
                 </tr>

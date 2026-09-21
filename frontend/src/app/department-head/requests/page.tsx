@@ -14,11 +14,18 @@ const STEP_LABEL: Record<string, string> = {
   rejected:          'Rejected',
 }
 const STEP_COLOR: Record<string, string> = {
-  pending_dean:      'bg-purple-100 text-purple-700',
-  pending_dept_head: 'bg-amber-100 text-amber-700',
-  pending_assignee:  'bg-indigo-100 text-indigo-700',
-  approved:          'bg-green-100 text-green-700',
-  rejected:          'bg-red-100 text-red-700',
+  pending_dean:      'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20',
+  pending_dept_head: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
+  pending_assignee:  'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20',
+  approved:          'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+  rejected:          'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20',
+}
+const STEP_DOT: Record<string, string> = {
+  pending_dean:      'bg-purple-400 animate-pulse',
+  pending_dept_head: 'bg-amber-400 animate-pulse',
+  pending_assignee:  'bg-indigo-400 animate-pulse',
+  approved:          'bg-emerald-500',
+  rejected:          'bg-rose-500',
 }
 
 export default function DeptHeadRequestsPage() {
@@ -153,8 +160,9 @@ export default function DeptHeadRequestsPage() {
               <div key={r.id} className="p-5 flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="badge text-xs bg-blue-100 text-blue-700">
-                      {r.request_type?.replace(/_/g, '-')}
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+                      <span>{r.request_type === 'cross_faculty' ? '🌐' : '🏛️'}</span>
+                      <span>{r.request_type?.replace(/_/g, '-')}</span>
                     </span>
                     <span className="text-xs text-[var(--muted)]">
                       For: <strong>{r.target_user_name ?? '—'}</strong>
@@ -264,7 +272,7 @@ export default function DeptHeadRequestsPage() {
                 <thead>
                   <tr className="border-b border-[var(--border)]">
                     {['Title', 'From', 'Target', 'Type', 'Status', 'Execution Progress', 'Date'].map(h => (
-                      <th key={h} className="text-left py-3 px-4 text-[var(--muted)] font-medium">{h}</th>
+                      <th key={h} className="text-left py-3 px-4 text-[var(--muted)] font-medium whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -274,7 +282,7 @@ export default function DeptHeadRequestsPage() {
                       <td className="py-3 px-4 font-medium">
                         <TruncatedTitle title={r.title} subtitle={r.description} maxWidthClass="max-w-[180px] lg:max-w-[260px]" />
                       </td>
-                      <td className="py-3 px-4 text-[var(--muted)]">
+                      <td className="py-3 px-4 text-[var(--muted)] whitespace-nowrap">
                         {r.requester_id === user?.id ? (
                           <span className="font-semibold text-teal-600 dark:text-teal-400">You</span>
                         ) : (
@@ -287,27 +295,32 @@ export default function DeptHeadRequestsPage() {
                             {r.target_user_id === user?.id ? 'You' : (r.target_user_name ?? r.target_dept_name ?? '—')}
                           </span>
                           {Number(r.target_dept_id) === Number(user?.dept_id) && Number(r.requester_id) !== Number(user?.id) && (
-                            <span className="inline-block text-[10px] ml-1.5 px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-600 dark:text-teal-400 font-semibold">
+                            <span className="inline-block text-[10px] ml-1.5 px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-600 dark:text-teal-400 font-semibold whitespace-nowrap">
                               Your Dept Staff
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         {r.request_type === 'cross_department' ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">
-                            🏛️ Cross-Dept
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 shadow-sm">
+                            <span className="text-xs">🏛️</span>
+                            <span>Cross-Dept</span>
                           </span>
                         ) : r.request_type === 'cross_faculty' ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
-                            🌐 Cross-Faculty
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 shadow-sm">
+                            <span className="text-xs">🌐</span>
+                            <span>Cross-Faculty</span>
                           </span>
                         ) : (
-                          <span className="text-xs">{r.request_type?.replace(/_/g, '-')}</span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-zinc-500/10 text-zinc-400 border border-zinc-500/20">
+                            {r.request_type?.replace(/_/g, '-')}
+                          </span>
                         )}
                       </td>
-                      <td className="py-3 px-4">
-                        <span className={`badge text-xs ${STEP_COLOR[r.approval_step] ?? 'bg-slate-100 text-slate-700'}`}>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap ${STEP_COLOR[r.approval_step] ?? 'bg-zinc-500/10 text-zinc-400 border border-zinc-500/20'}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STEP_DOT[r.approval_step] ?? 'bg-zinc-400'}`} />
                           {STEP_LABEL[r.approval_step] ?? r.approval_step}
                         </span>
                       </td>
@@ -337,7 +350,7 @@ export default function DeptHeadRequestsPage() {
                           <span className="text-xs text-[var(--muted)] italic">Awaiting approval</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-[var(--muted)]">
+                      <td className="py-3 px-4 text-[var(--muted)] whitespace-nowrap text-xs">
                         {new Date(r.created_at).toLocaleDateString()}
                       </td>
                     </tr>
