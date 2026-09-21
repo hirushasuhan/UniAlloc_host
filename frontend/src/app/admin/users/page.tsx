@@ -3,7 +3,7 @@ import { useEffect, useState, FormEvent } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { api } from '@/lib/api'
 import { validateContact, normaliseContact, validateName, sanitizeNameInput } from '@/lib/validation'
-import { HiOutlinePlus, HiOutlineMagnifyingGlass, HiOutlineUserPlus, HiOutlineUserMinus, HiOutlineXMark, HiOutlineKey, HiOutlineTrash } from 'react-icons/hi2'
+import { HiOutlinePlus, HiOutlineMagnifyingGlass, HiOutlineUserPlus, HiOutlineUserMinus, HiOutlineXMark, HiOutlineKey, HiOutlineTrash, HiOutlineClipboardDocument, HiOutlineCheck, HiOutlineExclamationTriangle } from 'react-icons/hi2'
 
 const ROLES = ['system_admin','dean','department_head','lecturer','student']
 const TITLES = ['Prof', 'Dr', 'Mr', 'Mrs', 'Ms', 'Miss', 'Rev', 'Thero']
@@ -28,6 +28,12 @@ export default function AdminUsersPage() {
   const [showModal, setShowModal]   = useState(false)
   const [saving,  setSaving]  = useState(false)
   const [msg,     setMsg]     = useState<{text:string;ok:boolean}|null>(null)
+
+  // Password reset modal state
+  const [resetTarget, setResetTarget] = useState<any | null>(null)
+  const [resetLoading, setResetLoading] = useState(false)
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   // Faculty select state inside creation modal
   const [selectedFaculty, setSelectedFaculty] = useState<string>('')
@@ -154,14 +160,32 @@ export default function AdminUsersPage() {
     }
   }
 
-  async function resetPassword(id: number) {
-    if (!confirm('Are you sure you want to reset this user\'s password? They will also need to re-enroll their authenticator app on next login.')) return;
+  async function handleConfirmReset() {
+    if (!resetTarget) return
+    setResetLoading(true)
     try {
-      const res = await api.post(`/users/${id}/reset-password`, {})
-      alert(`Success! The new password for this user is: ${res.data.data.new_password}\n\nThey will be asked to set up their authenticator app again the next time they log in.`)
+      const res = await api.post(`/users/${resetTarget.id}/reset-password`, {})
+      setGeneratedPassword(res.data.data.new_password)
     } catch(err:any) {
-      alert(err.response?.data?.message ?? 'Failed to reset password.')
+      setMsg({ text: err.response?.data?.message ?? 'Failed to reset password.', ok: false })
+      setResetTarget(null)
+    } finally {
+      setResetLoading(false)
     }
+  }
+
+  function handleCopyPassword() {
+    if (!generatedPassword) return
+    navigator.clipboard?.writeText(generatedPassword).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  function closeResetModal() {
+    setResetTarget(null)
+    setGeneratedPassword(null)
+    setCopied(false)
   }
 
   const roleColor: Record<string,string> = {
@@ -298,7 +322,7 @@ export default function AdminUsersPage() {
                 {/* Actions - Sticky Right Column */}
                 <td className="sticky right-0 z-10 bg-[var(--card-solid)] dark:bg-[#161a26] group-hover:bg-[var(--card-solid)] dark:group-hover:bg-[#161a26] py-2.5 px-4 shadow-[-6px_0_12px_rgba(0,0,0,0.06)] border-l border-[var(--border)]/40 whitespace-nowrap">
                   <div className="flex items-center justify-end gap-1.5">
-                    <button onClick={() => resetPassword(u.id)} title="Reset Password"
+                    <button onClick={() => { setResetTarget(u); setGeneratedPassword(null); setCopied(false); }} title="Reset Password"
                       className="inline-flex items-center justify-center w-7 h-7 bg-white/5 hover:bg-cyan-500/20 text-cyan-500 rounded-lg transition-colors border border-white/5 hover:border-cyan-500/30 active:scale-95">
                       <HiOutlineKey size={14} />
                     </button>
@@ -451,6 +475,129 @@ export default function AdminUsersPage() {
                 {saving ? 'Creating…' : 'Create User'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Password Reset Modal */}
+      {resetTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="glass-card w-full max-w-md p-6 relative border border-white/10 shadow-2xl rounded-2xl bg-[var(--card-solid)]">
+            <button
+              onClick={closeResetModal}
+              className="absolute top-4 right-4 text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+            >
+              <HiOutlineXMark size={20} />
+            </button>
+
+            {!generatedPassword ? (
+              /* Step 1: Confirmation */
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
+                    <HiOutlineKey size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-semibold text-lg text-[var(--text)]">Reset Password</h3>
+                    <p className="text-xs text-[var(--muted)]">Generate a new random password</p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-[var(--border)] mb-4 space-y-1">
+                  <div className="text-sm font-medium text-[var(--text)] flex items-center gap-2">
+                    <span>{resetTarget.full_name}</span>
+                    {resetTarget.position && (
+                      <span className="text-xs text-[var(--muted)]">({resetTarget.position})</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-[var(--muted)]">{resetTarget.email}</div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 dark:text-amber-400 text-xs flex items-start gap-2.5 mb-6 leading-relaxed">
+                  <HiOutlineExclamationTriangle size={18} className="shrink-0 mt-0.5" />
+                  <span>
+                    Are you sure you want to reset this user's password? A new random password will be generated, and the user will need to re-enroll their authenticator app (2FA) on their next login.
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={closeResetModal}
+                    disabled={resetLoading}
+                    className="px-4 py-2 text-sm rounded-xl border border-[var(--border)] text-[var(--muted)] hover:text-[var(--text)] hover:bg-white/5 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmReset}
+                    disabled={resetLoading}
+                    className="px-4 py-2 text-sm font-medium rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {resetLoading ? 'Resetting…' : 'Confirm Reset'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Step 2: New Password Display & Copy */
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shrink-0">
+                    <HiOutlineCheck size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-semibold text-lg text-[var(--text)]">Password Reset Complete</h3>
+                    <p className="text-xs text-[var(--muted)]">Temporary password generated</p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-[var(--muted)] mb-2">
+                  The password for <strong className="text-[var(--text)] font-semibold">{resetTarget.full_name}</strong> has been updated. Copy and share it securely:
+                </p>
+
+                <div className="relative flex items-center justify-between p-3.5 bg-black/20 dark:bg-black/50 border border-cyan-500/30 rounded-xl my-3">
+                  <span className="font-mono text-base font-semibold tracking-wider text-cyan-500 dark:text-cyan-400 select-all pr-2 break-all">
+                    {generatedPassword}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyPassword}
+                    className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all active:scale-95 ${
+                      copied
+                        ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-cyan-500/10 hover:bg-cyan-500/20 border-cyan-500/30 text-cyan-600 dark:text-cyan-400'
+                    }`}
+                  >
+                    {copied ? (
+                      <>
+                        <HiOutlineCheck size={15} />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <HiOutlineClipboardDocument size={15} />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs mb-5 leading-relaxed">
+                  Notice: The user will be required to re-enroll their authenticator app (2FA) upon next sign-in.
+                </div>
+
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={closeResetModal}
+                    className="px-5 py-2 text-sm font-medium rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white transition-all shadow-md active:scale-95"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
