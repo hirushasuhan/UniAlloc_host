@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>UniAlloc – Use Case Diagram</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#f0f2f8;font-family:Arial,sans-serif;overflow:hidden;height:100vh}
+#bar{position:fixed;top:0;left:0;right:0;height:44px;background:#fff;border-bottom:1px solid #d1d5db;display:flex;align-items:center;padding:0 16px;gap:10px;z-index:9;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#bar h1{font-size:14px;font-weight:700;color:#111827;flex:1}
+.btn{background:#f9fafb;color:#374151;border:1px solid #d1d5db;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:12px}
+.btn:hover{background:#f3f4f6}
+#vp{width:100%;height:calc(100vh - 44px);margin-top:44px;cursor:grab;overflow:hidden}
+#vp:active{cursor:grabbing}
+svg{width:100%;height:100%}
+</style>
+</head>
+<body>
+<div id="bar">
+  <h1>UniAlloc — Use Case Diagram</h1>
+  <span style="font-size:11px;color:#6b7280">5 actors · 26 use cases · scroll to zoom · drag to pan</span>
+  <button class="btn" onclick="fitView()">⊞ Fit</button>
+  <button class="btn" onclick="resetView()">Reset</button>
+</div>
+<div id="vp"><svg id="svg"><defs>
+  <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+    <polygon points="0 0, 9 3.5, 0 7" fill="#5a6a9a"/>
+  </marker>
+</defs><g id="world"></g></svg></div>
+<script>
+// ── COLORS ──
+const C_SYS_BG   = '#fffde7';  // yellow background
+const C_SYS_BDR  = '#b8a000';
+const C_UC_FILL  = '#d4d8f4';  // lavender rounded rect
+const C_UC_BDR   = '#7a88cc';
+const C_ACT_LINE = '#1a1a3e';
+const C_LINE     = '#5a6a9a';
+
+// ── SYSTEM BOUNDARY ──
+const SB = {x:230, y:40, w:1120, h:1100, title:'UniAlloc — Workload Allocation System'};
+
+// ── USE CASE BOX ──
+const UC_W = 160, UC_H = 38, UC_RX = 16;
+
+// Use cases: id, lines (text), cx, cy
+const ucs = [
+  // === Common (Login + profile) ===
+  {id:'login',   lines:['Login'],                          cx:570,  cy:110},
+  {id:'notif',   lines:['View Notifications'],             cx:830,  cy:110},
+  {id:'profile', lines:['Update Profile'],                 cx:1090, cy:110},
+
+  // === System Admin ===
+  {id:'mgu',     lines:['Manage Users'],                   cx:430,  cy:230},
+  {id:'mgf',     lines:['Manage Faculties'],               cx:640,  cy:230},
+  {id:'mgd',     lines:['Manage Departments'],             cx:860,  cy:230},
+  {id:'audit',   lines:['View Audit Logs'],                cx:1070, cy:230},
+  {id:'settings',lines:['Manage System Settings'],         cx:1260, cy:230},
+  {id:'promo',   lines:['Approve Role Promotions'],        cx:430,  cy:340},
+  {id:'mgset',   lines:['Manage System Settings'],         cx:640,  cy:340},
+
+  // === Dean ===
+  {id:'facwl',   lines:['Monitor Faculty Workload'],       cx:430,  cy:470},
+  {id:'asgdh',   lines:['Assign Work to Dept Heads'],      cx:660,  cy:470},
+  {id:'appreq',  lines:['Approve / Reject Requests'],      cx:890,  cy:470},
+  {id:'facdash', lines:['View Faculty Dashboard'],         cx:1110, cy:470},
+  {id:'nompromo',lines:['Nominate Lecturer Promotion'],    cx:1290, cy:470},
+
+  // === Department Head ===
+  {id:'deptwl',  lines:['Monitor Lecturer Workload'],      cx:430,  cy:610},
+  {id:'asglect', lines:['Assign Work to Lecturers'],       cx:660,  cy:610},
+  {id:'deptdash',lines:['View Department Dashboard'],      cx:890,  cy:610},
+  {id:'addlect', lines:['Add Lecturers'],                  cx:1110, cy:610},
+  {id:'crossreq',lines:['Create Cross-Dept Request'],      cx:1290, cy:610},
+
+  // === Lecturer ===
+  {id:'updprog', lines:['Update Assignment Progress'],     cx:490,  cy:750},
+  {id:'submapp', lines:['Submit Workload Appeal'],         cx:720,  cy:750},
+  {id:'wlchart', lines:['View Workload Chart'],            cx:950,  cy:750},
+  {id:'trackreq',lines:['Track Request Status'],           cx:1180, cy:750},
+
+  // === Student ===
+  {id:'stubreq', lines:['Submit Service Request'],         cx:560,  cy:890},
+  {id:'sttrack', lines:['Track Request Status'],           cx:840,  cy:890},
+];
+
+const ucmap = {};
+ucs.forEach(u => ucmap[u.id] = u);
+
+// ── ACTORS (all on LEFT) ──
+// Positions: cx for stick figure center, cy for head
+const actors = [
+  {id:'admin', lines:['System Admin'],     cx:100, cy:220},
+  {id:'dean',  lines:['Dean'],             cx:100, cy:460},
+  {id:'dhead', lines:['Department Head'],  cx:100, cy:600},
+  {id:'lect',  lines:['Lecturer'],         cx:100, cy:740},
+  {id:'stud',  lines:['Student'],          cx:100, cy:880},
+];
+const amap = {};
+actors.forEach(a => amap[a.id] = a);
+
+// ── CONNECTIONS: [actorId, ucId, dashed] ──
+const conns = [
+  // System Admin
+  ['admin','login'],['admin','notif'],['admin','profile'],
+  ['admin','mgu'],['admin','mgf'],['admin','mgd'],['admin','audit'],
+  ['admin','settings'],['admin','promo'],
+
+  // Dean
+  ['dean','login'],['dean','notif'],['dean','profile'],
+  ['dean','facwl'],['dean','asgdh'],['dean','appreq'],
+  ['dean','facdash'],['dean','nompromo'],
+
+  // Department Head
+  ['dhead','login'],['dhead','notif'],['dhead','profile'],
+  ['dhead','deptwl'],['dhead','asglect'],['dhead','deptdash'],
+  ['dhead','addlect'],['dhead','crossreq'],
+
+  // Lecturer
+  ['lect','login'],['lect','notif'],['lect','profile'],
+  ['lect','updprog'],['lect','submapp'],['lect','wlchart'],['lect','trackreq'],
+
+  // Student
+  ['stud','login'],['stud','notif'],
+  ['stud','stubreq'],['stud','sttrack'],
+];
+
+// ── RENDER HELPERS ──
+function ns(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+function sa(el, ...p) { for (let i = 0; i < p.length; i += 2) el.setAttribute(p[i], p[i+1]); return el; }
+function ln(g, x1, y1, x2, y2, col, w, dash) {
+  const l = ns('line');
+  sa(l,'x1',x1,'y1',y1,'x2',x2,'y2',y2,'stroke',col||C_LINE,'stroke-width',w||1.2);
+  if (dash) sa(l,'stroke-dasharray',dash);
+  g.appendChild(l); return l;
+}
+
+function drawStick(g, cx, cy) {
+  // Head
+  const hd = ns('circle');
+  sa(hd,'cx',cx,'cy',cy,'r',12,'fill','none','stroke',C_ACT_LINE,'stroke-width',1.8);
+  g.appendChild(hd);
+  // Body
+  ln(g, cx, cy+12, cx, cy+42, C_ACT_LINE, 1.8);
+  // Arms
+  ln(g, cx-16, cy+24, cx+16, cy+24, C_ACT_LINE, 1.8);
+  // Legs
+  ln(g, cx, cy+42, cx-13, cy+62, C_ACT_LINE, 1.8);
+  ln(g, cx, cy+42, cx+13, cy+62, C_ACT_LINE, 1.8);
+}
+
+function drawUC(g, uc) {
+  // Rounded rectangle
+  const bx = uc.cx - UC_W/2, by = uc.cy - UC_H/2;
+  const box = ns('rect');
+  sa(box,'x',bx,'y',by,'width',UC_W,'height',UC_H,'rx',UC_RX,
+     'fill',C_UC_FILL,'stroke',C_UC_BDR,'stroke-width',1.5);
+  g.appendChild(box);
+  // Text (may be multi-line)
+  const lines = uc.lines;
+  const lh = 14;
+  const startY = uc.cy - (lines.length-1)*lh/2 + 4;
+  lines.forEach((l, i) => {
+    const t = ns('text');
+    sa(t,'x',uc.cx,'y',startY+i*lh,'font-family','Arial,sans-serif',
+       'font-size',11,'fill','#1a1a3e','text-anchor','middle','font-weight','600');
+    t.textContent = l;
+    g.appendChild(t);
+  });
+}
+
+// Get left/right edge of use case box for connection
+function ucEdge(uc, fromLeft) {
+  return fromLeft
+    ? {x: uc.cx - UC_W/2, y: uc.cy}   // actor comes from left → connect to left edge
+    : {x: uc.cx + UC_W/2, y: uc.cy};
+}
+
+let scale = 0.6, tx = 20, ty = 20, drag = false, lx = 0, ly = 0;
+
+function render() {
+  const world = document.getElementById('world');
+  while (world.firstChild) world.removeChild(world.firstChild);
+  world.setAttribute('transform', `translate(${tx},${ty}) scale(${scale})`);
+
+  // System boundary
+  const sbFill = ns('rect');
+  sa(sbFill,'x',SB.x,'y',SB.y,'width',SB.w,'height',SB.h,'rx',8,
+     'fill',C_SYS_BG,'stroke',C_SYS_BDR,'stroke-width',2);
+  world.appendChild(sbFill);
+
+  // System boundary title
+  const sbtxt = ns('text');
+  sa(sbtxt,'x',SB.x+14,'y',SB.y+22,'font-family','Arial,sans-serif',
+     'font-size',13,'fill','#6b5200','font-weight','700');
+  sbtxt.textContent = SB.title;
+  world.appendChild(sbtxt);
+
+  // ── CONNECTION LINES ──
+  conns.forEach(([aid, uid]) => {
+    const a = amap[aid], uc = ucmap[uid];
+    if (!a || !uc) return;
+    // Actor right body midpoint
+    const ax = a.cx + 16, ay = a.cy + 27;
+    const ue = ucEdge(uc, true);
+    const l = ns('line');
+    sa(l,'x1',ax,'y1',ay,'x2',ue.x,'y2',ue.y,
+       'stroke',C_LINE,'stroke-width',1.0,'stroke-opacity','0.65');
+    world.appendChild(l);
+  });
+
+  // ── USE CASES ──
+  ucs.forEach(uc => {
+    const g = ns('g');
+    drawUC(g, uc);
+    world.appendChild(g);
+  });
+
+  // ── ACTORS ──
+  actors.forEach(a => {
+    const g = ns('g');
+    drawStick(g, a.cx, a.cy);
+    // Name labels
+    const startY = a.cy + 80;
+    a.lines.forEach((l, i) => {
+      const t = ns('text');
+      sa(t,'x',a.cx,'y',startY+i*14,'font-family','Arial,sans-serif',
+         'font-size',11,'fill',C_ACT_LINE,'text-anchor','middle','font-weight','700');
+      t.textContent = l;
+      g.appendChild(t);
+    });
+    world.appendChild(g);
+  });
+
+  // ── ACTOR ROLE LABELS (left side) ──
+  // Bracket/section labels on left outside boundary
+  const roleLabels = [
+    {y:230, label:'System Admin', color:'#c00000'},
+    {y:460, label:'Dean',         color:'#1a5fb4'},
+    {y:600, label:'Dept Head',    color:'#276e37'},
+    {y:740, label:'Lecturer',     color:'#7f3f00'},
+    {y:880, label:'Student',      color:'#4a4a8a'},
+  ];
+}
+
+function fitView() {
+  const vp = document.getElementById('vp');
+  const cw = vp.clientWidth, ch = vp.clientHeight;
+  const totalW = SB.x + SB.w + 250;
+  const totalH = SB.y + SB.h + 100;
+  scale = Math.min(cw/totalW, ch/totalH, 0.9);
+  tx = (cw - totalW*scale)/2;
+  ty = (ch - totalH*scale)/2 + 10;
+  render();
+}
+
+function resetView() { scale = 0.6; tx = 20; ty = 20; render(); }
+
+const vp = document.getElementById('vp');
+vp.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r = vp.getBoundingClientRect();
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const d = e.deltaY > 0 ? .88 : 1/.88;
+  tx = mx - (mx-tx)*d; ty = my - (my-ty)*d; scale *= d; render();
+}, {passive:false});
+vp.addEventListener('mousedown', e => { drag=true; lx=e.clientX; ly=e.clientY; });
+vp.addEventListener('mousemove', e => { if(!drag)return; tx+=e.clientX-lx; ty+=e.clientY-ly; lx=e.clientX; ly=e.clientY; render(); });
+vp.addEventListener('mouseup', () => drag=false);
+vp.addEventListener('mouseleave', () => drag=false);
+window.addEventListener('load', () => { render(); setTimeout(fitView, 120); });
+</script>
+</body>
+</html>
