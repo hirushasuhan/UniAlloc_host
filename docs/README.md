@@ -12,41 +12,41 @@
 [![UML Standard](https://img.shields.io/badge/Architecture-UML%202.5%20Standard-6366f1?style=for-the-badge)](SYSTEM_DOCUMENTATION.md)
 
 <p align="center">
-  <a href="https://www.unialloc.app" target="_blank"><strong>🌐 Live App: www.unialloc.app</strong></a> •
-  <a href="https://uniallocsystem.vercel.app" target="_blank"><strong>⚡ Vercel Mirror: uniallocsystem.vercel.app</strong></a> •
-  <a href="#demo-login-credentials"><strong>🔑 Demo Logins</strong></a>
+  <a href="https://www.unialloc.app" target="_blank"><strong>Live Application: www.unialloc.app</strong></a> •
+  <a href="https://uniallocsystem.vercel.app" target="_blank"><strong>Vercel Mirror: uniallocsystem.vercel.app</strong></a> •
+  <a href="#demo-login-credentials"><strong>Demo Credentials</strong></a>
 </p>
 
 </div>
 
 ---
 
-## 🌐 Live Production Deployments
+## Live Production Deployments
 
 The UniAlloc platform is deployed and live in production:
 
 | Deployment | URL | Status | Environment & Security Architecture |
 |---|---|---|---|
-| 🌍 **Primary Domain** | [https://www.unialloc.app](https://www.unialloc.app) | 🟢 **Active / Live** | **Cloudflare Proxied** (Full Strict SSL/TLS 1.3, DDoS Mitigation, WAF, Global Anycast CDN) &rarr; Vercel Serverless |
-| ⚡ **Vercel System Mirror** | [https://uniallocsystem.vercel.app](https://uniallocsystem.vercel.app) | 🟢 **Active / Live** | Direct Vercel Edge Production Deployment Mirror |
-| 🔌 **Backend REST API** | `https://backend-php.wasmer.app/api` | 🟢 **Active / Live** | High-performance Vanilla PHP 8.2 PDO REST Engine |
+| **Primary Domain** | [https://www.unialloc.app](https://www.unialloc.app) | **Active / Live** | **Cloudflare Proxied** (Full Strict SSL/TLS 1.3, DDoS Mitigation, WAF, Global Anycast CDN) &rarr; Vercel Serverless |
+| **Vercel Mirror** | [https://uniallocsystem.vercel.app](https://uniallocsystem.vercel.app) | **Active / Live** | Direct Vercel Edge Production Deployment Mirror |
+| **Backend REST API** | `https://backend-php.wasmer.app/api` | **Active / Live** | High-performance Vanilla PHP 8.2 PDO REST Engine |
 
 > [!NOTE]
 > **Cloudflare Edge Security:** The primary domain `unialloc.app` and `www.unialloc.app` is routed through **Cloudflare** as an enterprise-grade security layer. Cloudflare provides automated L3/L4/L7 DDoS attack protection, Web Application Firewall (WAF) filtering, Bot Fight Mode, DNSSEC verification, and Full (Strict) SSL/TLS encryption before proxying to the Vercel edge deployment.
 
 ---
 
-## 🔑 Demo Login Credentials
+## Demo Login Credentials
 
 For testing and demonstration, use the following pre-configured credentials across all 5 institutional roles:
 
 | Role | Email | Password | Access Scope & Permissions |
 |---|---|---|---|
-| 👑 **System Admin** | `admin@university.edu` | `Admin@123` | Institutional Administrator (Full system privileges, user administration, promotion approvals, audit logs) |
-| 🎓 **Dean (Computing)** | `dean.computing@university.edu` | `Dean@123` | Faculty of Computing (Faculty heatmap, cross-faculty requests, lecturer assignments, student appointments) |
-| 🏛️ **Department Head (CS)** | `head.cs@university.edu` | `Head@123` | Department of Computer Science (Department capacity, cross-dept requests, Step 1 student endorsement) |
-| 👨‍🏫 **Lecturer** | `lecturer1@university.edu` | `Lecturer@123` | Computer Science Academic Staff (Personal capacity donut, 0-100% assignment progress updates, appeal filing) |
-| 🎓 **Student** | `student@university.edu` | `Student@123` | Undergraduate Student (Research & thesis supervisor request submission, real-time status tracker) |
+| **System Admin** | `admin@university.edu` | `Admin@123` | Institutional Administrator (Full system privileges, user administration, promotion approvals, audit logs) |
+| **Dean (Computing)** | `dean.computing@university.edu` | `Dean@123` | Faculty of Computing (Faculty heatmap, cross-faculty requests, lecturer assignments, student appointments) |
+| **Department Head (CS)** | `head.cs@university.edu` | `Head@123` | Department of Computer Science (Department capacity, cross-dept requests, Step 1 student endorsement) |
+| **Lecturer** | `lecturer1@university.edu` | `Lecturer@123` | Computer Science Academic Staff (Personal capacity donut, 0-100% assignment progress updates, appeal filing) |
+| **Student** | `student@university.edu` | `Student@123` | Undergraduate Student (Research & thesis supervisor request submission, real-time status tracker) |
 
 ---
 

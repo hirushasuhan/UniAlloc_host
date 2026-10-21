@@ -12,71 +12,71 @@
 [![UML Standard](https://img.shields.io/badge/Architecture-UML%202.5%20Standard-6366f1?style=for-the-badge)](docs/SYSTEM_DOCUMENTATION.md)
 
 <p align="center">
-  <a href="https://www.unialloc.app" target="_blank"><strong>🌐 Live App: www.unialloc.app</strong></a> •
-  <a href="https://uniallocsystem.vercel.app" target="_blank"><strong>⚡ Vercel Mirror: uniallocsystem.vercel.app</strong></a> •
-  <a href="#-demo-credentials"><strong>🔑 Demo Logins</strong></a>
+  <a href="https://www.unialloc.app" target="_blank"><strong>Live Application: www.unialloc.app</strong></a> •
+  <a href="https://uniallocsystem.vercel.app" target="_blank"><strong>Vercel Mirror: uniallocsystem.vercel.app</strong></a> •
+  <a href="#demo-credentials"><strong>Demo Credentials</strong></a>
 </p>
 
 <p align="center">
-  <a href="#-live-production-deployments">Live Deployments</a> •
-  <a href="#-demo-credentials">Demo Logins</a> •
-  <a href="#-quick-navigation">Quick Navigation</a> •
-  <a href="#-key-features">Key Features</a> •
-  <a href="#-interactive-uml--er-diagrams">Interactive Diagrams</a> •
-  <a href="#-user-roles--permissions">User Roles</a> •
-  <a href="#-system-architecture">Architecture</a> •
-  <a href="#-quickstart--local-setup">Quickstart</a>
+  <a href="#live-production-deployments">Deployments</a> •
+  <a href="#demo-credentials">Demo Logins</a> •
+  <a href="#quick-navigation">Navigation</a> •
+  <a href="#the-core-problem--our-solution">Problem & Solution</a> •
+  <a href="#interactive-uml--er-diagrams">UML & ER Diagrams</a> •
+  <a href="#user-roles--permissions">User Roles</a> •
+  <a href="#system-architecture">Architecture</a> •
+  <a href="#quickstart--local-setup">Quickstart</a>
 </p>
 
 </div>
 
 ---
 
-## 🌐 Live Production Deployments
+## Live Production Deployments
 
 The UniAlloc platform is officially released and live in production:
 
 | Deployment | URL | Status | Environment & Security Architecture |
 |---|---|---|---|
-| 🌍 **Primary Domain** | [https://www.unialloc.app](https://www.unialloc.app) | 🟢 **Active / Live** | **Cloudflare Proxied** (Full Strict SSL, DDoS Shield, WAF, Global Edge CDN) &rarr; Vercel Serverless |
-| ⚡ **Vercel System Mirror** | [https://uniallocsystem.vercel.app](https://uniallocsystem.vercel.app) | 🟢 **Active / Live** | Direct Vercel Edge Production Deployment Mirror |
-| 🔌 **Backend REST API** | `https://backend-php.wasmer.app/api` | 🟢 **Active / Live** | High-performance PHP 8.2 PDO REST API Engine (Wasmer Edge) |
+| **Primary Domain** | [https://www.unialloc.app](https://www.unialloc.app) | **Active / Live** | **Cloudflare Proxied** (Full Strict SSL, DDoS Shield, WAF, Global Edge CDN) &rarr; Vercel Serverless |
+| **Vercel Mirror** | [https://uniallocsystem.vercel.app](https://uniallocsystem.vercel.app) | **Active / Live** | Direct Vercel Edge Production Deployment Mirror |
+| **Backend REST API** | `https://backend-php.wasmer.app/api` | **Active / Live** | High-performance PHP 8.2 PDO REST API Engine (Wasmer Edge) |
 
 > [!NOTE]
 > **Edge Security & Routing:** The production domain `www.unialloc.app` (and apex `unialloc.app`) is securely routed through **Cloudflare** as an enterprise perimeter defense layer. Cloudflare provides automated L3/L4/L7 DDoS mitigation, Web Application Firewall (WAF) rate protection, DNSSEC integrity, and end-to-end Full (Strict) TLS 1.3 encryption before traffic reaches the Vercel application host.
 
 ---
 
-## 🔑 Demo Credentials
+## Demo Credentials
 
-You can test and evaluate all system modules immediately using these pre-configured demo credentials:
+You can evaluate all system modules immediately using these pre-configured demo credentials:
 
 | Role | Email | Password | Access Scope & Permissions |
 |---|---|---|---|
-| 👑 **System Admin** | `admin@university.edu` | `Admin@123` | Institutional Administrator (Full system privileges, user administration, promotion approvals, audit logs) |
-| 🎓 **Dean (Computing)** | `dean.computing@university.edu` | `Dean@123` | Faculty of Computing (Faculty heatmap, cross-faculty requests, lecturer assignments, student appointments) |
-| 🏛️ **Department Head (CS)** | `head.cs@university.edu` | `Head@123` | Department of Computer Science (Department capacity, cross-dept requests, Step 1 student endorsement) |
-| 👨‍🏫 **Lecturer** | `lecturer1@university.edu` | `Lecturer@123` | Computer Science Academic Staff (Personal capacity donut, 0-100% assignment progress updates, appeal filing) |
-| 🎓 **Student** | `student@university.edu` | `Student@123` | Undergraduate Student (Research & thesis supervisor request submission, real-time status tracker) |
+| **System Admin** | `admin@university.edu` | `Admin@123` | Institutional Administrator (Full system privileges, user administration, promotion approvals, audit logs) |
+| **Dean (Computing)** | `dean.computing@university.edu` | `Dean@123` | Faculty of Computing (Faculty heatmap, cross-faculty requests, lecturer assignments, student appointments) |
+| **Department Head (CS)** | `head.cs@university.edu` | `Head@123` | Department of Computer Science (Department capacity, cross-dept requests, Step 1 student endorsement) |
+| **Lecturer** | `lecturer1@university.edu` | `Lecturer@123` | Computer Science Academic Staff (Personal capacity donut, 0-100% assignment progress updates, appeal filing) |
+| **Student** | `student@university.edu` | `Student@123` | Undergraduate Student (Research & thesis supervisor request submission, real-time status tracker) |
 
 > [!TIP]
-> **Instant Role Routing:** When you sign in with any of the accounts above, the system automatically redirects to that role's specialized workspace and dashboard.
+> **Role Routing:** When you sign in with any of the accounts above, the system automatically redirects to that role's specialized workspace and dashboard.
 
 ---
 
-## 📌 Quick Navigation
+## Quick Navigation
 
-- 📊 **Interactive Diagram Viewers (Open in any browser):**
+- **Interactive Diagram Viewers (Open in any browser):**
   - [UML 2.5 Use Case Diagram](docs/usecase_diagram.html) — 5 actors, 25 use cases, `<<include>>`, `<<extend>>`
   - [UML 2.5 Class Diagram](docs/class_diagram.html) — Full 14-class domain model, composition, aggregation, multiplicities
   - [Crow's Foot ER Diagram](docs/er_diagram.html) — 14 relational tables in 3NF, exact data types & keys
-- 📖 **Comprehensive System Specifications:** [docs/SYSTEM_DOCUMENTATION.md](docs/SYSTEM_DOCUMENTATION.md)
-- 🛠️ **Step-by-Step Setup & Installation Guide:** [docs/setup.md](docs/setup.md)
-- 🔒 **Demo Credentials & Rotation:** [database/DEMO_CREDENTIALS.local.md](database/DEMO_CREDENTIALS.local.md)
+- **Comprehensive System Specifications:** [docs/SYSTEM_DOCUMENTATION.md](docs/SYSTEM_DOCUMENTATION.md)
+- **Step-by-Step Setup & Installation Guide:** [docs/setup.md](docs/setup.md)
+- **Demo Credentials & Rotation:** [database/DEMO_CREDENTIALS.local.md](database/DEMO_CREDENTIALS.local.md)
 
 ---
 
-## 💡 The Core Problem & Our Solution
+## The Core Problem & Our Solution
 
 | Academic HR Challenge | Traditional Method | The UniAlloc Solution |
 |---|---|---|
@@ -86,7 +86,7 @@ You can test and evaluate all system modules immediately using these pre-configu
 
 ---
 
-## 🌟 Interactive UML & ER Diagrams
+## Interactive UML & ER Diagrams
 
 UniAlloc provides standalone, hardware-accelerated interactive SVG viewers for all standard software engineering diagrams:
 
@@ -100,7 +100,7 @@ UniAlloc provides standalone, hardware-accelerated interactive SVG viewers for a
 
 ---
 
-## 👥 User Roles & Permissions
+## User Roles & Permissions
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -125,7 +125,7 @@ UniAlloc provides standalone, hardware-accelerated interactive SVG viewers for a
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 UniAlloc implements a clean, decoupled 3-tier client-server architecture:
 
@@ -161,7 +161,7 @@ UniAlloc implements a clean, decoupled 3-tier client-server architecture:
 
 ---
 
-## 🚀 Quickstart & Local Setup
+## Quickstart & Local Setup
 
 ### 1. Database Setup
 ```bash
@@ -186,7 +186,7 @@ php -r "echo bin2hex(random_bytes(32)), PHP_EOL;" # APP_KEY
 # Start backend on port 8000:
 php -S localhost:8000 -t public/
 ```
-Verify: [http://localhost:8000/api/health](http://localhost:8000/api/health) returns `{"status":"UP","database":"connected"}`.
+Verify: `http://localhost:8000/api/health` returns `{"status":"UP","database":"connected"}`.
 
 ### 3. Frontend Setup (Next.js 14)
 ```bash
@@ -202,26 +202,7 @@ Open: [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## 🔑 Demo Credentials
-
-Default accounts seeded by `database/seed.sql` for testing:
-
-| Email | Role | Default Password | Faculty / Department |
-|---|---|---|---|
-| `admin@university.edu` | `system_admin` | `Admin@123` | Institutional Admin |
-| `dean.computing@university.edu` | `dean` | `Dean@123` | Faculty of Computing |
-| `dean.engineering@university.edu` | `dean` | `Dean@123` | Faculty of Engineering |
-| `head.cs@university.edu` | `department_head` | `Head@123` | Computer Science |
-| `head.se@university.edu` | `department_head` | `Head@123` | Software Engineering |
-| `lecturer1@university.edu` | `lecturer` | `Lecturer@123` | Computer Science |
-| `lecturer2@university.edu` | `lecturer` | `Lecturer@123` | Software Engineering |
-| `student@university.edu` | `student` | `Student@123` | Undergraduate Student |
-
-*(To rotate passwords to cryptographically random strings, run `mysql -u root -p uniAlloc_db < database/rotate_demo_credentials.sql`).*
-
----
-
-## 🛡️ Security Highlights
+## Security Highlights
 
 - **Cloudflare Edge Shield:** The custom domain `unialloc.app` / `www.unialloc.app` is fronted by Cloudflare's global Anycast edge network, providing automated L3/L4/L7 DDoS mitigation, Web Application Firewall (WAF) rule sets, Bot management, DNSSEC verification, and Full (Strict) SSL/TLS 1.3 encryption.
 - **Stateless JWT Tokens:** Embedded role and scope claims, cryptographically signed with HS256 and validated on every private route.
@@ -233,7 +214,7 @@ Default accounts seeded by `database/seed.sql` for testing:
 
 ---
 
-## 📁 Repository Directory Structure
+## Repository Directory Structure
 
 ```
 UniAlloc_host/
