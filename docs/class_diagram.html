@@ -2,445 +2,470 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>UniAlloc – Class Diagram</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UniAlloc — UML 2.5 Standard Architecture Class Diagram</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#f0f2f8;font-family:Arial,sans-serif;overflow:hidden;height:100vh}
-#bar{position:fixed;top:0;left:0;right:0;height:44px;background:#fff;border-bottom:1px solid #d1d5db;display:flex;align-items:center;padding:0 16px;gap:10px;z-index:9;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-#bar h1{font-size:14px;font-weight:700;color:#111827;flex:1}
-.btn{background:#f9fafb;color:#374151;border:1px solid #d1d5db;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:12px}
-.btn:hover{background:#f3f4f6}
-#vp{width:100%;height:calc(100vh - 44px);margin-top:44px;cursor:grab;overflow:hidden}
+body{background:#0b1120;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;overflow:hidden;height:100vh;color:#e2e8f0}
+#bar{position:fixed;top:0;left:0;right:0;height:52px;background:#1e293b;border-bottom:1px solid #334155;display:flex;align-items:center;padding:0 20px;gap:12px;z-index:99;box-shadow:0 4px 6px -1px rgba(0,0,0,0.3)}
+#bar h1{font-size:15px;font-weight:700;color:#f8fafc;display:flex;align-items:center;gap:8px}
+.badge{background:#10b98120;color:#34d399;border:1px solid #10b98140;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.legend{display:flex;align-items:center;gap:16px;font-size:11px;color:#94a3b8;margin-left:auto}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-dot{width:8px;height:8px;border-radius:2px}
+.btn{background:#334155;color:#f1f5f9;border:1px solid #475569;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;transition:all 0.15s ease}
+.btn:hover{background:#475569;border-color:#64748b}
+.btn-primary{background:#2563eb;border-color:#3b82f6}
+.btn-primary:hover{background:#1d4ed8}
+#vp{width:100%;height:calc(100vh - 52px);margin-top:52px;cursor:grab;overflow:hidden;background:radial-gradient(circle at 50% 50%, #1e293b 0%, #0b1120 100%)}
 #vp:active{cursor:grabbing}
 svg{width:100%;height:100%}
+.help-tip{position:fixed;bottom:16px;left:20px;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px 14px;font-size:11px;color:#94a3b8;box-shadow:0 10px 15px -3px rgba(0,0,0,0.4);pointer-events:none}
 </style>
 </head>
 <body>
 <div id="bar">
-  <h1>UniAlloc — Class Diagram (UML)</h1>
-  <span style="font-size:11px;color:#6b7280">12 classes · scroll to zoom · drag to pan</span>
-  <button class="btn" onclick="fitView()">⊞ Fit</button>
+  <h1>
+    <span>UniAlloc — Class Diagram</span>
+    <span class="badge">UML 2.5 Standard (Design Class Diagram)</span>
+  </h1>
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> &laquo;controller&raquo;</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span> &laquo;service&raquo; / &laquo;middleware&raquo;</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#10b981"></span> &laquo;dao&raquo;</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span> &laquo;helper&raquo;</div>
+    <div class="legend-item"><span style="display:inline-block;width:14px;height:2px;border-top:2px dashed #94a3b8"></span> Dependency (..&gt;)</div>
+  </div>
+  <button class="btn btn-primary" onclick="fitView()">⊞ Fit View</button>
   <button class="btn" onclick="resetView()">Reset</button>
 </div>
-<div id="vp"><svg id="svg"><defs>
-  <marker id="assoc" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-    <polygon points="0 0, 9 3.5, 0 7" fill="#5a6a9a"/>
-  </marker>
-  <marker id="empty-arr" markerWidth="12" markerHeight="8" refX="11" refY="4" orient="auto">
-    <path d="M0,0 L11,4 L0,8" fill="none" stroke="#5a6a9a" stroke-width="1.5"/>
-  </marker>
-  <marker id="diamond" markerWidth="14" markerHeight="8" refX="0" refY="4" orient="auto">
-    <polygon points="0,4 5,0 10,4 5,8" fill="#fff" stroke="#5a6a9a" stroke-width="1.2"/>
-  </marker>
-</defs><g id="world"></g></svg></div>
-<script>
-// ── COLORS ──
-const C_HDR  = '#c8d0f0'; // lavender header
-const C_HDR2 = '#9aaad8'; // header border
-const C_BODY = '#ffffff';
-const C_BORD = '#9aaad8';
-const C_LINE = '#5a6a9a';
-const C_TEXT = '#1a1a3e';
-const C_DIM  = '#5a6080';
 
+<div id="vp">
+  <svg id="svg">
+    <defs>
+      <!-- UML 2.5 Standard Open Arrowhead for Dependency (..>) -->
+      <marker id="uml-dep" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+        <path d="M1,1 L9,4 L1,7" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+      </marker>
+      <!-- UML 2.5 Standard Open Arrowhead for Directed Association (-->) -->
+      <marker id="uml-assoc" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+        <path d="M1,1 L9,4 L1,7" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round"/>
+      </marker>
+      <filter id="box-shadow" x="-6%" y="-6%" width="112%" height="112%">
+        <feDropShadow dx="2" dy="4" stdDeviation="4" flood-color="rgba(0,0,0,0.5)"/>
+      </filter>
+    </defs>
+    <g id="world"></g>
+  </svg>
+</div>
+
+<div class="help-tip">
+  💡 <b>UML 2.5 Standard Notation:</b> 3-Compartment Class Boxes · Stereotypes (&laquo;controller&raquo;, &laquo;dao&raquo;) · Open arrowheads for dependencies · Clean non-overlapping layer channels
+</div>
+
+<script>
 // ── LAYOUT CONSTANTS ──
-const CW   = 240;  // class box width
-const CHDR = 30;   // header height
-const ARH  = 18;   // attribute/method row height
-const SPAD = 6;    // section vertical padding
+const CW   = 290;
+const CHDR = 38;  // Height for stereotype + class name
+const ARH  = 18;
+const SPAD = 6;
 
 function secH(items) { return items.length * ARH + SPAD * 2; }
 function classH(c)   { return CHDR + secH(c.attrs) + secH(c.methods); }
 function cmx(c)      { return c.x + CW / 2; }
 function cmy(c)      { return c.y + classH(c) / 2; }
 
-// ── CLASS DATA ──
-// attrs use + public, - private, # protected
-// types: int, varchar, enum, decimal, text, boolean, datetime
+// ── ORIGINAL BACKEND CLASSES (Strict UML 2.5 Standard) ──
 const classes = [
-  // ── TOP ROW ─────────────────────────────
-  {id:'role', name:'Role', x:530, y:40,
+  // ── LAYER 1: REST CONTROLLERS (Y: 50) ──────────────────────────────
+  {id:'AuthController', stereotype:'controller', pkg:'App\\Controllers', name:'AuthController', layer:'ctrl', x:50, y:50,
    attrs:[
-     '- id : int',
-     '- role_name : enum',
+     '- db : PDO',
    ],
    methods:[
-     '+ getId() : int',
-     '+ getRoleName() : string',
+     '+ login(params: array) : void',
+     '+ logout(params: array) : void',
+     '+ register(params: array) : void',
+     '+ totpSetup(params: array) : void',
+     '+ totpVerify(params: array) : void',
+     '+ forgotPasswordCheck(params: array) : void',
+     '+ forgotPasswordReset(params: array) : void',
    ]},
 
-  // ── SECOND ROW (center) ─────────────────
-  {id:'faculty', name:'Faculty', x:60, y:250,
+  {id:'UserController', stereotype:'controller', pkg:'App\\Controllers', name:'UserController', layer:'ctrl', x:380, y:50,
    attrs:[
-     '- id : int',
-     '- faculty_name : varchar',
-     '- dean_id : int',
-     '- created_at : datetime',
+     '- auth : array',
    ],
    methods:[
-     '+ getDepartments() : list',
-     '+ getWorkloadSummary() : object',
+     '+ index(params: array) : void',
+     '+ show(params: array) : void',
+     '+ store(params: array) : void',
+     '+ update(params: array) : void',
+     '+ destroy(params: array) : void',
+     '+ resetPassword(params: array) : void',
+     '+ changePassword(params: array) : void',
    ]},
 
-  {id:'user', name:'User', x:420, y:250,
+  {id:'AssignmentController', stereotype:'controller', pkg:'App\\Controllers', name:'AssignmentController', layer:'ctrl', x:710, y:50,
    attrs:[
-     '- id : int',
-     '- full_name : varchar',
-     '- email : varchar',
-     '- password_hash : varchar',
-     '- role_id : int',
-     '- department_id : int',
-     '- enrollment_number : varchar',
-     '- contact : varchar',
-     '- capacity_hours : decimal',
-     '- is_active : boolean',
-     '- created_at : datetime',
-     '- updated_at : datetime',
+     '- auth : array',
    ],
    methods:[
-     '+ login() : token',
-     '+ logout() : void',
-     '+ changePassword() : void',
-     '+ updateProfile() : void',
+     '+ index(params: array) : void',
+     '+ show(params: array) : void',
+     '+ store(params: array) : void',
+     '+ update(params: array) : void',
+     '+ destroy(params: array) : void',
+     '+ updateProgress(params: array) : void',
    ]},
 
-  {id:'department', name:'Department', x:790, y:250,
+  {id:'StudentRequestController', stereotype:'controller', pkg:'App\\Controllers', name:'StudentRequestController', layer:'ctrl', x:1040, y:50,
    attrs:[
-     '- id : int',
-     '- dept_name : varchar',
-     '- faculty_id : int',
-     '- head_id : int',
-     '- created_at : datetime',
+     '- auth : array',
    ],
    methods:[
-     '+ getLecturers() : list',
-     '+ getWorkload() : object',
+     '+ index(params: array) : void',
+     '+ show(params: array) : void',
+     '+ store(params: array) : void',
+     '+ update(params: array) : void',
+     '+ destroy(params: array) : void',
    ]},
 
-  // ── THIRD ROW ───────────────────────────
-  {id:'assignment', name:'Assignment', x:60, y:680,
+  {id:'WorkRequestController', stereotype:'controller', pkg:'App\\Controllers', name:'WorkRequestController', layer:'ctrl', x:1370, y:50,
    attrs:[
-     '- id : int',
-     '- title : varchar',
-     '- description : text',
-     '- assigned_to : int',
-     '- assigned_by : int',
-     '- department_id : int',
-     '- priority : enum',
-     '- status : enum',
-     '- estimated_hours : decimal',
-     '- actual_hours : decimal',
-     '- deadline : date',
-     '- created_at : datetime',
-     '- updated_at : datetime',
+     '- auth : array',
    ],
    methods:[
-     '+ updateStatus() : void',
-     '+ approve() : void',
-     '+ cancel() : void',
+     '+ index(params: array) : void',
+     '+ show(params: array) : void',
+     '+ store(params: array) : void',
+     '+ resolve(params: array) : void',
    ]},
 
-  {id:'work_request', name:'WorkRequest', x:370, y:680,
+  // ── LAYER 2: SERVICES & MIDDLEWARE (Y: 420) ────────────────────────
+  {id:'JwtMiddleware', stereotype:'middleware', pkg:'App\\Middleware', name:'JwtMiddleware', layer:'srv', x:120, y:420,
    attrs:[
-     '- id : int',
-     '- requester_id : int',
-     '- request_type : enum',
-     '- title : varchar',
-     '- description : text',
-     '- target_user_id : int',
-     '- target_dept_id : int',
-     '- target_faculty_id : int',
-     '- status : enum',
-     '- created_at : datetime',
-     '- updated_at : datetime',
+     '- token : ?string',
    ],
    methods:[
-     '+ submit() : void',
-     '+ approve() : void',
-     '+ reject() : void',
+     '+ authenticate() : array',
+     '+ requireRole(roles: array) : array',
+     '+ extractBearer() : ?string',
    ]},
 
-  {id:'student_request', name:'StudentRequest', x:680, y:680,
+  {id:'WorkloadService', stereotype:'service', pkg:'App\\Services', name:'WorkloadService', layer:'srv', x:710, y:420,
    attrs:[
-     '- id : int',
-     '- student_id : int',
-     '- faculty_id : int',
-     '- title : varchar',
-     '- description : text',
-     '- status : enum',
-     '- assigned_to : int',
-     '- created_at : datetime',
-     '- updated_at : datetime',
+     '- thresholdPct : int = 90',
    ],
    methods:[
-     '+ submit() : void',
-     '+ track() : string',
+     '+ getCapacity(userId: int) : array',
+     '+ checkAndNotifyOverload(to: int, asgId: int, by: int) : void',
+     '+ suggestAlternatives(overloadedId: int) : array',
    ]},
 
-  {id:'notification', name:'Notification', x:990, y:680,
+  {id:'Db', stereotype:'helper', pkg:'App\\Helpers', name:'Db', layer:'infra', x:1300, y:420,
    attrs:[
-     '- id : int',
-     '- user_id : int',
-     '- title : varchar',
-     '- message : text',
-     '- type : enum',
-     '- is_read : boolean',
-     '- created_at : datetime',
+     '- instance : ?PDO = null',
    ],
    methods:[
-     '+ markRead() : void',
-     '+ markAllRead() : void',
+     '+ getPdo() : PDO',
+     '+ beginTransaction() : void',
+     '+ commit() : void',
+     '+ rollBack() : void',
    ]},
 
-  // ── FOURTH ROW ──────────────────────────
-  {id:'assignment_progress', name:'AssignmentProgress', x:60, y:1160,
+  // ── LAYER 3: CORE DATA ACCESS OBJECTS (Y: 750) ─────────────────────
+  {id:'UserDao', stereotype:'dao', pkg:'App\\Dao', name:'UserDao', layer:'dao', x:50, y:750,
    attrs:[
-     '- id : int',
-     '- assignment_id : int',
-     '- updated_by : int',
-     '- progress_percent : tinyint',
-     '- note : text',
-     '- updated_at : datetime',
+     '+ POSITIONS : array',
+     '- TABLE : string = "users"',
    ],
    methods:[
-     '+ save() : void',
-     '+ getHistory() : list',
+     '+ list(auth: array, filters: array) : array',
+     '+ findById(id: int) : ?array',
+     '+ create(data: array) : int',
+     '+ update(id: int, data: array) : bool',
+     '+ bumpTokenVersion(id: int) : void',
+     '+ saveTotpSecret(id: int, secret: string) : void',
+     '+ enableTotp(id: int) : void',
+     '+ registerTotpFailure(id: int) : void',
    ]},
 
-  {id:'workload_appeal', name:'WorkloadAppeal', x:370, y:1160,
+  {id:'AssignmentDao', stereotype:'dao', pkg:'App\\Dao', name:'AssignmentDao', layer:'dao', x:380, y:750,
    attrs:[
-     '- id : int',
-     '- lecturer_id : int',
-     '- reason : text',
-     '- status : enum',
-     '- reviewed_by : int',
-     '- reviewed_at : datetime',
-     '- created_at : datetime',
-     '- updated_at : datetime',
+     '- TABLE : string = "assignments"',
    ],
    methods:[
-     '+ submit() : void',
-     '+ review() : void',
+     '+ list(filters: array) : array',
+     '+ findById(id: int) : ?array',
+     '+ create(data: array) : int',
+     '+ update(id: int, data: array) : bool',
+     '+ delete(id: int) : bool',
+     '+ addProgress(asgId: int, uId: int, pct: int, note: ?string) : int',
+     '+ getProgress(assignmentId: int) : array',
    ]},
 
-  {id:'role_promotion', name:'RolePromotion', x:680, y:1160,
+  {id:'StudentRequestDao', stereotype:'dao', pkg:'App\\Dao', name:'StudentRequestDao', layer:'dao', x:710, y:750,
    attrs:[
-     '- id : int',
-     '- lecturer_id : int',
-     '- from_role_id : int',
-     '- to_role_id : int',
-     '- requested_by : int',
-     '- approved_by : int',
-     '- status : enum',
-     '- created_at : datetime',
-     '- updated_at : datetime',
+     '- TABLE : string = "student_requests"',
    ],
    methods:[
-     '+ initiate() : void',
-     '+ approve() : void',
-     '+ reject() : void',
+     '+ list(filters: array) : array',
+     '+ findById(id: int) : ?array',
+     '+ create(sId: int, fId: int, title: string, desc: ?string, dId: ?int) : int',
+     '+ endorse(id: int, headId: ?int, supId: ?int) : bool',
+     '+ finalise(id: int, status: string, by: int, to: ?int) : bool',
+     '+ linkAssignment(id: int, assignmentId: int) : bool',
    ]},
 
-  {id:'audit_log', name:'AuditLog', x:990, y:1160,
+  {id:'WorkRequestDao', stereotype:'dao', pkg:'App\\Dao', name:'WorkRequestDao', layer:'dao', x:1040, y:750,
    attrs:[
-     '- id : int',
-     '- user_id : int',
-     '- action : varchar',
-     '- entity : varchar',
-     '- entity_id : int',
-     '- ip_address : varchar',
-     '- created_at : datetime',
+     '- TABLE : string = "work_requests"',
    ],
    methods:[
-     '+ record() : void',
-     '+ getLogs() : list',
+     '+ list(filters: array) : array',
+     '+ findById(id: int) : ?array',
+     '+ create(data: array) : int',
+     '+ advanceToDeptHead(id: int, deanId: int) : bool',
+     '+ advanceToAssignee(id: int, approverId: int, type: string) : bool',
+     '+ finalApprove(id: int, userId: int) : bool',
+     '+ setAssignmentId(reqId: int, asgId: int) : bool',
+     '+ reject(id: int, userId: int) : bool',
+   ]},
+
+  {id:'AppealDao', stereotype:'dao', pkg:'App\\Dao', name:'AppealDao', layer:'dao', x:1370, y:750,
+   attrs:[
+     '- TABLE : string = "workload_appeals"',
+   ],
+   methods:[
+     '+ list(filters: array) : array',
+     '+ findById(id: int) : ?array',
+     '+ create(lecturerId: int, asgId: ?int, reason: string) : int',
+     '+ update(id: int, status: string, by: int, note: ?string) : bool',
+   ]},
+
+  // ── LAYER 4: SUPPORTING ACADEMIC & AUDIT DAOs (Y: 1280) ───────────
+  {id:'FacultyDao', stereotype:'dao', pkg:'App\\Dao', name:'FacultyDao', layer:'dao', x:50, y:1280,
+   attrs:[
+     '- TABLE : string = "faculties"',
+   ],
+   methods:[
+     '+ list() : array',
+     '+ findById(id: int) : ?array',
+     '+ create(name: string, deanId: ?int) : int',
+     '+ update(id: int, data: array) : bool',
+   ]},
+
+  {id:'DepartmentDao', stereotype:'dao', pkg:'App\\Dao', name:'DepartmentDao', layer:'dao', x:380, y:1280,
+   attrs:[
+     '- TABLE : string = "departments"',
+   ],
+   methods:[
+     '+ list(facultyId: ?int) : array',
+     '+ findById(id: int) : ?array',
+     '+ create(deptName: string, facultyId: int, headId: ?int) : int',
+     '+ update(id: int, data: array) : bool',
+   ]},
+
+  {id:'NotificationDao', stereotype:'dao', pkg:'App\\Dao', name:'NotificationDao', layer:'dao', x:710, y:1280,
+   attrs:[
+     '- TABLE : string = "notifications"',
+   ],
+   methods:[
+     '+ create(userId: int, msg: string, type: string) : int',
+     '+ listForUser(userId: int) : array',
+     '+ markRead(id: int, userId: int) : bool',
+     '+ markAllRead(userId: int) : void',
+   ]},
+
+  {id:'AuditLogDao', stereotype:'dao', pkg:'App\\Dao', name:'AuditLogDao', layer:'dao', x:1040, y:1280,
+   attrs:[
+     '- TABLE : string = "audit_logs"',
+   ],
+   methods:[
+     '+ log(userId: int, action: string, entity: ?string, id: ?int, detail: ?array) : void',
+     '+ list(limit: int, offset: int) : array',
+   ]},
+
+  {id:'LoginAttemptDao', stereotype:'dao', pkg:'App\\Dao', name:'LoginAttemptDao', layer:'dao', x:1370, y:1280,
+   attrs:[
+     '- TABLE : string = "login_attempts"',
+   ],
+   methods:[
+     '+ record(identifier: string, ip: string, ok: bool) : void',
+     '+ isThrottled(identifier: string, ip: string) : bool',
+     '+ clearFailures(identifier: string) : void',
    ]},
 ];
 
 const cmap = {};
 classes.forEach(c => cmap[c.id] = c);
 
-// ── RELATIONSHIPS ──
-// type: 'assoc'=solid arrow, 'comp'=diamond+arrow, 'dep'=dashed arrow
-// label, fromMul, toMul
+// ── UML 2.5 DEPENDENCIES (..>) WITH CLEAN STEPPED ROUTING ──
 const rels = [
-  {f:'user',               t:'role',              type:'assoc', lbl:'has',           fm:'N',    tm:'1'},
-  {f:'user',               t:'department',        type:'assoc', lbl:'belongs to',    fm:'N',    tm:'1'},
-  {f:'faculty',            t:'department',        type:'assoc', lbl:'contains',      fm:'1',    tm:'*'},
-  {f:'faculty',            t:'user',              type:'assoc', lbl:'has dean',      fm:'1',    tm:'0..1'},
-  {f:'department',         t:'user',              type:'assoc', lbl:'has head',      fm:'1',    tm:'0..1'},
-  {f:'user',               t:'assignment',        type:'assoc', lbl:'assigned to',   fm:'1',    tm:'*'},
-  {f:'assignment',         t:'assignment_progress',type:'comp', lbl:'has progress',  fm:'1',    tm:'*'},
-  {f:'user',               t:'work_request',      type:'assoc', lbl:'creates',       fm:'1',    tm:'*'},
-  {f:'user',               t:'student_request',   type:'assoc', lbl:'submits',       fm:'1',    tm:'*'},
-  {f:'user',               t:'notification',      type:'assoc', lbl:'receives',      fm:'1',    tm:'*'},
-  {f:'user',               t:'workload_appeal',   type:'assoc', lbl:'appeals',       fm:'1',    tm:'*'},
-  {f:'user',               t:'role_promotion',    type:'assoc', lbl:'requests',      fm:'1',    tm:'*'},
-  {f:'user',               t:'audit_log',         type:'assoc', lbl:'generates',     fm:'1',    tm:'*'},
+  // Controllers depend on DAOs & Services
+  {f:'AuthController',           t:'UserDao',          lbl:'«call»'},
+  {f:'AuthController',           t:'LoginAttemptDao',  lbl:'«call»'},
+  {f:'UserController',           t:'UserDao',          lbl:'«call»'},
+  {f:'AssignmentController',     t:'AssignmentDao',    lbl:'«call»'},
+  {f:'AssignmentController',     t:'WorkloadService',  lbl:'«uses»'},
+  {f:'StudentRequestController', t:'StudentRequestDao',lbl:'«call»'},
+  {f:'StudentRequestController', t:'AssignmentDao',    lbl:'«call»'},
+  {f:'WorkRequestController',    t:'WorkRequestDao',   lbl:'«call»'},
+  {f:'WorkRequestController',    t:'AssignmentDao',    lbl:'«call»'},
+
+  // WorkloadService integrates DAOs
+  {f:'WorkloadService',          t:'UserDao',          lbl:'«uses»'},
+  {f:'WorkloadService',          t:'AssignmentDao',    lbl:'«uses»'},
+  {f:'WorkloadService',          t:'NotificationDao',  lbl:'«call»'},
+
+  // Hierarchy
+  {f:'DepartmentDao',            t:'FacultyDao',       lbl:'«reference»'},
 ];
 
-// ── RENDER HELPERS ──
+function getPort(c, side) {
+  const h = classH(c);
+  if (side === 'top')    return {x: c.x + CW / 2, y: c.y};
+  if (side === 'bottom') return {x: c.x + CW / 2, y: c.y + h};
+  if (side === 'left')   return {x: c.x,          y: c.y + h / 2};
+  if (side === 'right')  return {x: c.x + CW,      y: c.y + h / 2};
+  return {x: cmx(c), y: cmy(c)};
+}
+
 function ns(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
 function sa(el, ...p) { for (let i = 0; i < p.length; i += 2) el.setAttribute(p[i], p[i+1]); return el; }
-function ln(g, x1, y1, x2, y2, col, w, dash, mEnd) {
-  const l = ns('line');
-  sa(l,'x1',x1,'y1',y1,'x2',x2,'y2',y2,'stroke',col||C_LINE,'stroke-width',w||1.5);
-  if (dash) sa(l,'stroke-dasharray',dash);
-  if (mEnd) sa(l,'marker-end',mEnd);
-  g.appendChild(l); return l;
-}
-function txt(g, x, y, text, opts={}) {
-  const t = ns('text');
-  sa(t,'x',x,'y',y,'font-family','Arial,sans-serif','font-size',opts.size||10.5,
-     'fill',opts.fill||C_TEXT,'text-anchor',opts.anchor||'start');
-  if (opts.bold) sa(t,'font-weight','700');
-  if (opts.italic) sa(t,'font-style','italic');
-  t.textContent = text;
-  g.appendChild(t); return t;
-}
 
-// Get nearest edge point of a class box toward (tx,ty)
-function edgePt(c, tx, ty) {
-  const cx = cmx(c), cy = cmy(c), h = classH(c);
-  const hw = CW/2, hh = h/2;
-  const dx = tx-cx, dy = ty-cy;
-  if (!dx && !dy) return [cx,cy];
-  const rx = Math.abs(dx)/hw, ry = Math.abs(dy)/hh;
-  if (rx >= ry) {
-    const t = hw/Math.abs(dx);
-    return [dx>0 ? cx+hw : cx-hw, cy+dy*t];
-  } else {
-    const t = hh/Math.abs(dy);
-    return [cx+dx*t, dy>0 ? cy+hh : cy-hh];
-  }
-}
-
-let scale=0.5, tx=40, ty=30, drag=false, lx=0, ly=0;
+let scale = 0.44, tx = 30, ty = 20, drag = false, lx = 0, ly = 0;
 
 function render() {
   const world = document.getElementById('world');
   while (world.firstChild) world.removeChild(world.firstChild);
   world.setAttribute('transform', `translate(${tx},${ty}) scale(${scale})`);
 
-  // ── RELATIONSHIP LINES ──
+  // 1. DRAW RELATIONSHIP LINES WITH STEPPED ROUTING
   rels.forEach(r => {
     const fc = cmap[r.f], tc = cmap[r.t];
     if (!fc || !tc) return;
-    const fcx=cmx(fc),fcy=cmy(fc),tcx=cmx(tc),tcy=cmy(tc);
-    const [x1,y1] = edgePt(fc, tcx, tcy);
-    const [x2,y2] = edgePt(tc, fcx, fcy);
+
+    let p1, p2, d;
+    if (fc.y < tc.y) {
+      p1 = getPort(fc, 'bottom');
+      p2 = getPort(tc, 'top');
+      const midY = (p1.y + p2.y) / 2;
+      d = `M${p1.x},${p1.y} V${midY} H${p2.x} V${p2.y}`;
+    } else if (fc.y > tc.y) {
+      p1 = getPort(fc, 'top');
+      p2 = getPort(tc, 'bottom');
+      const midY = (p1.y + p2.y) / 2;
+      d = `M${p1.x},${p1.y} V${midY} H${p2.x} V${p2.y}`;
+    } else {
+      if (fc.x < tc.x) {
+        p1 = getPort(fc, 'right');
+        p2 = getPort(tc, 'left');
+      } else {
+        p1 = getPort(fc, 'left');
+        p2 = getPort(tc, 'right');
+      }
+      d = `M${p1.x},${p1.y} H${p2.x}`;
+    }
 
     const g = ns('g');
-
-    // Line style
-    const isDash = r.type === 'dep';
-    const mEnd = r.type === 'comp' ? 'url(#assoc)' : 'url(#empty-arr)';
-    const mStart = r.type === 'comp' ? 'url(#diamond)' : 'none';
-
     const path = ns('path');
-    // Route with slight curve
-    const dx = x2-x1, dy = y2-y1;
-    let d;
-    if (Math.abs(dx) > Math.abs(dy)) {
-      d = `M${x1},${y1} C${x1+dx*0.4},${y1} ${x2-dx*0.4},${y2} ${x2},${y2}`;
-    } else {
-      d = `M${x1},${y1} C${x1},${y1+dy*0.4} ${x2},${y2-dy*0.4} ${x2},${y2}`;
-    }
-    sa(path,'d',d,'fill','none','stroke',C_LINE,'stroke-width',1.4,
-       'marker-end',mEnd);
-    if (isDash) sa(path,'stroke-dasharray','6 3');
-    if (r.type === 'comp') sa(path,'marker-start','url(#diamond)');
+    sa(path, 'd', d, 'fill', 'none', 'stroke', '#64748b', 'stroke-width', 1.4,
+       'stroke-dasharray', '5 4', 'marker-end', 'url(#uml-dep)');
     g.appendChild(path);
 
-    // Relationship label
-    const mlx=(x1+x2)/2, mly=(y1+y2)/2;
+    // Label pill
+    const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
     const bg = ns('rect');
-    const lw = r.lbl.length*5.2+8;
-    sa(bg,'x',mlx-lw/2,'y',mly-9,'width',lw,'height',13,'rx',3,'fill','#eef0fa');
+    const w = r.lbl.length * 6.5 + 10;
+    sa(bg, 'x', mx - w/2, 'y', my - 8, 'width', w, 'height', 16, 'rx', 4,
+       'fill', '#0b1120', 'stroke', '#334155', 'stroke-width', 0.9);
     g.appendChild(bg);
-    txt(g, mlx, mly+1, r.lbl, {anchor:'middle', fill:'#4a5a8a', italic:true, size:9.5});
 
-    // Multiplicities
-    function mulTxt(x, y, m) {
-      const t = ns('text');
-      sa(t,'x',x,'y',y,'font-family','Arial,sans-serif','font-size',10,
-         'fill',C_LINE,'font-weight','700','text-anchor','middle');
-      t.textContent = m; g.appendChild(t);
-    }
-    const ang = Math.atan2(y2-y1, x2-x1);
-    const off = 28;
-    if (r.fm) mulTxt(x1+off*Math.cos(ang)-10*Math.sin(ang), y1+off*Math.sin(ang)+10*Math.cos(ang), r.fm);
-    if (r.tm) mulTxt(x2-off*Math.cos(ang)-10*Math.sin(ang), y2-off*Math.sin(ang)+10*Math.cos(ang), r.tm);
+    const txtLabel = ns('text');
+    sa(txtLabel, 'x', mx, 'y', my + 4, 'font-family', 'ui-monospace,sans-serif',
+       'font-size', 9.5, 'fill', '#94a3b8', 'text-anchor', 'middle');
+    txtLabel.textContent = r.lbl;
+    g.appendChild(txtLabel);
 
     world.appendChild(g);
   });
 
-  // ── CLASS BOXES ──
+  // 2. DRAW 3-COMPARTMENT CLASS BOXES
   classes.forEach(c => {
     const h = classH(c);
     const g = ns('g');
 
-    // Shadow
-    const shad = ns('rect');
-    sa(shad,'x',c.x+2,'y',c.y+2,'width',CW,'height',h,'rx',4,'fill','rgba(0,0,0,0.10)');
-    g.appendChild(shad);
+    let hdrBg = '#1e293b', bdrCol = '#475569', badgeCol = '#38bdf8';
+    if (c.layer === 'ctrl')  { hdrBg = '#172554'; bdrCol = '#2563eb'; badgeCol = '#60a5fa'; }
+    if (c.layer === 'srv')   { hdrBg = '#2e1065'; bdrCol = '#7c3aed'; badgeCol = '#a78bfa'; }
+    if (c.layer === 'dao')   { hdrBg = '#064e3b'; bdrCol = '#059669'; badgeCol = '#34d399'; }
+    if (c.layer === 'infra') { hdrBg = '#451a03'; bdrCol = '#d97706'; badgeCol = '#fbbf24'; }
 
-    // Body
+    // Outer card
     const body = ns('rect');
-    sa(body,'x',c.x,'y',c.y,'width',CW,'height',h,'rx',4,
-       'fill',C_BODY,'stroke',C_BORD,'stroke-width',1.5);
+    sa(body, 'x', c.x, 'y', c.y, 'width', CW, 'height', h, 'rx', 6,
+       'fill', '#0f172a', 'stroke', bdrCol, 'stroke-width', 1.5, 'filter', 'url(#box-shadow)');
     g.appendChild(body);
 
-    // Header background
+    // Compartment 1: Header (Stereotype + Class Name)
     const hdr = ns('rect');
-    sa(hdr,'x',c.x,'y',c.y,'width',CW,'height',CHDR,'rx',4,
-       'fill',C_HDR,'stroke','none');
+    sa(hdr, 'x', c.x, 'y', c.y, 'width', CW, 'height', CHDR, 'rx', 6, 'fill', hdrBg);
     g.appendChild(hdr);
     const hdrFix = ns('rect');
-    sa(hdrFix,'x',c.x,'y',c.y+CHDR-4,'width',CW,'height',4,'fill',C_HDR);
+    sa(hdrFix, 'x', c.x, 'y', c.y + CHDR - 6, 'width', CW, 'height', 6, 'fill', hdrBg);
     g.appendChild(hdrFix);
 
-    // Header border line
-    const hdivL = ns('line');
-    sa(hdivL,'x1',c.x,'y1',c.y+CHDR,'x2',c.x+CW,'y2',c.y+CHDR,
-       'stroke',C_HDR2,'stroke-width',1.2);
-    g.appendChild(hdivL);
+    const hdiv = ns('line');
+    sa(hdiv, 'x1', c.x, 'y1', c.y + CHDR, 'x2', c.x + CW, 'y2', c.y + CHDR, 'stroke', bdrCol, 'stroke-width', 1.2);
+    g.appendChild(hdiv);
 
-    // Class name
-    txt(g, c.x+CW/2, c.y+CHDR-9, c.name,
-        {anchor:'middle', bold:true, size:12, fill:'#1a1a3e'});
+    // Stereotype: «stereotype»
+    const stTxt = ns('text');
+    sa(stTxt, 'x', c.x + CW / 2, 'y', c.y + 14, 'font-family', 'ui-sans-serif,system-ui,sans-serif',
+       'font-size', 9.5, 'fill', '#94a3b8', 'text-anchor', 'middle', 'font-style', 'italic');
+    stTxt.textContent = `«${c.stereotype}»`;
+    g.appendChild(stTxt);
 
-    // ATTRS section
+    // Class Name
+    const nameTxt = ns('text');
+    sa(nameTxt, 'x', c.x + CW / 2, 'y', c.y + CHDR - 7, 'font-family', 'ui-sans-serif,system-ui,sans-serif',
+       'font-size', 12, 'fill', '#f8fafc', 'font-weight', '700', 'text-anchor', 'middle');
+    nameTxt.textContent = c.name;
+    g.appendChild(nameTxt);
+
+    // Compartment 2: Attributes
     const attrY = c.y + CHDR;
-    const attrSecH = secH(c.attrs);
     c.attrs.forEach((a, i) => {
-      const ry = attrY + SPAD + i*ARH;
-      // Alternate row
+      const ry = attrY + SPAD + i * ARH;
       if (i % 2 === 1) {
-        const rb = ns('rect');
-        sa(rb,'x',c.x,'y',ry,'width',CW,'height',ARH,'fill','#f4f5fc');
-        g.appendChild(rb);
+        const bg = ns('rect');
+        sa(bg, 'x', c.x + 1, 'y', ry, 'width', CW - 2, 'height', ARH, 'fill', '#172033');
+        g.appendChild(bg);
       }
-      txt(g, c.x+8, ry+ARH-4, a, {fill:C_DIM, size:9.5});
+      const atxt = ns('text');
+      sa(atxt, 'x', c.x + 10, 'y', ry + ARH - 5, 'font-family', 'ui-monospace,SFMono-Regular,Consolas,sans-serif',
+         'font-size', 9.5, 'fill', '#94a3b8');
+      atxt.textContent = a;
+      g.appendChild(atxt);
     });
 
-    // Divider before methods
-    const methY = attrY + attrSecH;
-    const div = ns('line');
-    sa(div,'x1',c.x,'y1',methY,'x2',c.x+CW,'y2',methY,'stroke',C_HDR2,'stroke-width',1);
-    g.appendChild(div);
+    // Compartment Divider between Attributes & Methods
+    const methY = attrY + secH(c.attrs);
+    const mdiv = ns('line');
+    sa(mdiv, 'x1', c.x, 'y1', methY, 'x2', c.x + CW, 'y2', methY, 'stroke', '#334155', 'stroke-width', 1.2);
+    g.appendChild(mdiv);
 
-    // METHODS section
+    // Compartment 3: Methods / Operations
     c.methods.forEach((m, i) => {
-      const ry = methY + SPAD + i*ARH;
-      txt(g, c.x+8, ry+ARH-4, m, {fill:'#1a3a6a', size:9.5});
+      const ry = methY + SPAD + i * ARH;
+      const mtxt = ns('text');
+      sa(mtxt, 'x', c.x + 10, 'y', ry + ARH - 5, 'font-family', 'ui-monospace,SFMono-Regular,Consolas,sans-serif',
+         'font-size', 9.5, 'fill', badgeCol);
+      mtxt.textContent = m;
+      g.appendChild(mtxt);
     });
-
-    // Outer border
-    const bord = ns('rect');
-    sa(bord,'x',c.x,'y',c.y,'width',CW,'height',h,'rx',4,
-       'fill','none','stroke',C_BORD,'stroke-width',1.5);
-    g.appendChild(bord);
 
     world.appendChild(g);
   });
@@ -449,33 +474,42 @@ function render() {
 function fitView() {
   const vp = document.getElementById('vp');
   const cw = vp.clientWidth, ch = vp.clientHeight;
-  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   classes.forEach(c => {
-    minX=Math.min(minX,c.x); minY=Math.min(minY,c.y);
-    maxX=Math.max(maxX,c.x+CW); maxY=Math.max(maxY,c.y+classH(c));
+    minX = Math.min(minX, c.x); minY = Math.min(minY, c.y);
+    maxX = Math.max(maxX, c.x + CW); maxY = Math.max(maxY, c.y + classH(c));
   });
-  const bw=maxX-minX+80, bh=maxY-minY+80;
-  scale=Math.min(cw/bw, ch/bh, 0.9);
-  tx=(cw-bw*scale)/2-minX*scale+40*scale;
-  ty=(ch-bh*scale)/2-minY*scale+40*scale;
+  const bw = maxX - minX + 120, bh = maxY - minY + 120;
+  scale = Math.min(cw / bw, ch / bh, 0.95);
+  tx = (cw - bw * scale) / 2 - minX * scale + 60 * scale;
+  ty = (ch - bh * scale) / 2 - minY * scale + 60 * scale;
   render();
 }
 
-function resetView() { scale=0.5; tx=40; ty=30; render(); }
+function resetView() { scale = 0.44; tx = 30; ty = 20; render(); }
 
 const vp = document.getElementById('vp');
 vp.addEventListener('wheel', e => {
   e.preventDefault();
   const r = vp.getBoundingClientRect();
-  const mx=e.clientX-r.left, my=e.clientY-r.top;
-  const d=e.deltaY>0?.88:1/.88;
-  tx=mx-(mx-tx)*d; ty=my-(my-ty)*d; scale*=d; render();
-},{passive:false});
-vp.addEventListener('mousedown', e=>{drag=true;lx=e.clientX;ly=e.clientY;});
-vp.addEventListener('mousemove', e=>{if(!drag)return;tx+=e.clientX-lx;ty+=e.clientY-ly;lx=e.clientX;ly=e.clientY;render();});
-vp.addEventListener('mouseup', ()=>drag=false);
-vp.addEventListener('mouseleave', ()=>drag=false);
-window.addEventListener('load', ()=>{render();setTimeout(fitView,120);});
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  const d = e.deltaY > 0 ? 0.9 : 1 / 0.9;
+  tx = mx - (mx - tx) * d;
+  ty = my - (my - ty) * d;
+  scale *= d;
+  render();
+}, {passive:false});
+
+vp.addEventListener('mousedown', e => { drag = true; lx = e.clientX; ly = e.clientY; });
+vp.addEventListener('mousemove', e => {
+  if (!drag) return;
+  tx += e.clientX - lx; ty += e.clientY - ly;
+  lx = e.clientX; ly = e.clientY;
+  render();
+});
+vp.addEventListener('mouseup', () => drag = false);
+vp.addEventListener('mouseleave', () => drag = false);
+window.addEventListener('load', () => { render(); setTimeout(fitView, 100); });
 </script>
 </body>
 </html>

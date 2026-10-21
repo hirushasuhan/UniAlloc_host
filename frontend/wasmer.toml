@@ -1,6 +1,6 @@
 [package]
 name = "hirushasuhan/frontend"
-version = "0.1.7"
+version = "1.0.0"
 description = "UniAlloc Next.js Frontend for Wasmer Edge"
 
 [dependencies]

@@ -2,272 +2,388 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>UniAlloc – Use Case Diagram</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UniAlloc — UML 2.5 Standard Use Case Diagram</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#f0f2f8;font-family:Arial,sans-serif;overflow:hidden;height:100vh}
-#bar{position:fixed;top:0;left:0;right:0;height:44px;background:#fff;border-bottom:1px solid #d1d5db;display:flex;align-items:center;padding:0 16px;gap:10px;z-index:9;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-#bar h1{font-size:14px;font-weight:700;color:#111827;flex:1}
-.btn{background:#f9fafb;color:#374151;border:1px solid #d1d5db;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:12px}
-.btn:hover{background:#f3f4f6}
-#vp{width:100%;height:calc(100vh - 44px);margin-top:44px;cursor:grab;overflow:hidden}
+body{background:#0f172a;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;overflow:hidden;height:100vh;color:#e2e8f0}
+#bar{position:fixed;top:0;left:0;right:0;height:52px;background:#1e293b;border-bottom:1px solid #334155;display:flex;align-items:center;padding:0 20px;gap:12px;z-index:99;box-shadow:0 4px 6px -1px rgba(0,0,0,0.3)}
+#bar h1{font-size:15px;font-weight:700;color:#f8fafc;display:flex;align-items:center;gap:8px}
+.badge{background:#8b5cf620;color:#a78bfa;border:1px solid #8b5cf640;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.legend{display:flex;align-items:center;gap:16px;font-size:11px;color:#94a3b8;margin-left:auto}
+.legend-item{display:flex;align-items:center;gap:6px}
+.btn{background:#334155;color:#f1f5f9;border:1px solid #475569;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;transition:all 0.15s ease}
+.btn:hover{background:#475569;border-color:#64748b}
+.btn-primary{background:#2563eb;border-color:#3b82f6}
+.btn-primary:hover{background:#1d4ed8}
+#vp{width:100%;height:calc(100vh - 52px);margin-top:52px;cursor:grab;overflow:hidden;background:radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%)}
 #vp:active{cursor:grabbing}
 svg{width:100%;height:100%}
+.help-tip{position:fixed;bottom:16px;left:20px;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px 14px;font-size:11px;color:#94a3b8;box-shadow:0 10px 15px -3px rgba(0,0,0,0.4);pointer-events:none}
 </style>
 </head>
 <body>
 <div id="bar">
-  <h1>UniAlloc — Use Case Diagram</h1>
-  <span style="font-size:11px;color:#6b7280">5 actors · 26 use cases · scroll to zoom · drag to pan</span>
-  <button class="btn" onclick="fitView()">⊞ Fit</button>
+  <h1>
+    <span>UniAlloc — Use Case Diagram</span>
+    <span class="badge">Strict UML 2.5 Standard</span>
+  </h1>
+  <div class="legend">
+    <div class="legend-item"><span style="display:inline-block;width:14px;height:2px;background:#94a3b8"></span> Actor Association (Undirected)</div>
+    <div class="legend-item"><span style="display:inline-block;width:14px;height:2px;border-top:2px dashed #38bdf8"></span> &laquo;include&raquo;</div>
+    <div class="legend-item"><span style="display:inline-block;width:14px;height:2px;border-top:2px dashed #f59e0b"></span> &laquo;extend&raquo;</div>
+    <div class="legend-item"><span style="display:inline-block;width:8px;height:8px;border-left:2px solid #cbd5e1;border-bottom:2px solid #cbd5e1;transform:rotate(45deg);margin-right:4px"></span> Actor Generalization (&triangle;)</div>
+  </div>
+  <button class="btn btn-primary" onclick="fitView()">⊞ Fit View</button>
   <button class="btn" onclick="resetView()">Reset</button>
 </div>
-<div id="vp"><svg id="svg"><defs>
-  <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-    <polygon points="0 0, 9 3.5, 0 7" fill="#5a6a9a"/>
-  </marker>
-</defs><g id="world"></g></svg></div>
+
+<div id="vp">
+  <svg id="svg">
+    <defs>
+      <!-- UML Standard Open Arrowhead for <<include>> and <<extend>> -->
+      <marker id="uml-open-arrow-inc" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+        <path d="M1,1 L9,4 L1,7" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round"/>
+      </marker>
+      <marker id="uml-open-arrow-ext" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+        <path d="M1,1 L9,4 L1,7" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/>
+      </marker>
+      <!-- UML Standard Hollow Triangle for Generalization (Inheritance) -->
+      <marker id="uml-generalization" markerWidth="12" markerHeight="10" refX="12" refY="5" orient="auto">
+        <polygon points="1,1 11,5 1,9" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.4"/>
+      </marker>
+    </defs>
+    <g id="world"></g>
+  </svg>
+</div>
+
+<div class="help-tip">
+  💡 <b>UML 2.5 Standard Rules:</b> Single System Boundary · Actors outside boundary · Actor Generalization to base User eliminates line crossing · True ellipses for use cases
+</div>
+
 <script>
-// ── COLORS ──
-const C_SYS_BG   = '#fffde7';  // yellow background
-const C_SYS_BDR  = '#b8a000';
-const C_UC_FILL  = '#d4d8f4';  // lavender rounded rect
-const C_UC_BDR   = '#7a88cc';
-const C_ACT_LINE = '#1a1a3e';
-const C_LINE     = '#5a6a9a';
+// ── THEME COLORS ──
+const C_SYS_BG   = '#0a0f1d';
+const C_SYS_BDR  = '#334155';
+const C_UC_FILL  = '#1e293b';
+const C_UC_BDR   = '#6366f1';
+const C_UC_TXT   = '#f8fafc';
+const C_ACT_LINE = '#cbd5e1';
+const C_LINE     = '#64748b';
 
-// ── SYSTEM BOUNDARY ──
-const SB = {x:230, y:40, w:1120, h:1100, title:'UniAlloc — Workload Allocation System'};
+// ── SYSTEM BOUNDARY (Single Rectangular Box as per UML 2.5) ──
+const SB = {x: 320, y: 30, w: 1040, h: 1080, title: 'UniAlloc — University HR & Workload Allocation System'};
 
-// ── USE CASE BOX ──
-const UC_W = 160, UC_H = 38, UC_RX = 16;
+// ── ELLIPSE DIMENSIONS ──
+const UC_RX = 94, UC_RY = 26;
 
-// Use cases: id, lines (text), cx, cy
+// ── ACTORS (All OUTSIDE the System Boundary on Left) ──
+// Includes standard UML Actor Generalization (User <- Staff <- Dean/Head/Lecturer)
+const actors = [
+  // Base Abstract Actor (Inherited by all)
+  {id:'user',   label:'«abstract»\nUser',          cx:80,  cy:130, color:'#94a3b8', isAbstract:true},
+  
+  // Specific Concrete Roles
+  {id:'admin',  label:'System Admin',              cx:80,  cy:320, color:'#ef4444'},
+  {id:'dean',   label:'Dean',                      cx:80,  cy:510, color:'#38bdf8'},
+  {id:'dhead',  label:'Department Head',           cx:80,  cy:690, color:'#10b981'},
+  {id:'lect',   label:'Lecturer',                  cx:80,  cy:860, color:'#f59e0b'},
+  {id:'stud',   label:'Student',                   cx:80,  cy:1010, color:'#a78bfa'},
+];
+
+const amap = {};
+actors.forEach(a => amap[a.id] = a);
+
+// Actor Generalizations: childId -> parentId (Hollow triangle arrow pointing to parent)
+const actorGen = [
+  {child:'admin', parent:'user'},
+  {child:'dean',  parent:'user'},
+  {child:'dhead', parent:'user'},
+  {child:'lect',  parent:'user'},
+  {child:'stud',  parent:'user'},
+];
+
+// ── USE CASES (INSIDE the System Boundary, Grouped by Functional Package) ──
 const ucs = [
-  // === Common (Login + profile) ===
-  {id:'login',   lines:['Login'],                          cx:570,  cy:110},
-  {id:'notif',   lines:['View Notifications'],             cx:830,  cy:110},
-  {id:'profile', lines:['Update Profile'],                 cx:1090, cy:110},
+  // ── Package 1: Common Security & Identity (Top Cluster) ─────────
+  {id:'login',     lines:['Authenticate / Login'],           cx:500,  cy:90,  tag:'sec'},
+  {id:'totp',      lines:['Setup / Verify 2FA (TOTP)'],      cx:760,  cy:90,  tag:'sec'},
+  {id:'pwdreset',  lines:['Reset Password via TOTP'],        cx:1020, cy:90,  tag:'sec'},
+  {id:'notif',     lines:['View Notifications'],             cx:1220, cy:90,  tag:'sec'},
+  {id:'profile',   lines:['Manage User Profile'],            cx:630,  cy:155, tag:'sec'},
 
-  // === System Admin ===
-  {id:'mgu',     lines:['Manage Users'],                   cx:430,  cy:230},
-  {id:'mgf',     lines:['Manage Faculties'],               cx:640,  cy:230},
-  {id:'mgd',     lines:['Manage Departments'],             cx:860,  cy:230},
-  {id:'audit',   lines:['View Audit Logs'],                cx:1070, cy:230},
-  {id:'settings',lines:['Manage System Settings'],         cx:1260, cy:230},
-  {id:'promo',   lines:['Approve Role Promotions'],        cx:430,  cy:340},
-  {id:'mgset',   lines:['Manage System Settings'],         cx:640,  cy:340},
+  // ── Package 2: System Administration (Admin Scope) ──────────────
+  {id:'mgu',       lines:['Manage Users & Roles'],           cx:520,  cy:280, tag:'adm'},
+  {id:'mgf',       lines:['Manage Faculties & Deans'],       cx:780,  cy:280, tag:'adm'},
+  {id:'mgd',       lines:['Manage Departments'],             cx:1040, cy:280, tag:'adm'},
+  {id:'audit',     lines:['View Audit & Security Logs'],     cx:1240, cy:280, tag:'adm'},
+  {id:'settings',  lines:['Configure System Settings'],      cx:520,  cy:355, tag:'adm'},
+  {id:'apppromo',  lines:['Approve Dean Promotions'],        cx:780,  cy:355, tag:'adm'},
 
-  // === Dean ===
-  {id:'facwl',   lines:['Monitor Faculty Workload'],       cx:430,  cy:470},
-  {id:'asgdh',   lines:['Assign Work to Dept Heads'],      cx:660,  cy:470},
-  {id:'appreq',  lines:['Approve / Reject Requests'],      cx:890,  cy:470},
-  {id:'facdash', lines:['View Faculty Dashboard'],         cx:1110, cy:470},
-  {id:'nompromo',lines:['Nominate Lecturer Promotion'],    cx:1290, cy:470},
+  // ── Package 3: Workload Allocation & Monitoring (Dean/Head) ─────
+  {id:'facwl',     lines:['Monitor Faculty Capacity'],       cx:520,  cy:470, tag:'alloc'},
+  {id:'asgwork',   lines:['Allocate Workload Task'],         cx:780,  cy:470, tag:'alloc'},
+  {id:'overload',  lines:['Trigger Overload Alert'],         cx:1040, cy:470, tag:'alloc', isExt:true},
+  {id:'altstaff',  lines:['Suggest Alternative Staff'],      cx:1240, cy:470, tag:'alloc', isExt:true},
+  {id:'deptwl',    lines:['Monitor Department Workload'],    cx:520,  cy:550, tag:'alloc'},
+  {id:'crossreq',  lines:['Process Cross-Boundary Request'], cx:780,  cy:550, tag:'alloc'},
+  {id:'nompromo',  lines:['Nominate / Endorse Promotion'],   cx:1040, cy:550, tag:'alloc'},
 
-  // === Department Head ===
-  {id:'deptwl',  lines:['Monitor Lecturer Workload'],      cx:430,  cy:610},
-  {id:'asglect', lines:['Assign Work to Lecturers'],       cx:660,  cy:610},
-  {id:'deptdash',lines:['View Department Dashboard'],      cx:890,  cy:610},
-  {id:'addlect', lines:['Add Lecturers'],                  cx:1110, cy:610},
-  {id:'crossreq',lines:['Create Cross-Dept Request'],      cx:1290, cy:610},
+  // ── Package 4: Student Supervision Workflow (2-Step Chain) ──────
+  {id:'submstud',  lines:['Submit Supervisor Request'],      cx:520,  cy:680, tag:'sup'},
+  {id:'endorsestud',lines:['Endorse Supervisor Request'],    cx:780,  cy:680, tag:'sup'},
+  {id:'asgsup',    lines:['Approve & Assign Supervisor'],    cx:1040, cy:680, tag:'sup'},
+  {id:'trackstud', lines:['Track Supervisor Status'],        cx:1240, cy:680, tag:'sup'},
 
-  // === Lecturer ===
-  {id:'updprog', lines:['Update Assignment Progress'],     cx:490,  cy:750},
-  {id:'submapp', lines:['Submit Workload Appeal'],         cx:720,  cy:750},
-  {id:'wlchart', lines:['View Workload Chart'],            cx:950,  cy:750},
-  {id:'trackreq',lines:['Track Request Status'],           cx:1180, cy:750},
-
-  // === Student ===
-  {id:'stubreq', lines:['Submit Service Request'],         cx:560,  cy:890},
-  {id:'sttrack', lines:['Track Request Status'],           cx:840,  cy:890},
+  // ── Package 5: Workload Execution & Appeals (Lecturer Scope) ────
+  {id:'myasg',     lines:['View Assigned Workload'],         cx:520,  cy:820, tag:'exec'},
+  {id:'updprog',   lines:['Update Task Progress & Note'],    cx:780,  cy:820, tag:'exec'},
+  {id:'submapp',   lines:['File Workload Appeal'],           cx:1040, cy:820, tag:'exec'},
+  {id:'revapp',    lines:['Review / Resolve Appeal'],        cx:1240, cy:820, tag:'exec'},
+  {id:'upreq',     lines:['Submit Upward Work Request'],     cx:780,  cy:900, tag:'exec'},
+  {id:'wldonut',   lines:['View Capacity Donut Chart'],      cx:520,  cy:900, tag:'exec'},
 ];
 
 const ucmap = {};
 ucs.forEach(u => ucmap[u.id] = u);
 
-// ── ACTORS (all on LEFT) ──
-// Positions: cx for stick figure center, cy for head
-const actors = [
-  {id:'admin', lines:['System Admin'],     cx:100, cy:220},
-  {id:'dean',  lines:['Dean'],             cx:100, cy:460},
-  {id:'dhead', lines:['Department Head'],  cx:100, cy:600},
-  {id:'lect',  lines:['Lecturer'],         cx:100, cy:740},
-  {id:'stud',  lines:['Student'],          cx:100, cy:880},
-];
-const amap = {};
-actors.forEach(a => amap[a.id] = a);
+// ── ACTOR-TO-USE-CASE ASSOCIATIONS (Solid Undirected Lines) ──
+// Standard UML: Only role-specific associations; common ones connect to 'user'
+const actorConns = [
+  // User (Base Actor - inherited by all 5 roles)
+  ['user', 'login'],
+  ['user', 'totp'],
+  ['user', 'notif'],
+  ['user', 'profile'],
 
-// ── CONNECTIONS: [actorId, ucId, dashed] ──
-const conns = [
   // System Admin
-  ['admin','login'],['admin','notif'],['admin','profile'],
-  ['admin','mgu'],['admin','mgf'],['admin','mgd'],['admin','audit'],
-  ['admin','settings'],['admin','promo'],
+  ['admin', 'mgu'],
+  ['admin', 'mgf'],
+  ['admin', 'mgd'],
+  ['admin', 'audit'],
+  ['admin', 'settings'],
+  ['admin', 'apppromo'],
 
   // Dean
-  ['dean','login'],['dean','notif'],['dean','profile'],
-  ['dean','facwl'],['dean','asgdh'],['dean','appreq'],
-  ['dean','facdash'],['dean','nompromo'],
+  ['dean', 'facwl'],
+  ['dean', 'asgwork'],
+  ['dean', 'crossreq'],
+  ['dean', 'asgsup'],
+  ['dean', 'revapp'],
 
   // Department Head
-  ['dhead','login'],['dhead','notif'],['dhead','profile'],
-  ['dhead','deptwl'],['dhead','asglect'],['dhead','deptdash'],
-  ['dhead','addlect'],['dhead','crossreq'],
+  ['dhead', 'deptwl'],
+  ['dhead', 'asgwork'],
+  ['dhead', 'crossreq'],
+  ['dhead', 'endorsestud'],
+  ['dhead', 'revapp'],
+  ['dhead', 'nompromo'],
 
   // Lecturer
-  ['lect','login'],['lect','notif'],['lect','profile'],
-  ['lect','updprog'],['lect','submapp'],['lect','wlchart'],['lect','trackreq'],
+  ['lect', 'myasg'],
+  ['lect', 'updprog'],
+  ['lect', 'submapp'],
+  ['lect', 'upreq'],
+  ['lect', 'wldonut'],
 
   // Student
-  ['stud','login'],['stud','notif'],
-  ['stud','stubreq'],['stud','sttrack'],
+  ['stud', 'submstud'],
+  ['stud', 'trackstud'],
 ];
 
-// ── RENDER HELPERS ──
+// ── USE CASE RELATIONSHIPS (<<include>> and <<extend>>) ──
+const ucRels = [
+  // <<include>>: Password reset requires TOTP verification
+  {f:'pwdreset', t:'totp',    type:'include'},
+
+  // <<extend>>: Overload alert extends task allocation conditionally [workload > 90%]
+  {f:'overload', t:'asgwork', type:'extend'},
+  // <<extend>>: Suggesting alternative staff extends overload alert
+  {f:'altstaff', t:'overload',type:'extend'},
+
+  // <<include>>: Final supervisor assignment creates a formal workload task
+  {f:'asgsup',   t:'asgwork', type:'include'},
+];
+
+// ── HELPER FUNCTIONS ──
 function ns(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
 function sa(el, ...p) { for (let i = 0; i < p.length; i += 2) el.setAttribute(p[i], p[i+1]); return el; }
-function ln(g, x1, y1, x2, y2, col, w, dash) {
+
+function ln(g, x1, y1, x2, y2, col, w, dash, markerEnd) {
   const l = ns('line');
-  sa(l,'x1',x1,'y1',y1,'x2',x2,'y2',y2,'stroke',col||C_LINE,'stroke-width',w||1.2);
-  if (dash) sa(l,'stroke-dasharray',dash);
-  g.appendChild(l); return l;
+  sa(l, 'x1', x1, 'y1', y1, 'x2', x2, 'y2', y2, 'stroke', col || C_LINE, 'stroke-width', w || 1.3);
+  if (dash) sa(l, 'stroke-dasharray', dash);
+  if (markerEnd) sa(l, 'marker-end', markerEnd);
+  g.appendChild(l);
+  return l;
 }
 
-function drawStick(g, cx, cy) {
-  // Head
+function ellipseEdgePt(uc, tx, ty) {
+  const dx = tx - uc.cx, dy = ty - uc.cy;
+  if (dx === 0 && dy === 0) return {x: uc.cx, y: uc.cy};
+  const angle = Math.atan2(dy, dx);
+  return {
+    x: uc.cx + UC_RX * Math.cos(angle),
+    y: uc.cy + UC_RY * Math.sin(angle)
+  };
+}
+
+function drawStick(g, cx, cy, col) {
   const hd = ns('circle');
-  sa(hd,'cx',cx,'cy',cy,'r',12,'fill','none','stroke',C_ACT_LINE,'stroke-width',1.8);
+  sa(hd, 'cx', cx, 'cy', cy, 'r', 13, 'fill', '#1e293b', 'stroke', col, 'stroke-width', 2);
   g.appendChild(hd);
-  // Body
-  ln(g, cx, cy+12, cx, cy+42, C_ACT_LINE, 1.8);
-  // Arms
-  ln(g, cx-16, cy+24, cx+16, cy+24, C_ACT_LINE, 1.8);
-  // Legs
-  ln(g, cx, cy+42, cx-13, cy+62, C_ACT_LINE, 1.8);
-  ln(g, cx, cy+42, cx+13, cy+62, C_ACT_LINE, 1.8);
+  ln(g, cx, cy + 13, cx, cy + 42, col, 2);
+  ln(g, cx - 16, cy + 25, cx + 16, cy + 25, col, 2);
+  ln(g, cx, cy + 42, cx - 14, cy + 64, col, 2);
+  ln(g, cx, cy + 42, cx + 14, cy + 64, col, 2);
 }
 
-function drawUC(g, uc) {
-  // Rounded rectangle
-  const bx = uc.cx - UC_W/2, by = uc.cy - UC_H/2;
-  const box = ns('rect');
-  sa(box,'x',bx,'y',by,'width',UC_W,'height',UC_H,'rx',UC_RX,
-     'fill',C_UC_FILL,'stroke',C_UC_BDR,'stroke-width',1.5);
-  g.appendChild(box);
-  // Text (may be multi-line)
+function drawEllipseUC(g, uc) {
+  const el = ns('ellipse');
+  const bdr = uc.isExt ? '#f59e0b' : uc.tag === 'sec' ? '#38bdf8' : C_UC_BDR;
+  sa(el, 'cx', uc.cx, 'cy', uc.cy, 'rx', UC_RX, 'ry', UC_RY,
+     'fill', C_UC_FILL, 'stroke', bdr, 'stroke-width', 1.6);
+  g.appendChild(el);
+
   const lines = uc.lines;
-  const lh = 14;
-  const startY = uc.cy - (lines.length-1)*lh/2 + 4;
+  const lh = 13;
+  const startY = uc.cy - (lines.length - 1) * lh / 2 + 4;
   lines.forEach((l, i) => {
     const t = ns('text');
-    sa(t,'x',uc.cx,'y',startY+i*lh,'font-family','Arial,sans-serif',
-       'font-size',11,'fill','#1a1a3e','text-anchor','middle','font-weight','600');
+    sa(t, 'x', uc.cx, 'y', startY + i * lh, 'font-family', 'ui-sans-serif,system-ui,sans-serif',
+       'font-size', 10.5, 'fill', C_UC_TXT, 'text-anchor', 'middle', 'font-weight', '600');
     t.textContent = l;
     g.appendChild(t);
   });
 }
 
-// Get left/right edge of use case box for connection
-function ucEdge(uc, fromLeft) {
-  return fromLeft
-    ? {x: uc.cx - UC_W/2, y: uc.cy}   // actor comes from left → connect to left edge
-    : {x: uc.cx + UC_W/2, y: uc.cy};
-}
-
-let scale = 0.6, tx = 20, ty = 20, drag = false, lx = 0, ly = 0;
+let scale = 0.47, tx = 30, ty = 20, drag = false, lx = 0, ly = 0;
 
 function render() {
   const world = document.getElementById('world');
   while (world.firstChild) world.removeChild(world.firstChild);
   world.setAttribute('transform', `translate(${tx},${ty}) scale(${scale})`);
 
-  // System boundary
-  const sbFill = ns('rect');
-  sa(sbFill,'x',SB.x,'y',SB.y,'width',SB.w,'height',SB.h,'rx',8,
-     'fill',C_SYS_BG,'stroke',C_SYS_BDR,'stroke-width',2);
-  world.appendChild(sbFill);
+  // 1. SYSTEM BOUNDARY (Single Official UML Rectangle)
+  const sbBox = ns('rect');
+  sa(sbBox, 'x', SB.x, 'y', SB.y, 'width', SB.w, 'height', SB.h, 'rx', 8,
+     'fill', C_SYS_BG, 'stroke', C_SYS_BDR, 'stroke-width', 2);
+  world.appendChild(sbBox);
 
-  // System boundary title
-  const sbtxt = ns('text');
-  sa(sbtxt,'x',SB.x+14,'y',SB.y+22,'font-family','Arial,sans-serif',
-     'font-size',13,'fill','#6b5200','font-weight','700');
-  sbtxt.textContent = SB.title;
-  world.appendChild(sbtxt);
+  // Boundary Title
+  const sbTitle = ns('text');
+  sa(sbTitle, 'x', SB.x + 20, 'y', SB.y + 28, 'font-family', 'ui-sans-serif,system-ui,sans-serif',
+     'font-size', 14, 'fill', '#94a3b8', 'font-weight', '700', 'letter-spacing', '0.5px');
+  sbTitle.textContent = SB.title;
+  world.appendChild(sbTitle);
 
-  // ── CONNECTION LINES ──
-  conns.forEach(([aid, uid]) => {
+  // 2. ACTOR GENERALIZATIONS (Hollow Triangle pointing to Parent Actor)
+  actorGen.forEach(gRel => {
+    const ch = amap[gRel.child], pr = amap[gRel.parent];
+    if (!ch || !pr) return;
+    // Draw line from child head up to parent feet
+    ln(world, ch.cx, ch.cy - 16, pr.cx, pr.cy + 70, '#94a3b8', 1.4, null, 'url(#uml-generalization)');
+  });
+
+  // 3. ACTOR-TO-USE-CASE ASSOCIATIONS (Solid Undirected Lines)
+  actorConns.forEach(([aid, uid]) => {
     const a = amap[aid], uc = ucmap[uid];
     if (!a || !uc) return;
-    // Actor right body midpoint
-    const ax = a.cx + 16, ay = a.cy + 27;
-    const ue = ucEdge(uc, true);
-    const l = ns('line');
-    sa(l,'x1',ax,'y1',ay,'x2',ue.x,'y2',ue.y,
-       'stroke',C_LINE,'stroke-width',1.0,'stroke-opacity','0.65');
-    world.appendChild(l);
+    const ax = a.cx + 20, ay = a.cy + 25;
+    const edge = ellipseEdgePt(uc, ax, ay);
+    ln(world, ax, ay, edge.x, edge.y, C_LINE, 1.2);
   });
 
-  // ── USE CASES ──
+  // 4. USE CASE RELATIONSHIPS (<<include>> and <<extend>>)
+  ucRels.forEach(r => {
+    const fc = ucmap[r.f], tc = ucmap[r.t];
+    if (!fc || !tc) return;
+    const p1 = ellipseEdgePt(fc, tc.cx, tc.cy);
+    const p2 = ellipseEdgePt(tc, fc.cx, fc.cy);
+
+    const isInc = r.type === 'include';
+    const col = isInc ? '#38bdf8' : '#f59e0b';
+    const marker = isInc ? 'url(#uml-open-arrow-inc)' : 'url(#uml-open-arrow-ext)';
+    const label = isInc ? '«include»' : '«extend»';
+
+    ln(world, p1.x, p1.y, p2.x, p2.y, col, 1.4, '5 4', marker);
+
+    // Midpoint label pill
+    const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+    const bg = ns('rect');
+    sa(bg, 'x', mx - 32, 'y', my - 8, 'width', 64, 'height', 16, 'rx', 4,
+       'fill', '#0a0f1d', 'stroke', '#334155', 'stroke-width', 0.9);
+    world.appendChild(bg);
+
+    const t = ns('text');
+    sa(t, 'x', mx, 'y', my + 4, 'font-family', 'ui-monospace,sans-serif', 'font-size', 9.5,
+       'fill', col, 'text-anchor', 'middle', 'font-weight', '600');
+    t.textContent = label;
+    world.appendChild(t);
+  });
+
+  // 5. DRAW USE CASES (Ellipses)
   ucs.forEach(uc => {
     const g = ns('g');
-    drawUC(g, uc);
+    drawEllipseUC(g, uc);
     world.appendChild(g);
   });
 
-  // ── ACTORS ──
+  // 6. DRAW ACTORS (Stick figures on left)
   actors.forEach(a => {
     const g = ns('g');
-    drawStick(g, a.cx, a.cy);
-    // Name labels
-    const startY = a.cy + 80;
-    a.lines.forEach((l, i) => {
+    drawStick(g, a.cx, a.cy, a.color);
+
+    // Actor Name Label (multi-line support for «abstract»)
+    const lines = a.label.split('\n');
+    lines.forEach((line, idx) => {
       const t = ns('text');
-      sa(t,'x',a.cx,'y',startY+i*14,'font-family','Arial,sans-serif',
-         'font-size',11,'fill',C_ACT_LINE,'text-anchor','middle','font-weight','700');
-      t.textContent = l;
+      sa(t, 'x', a.cx, 'y', a.cy + 82 + idx * 13, 'font-family', 'ui-sans-serif,system-ui,sans-serif',
+         'font-size', idx === 0 && lines.length > 1 ? 9.5 : 11.5,
+         'fill', a.color, 'text-anchor', 'middle', 'font-weight', '700');
+      t.textContent = line;
       g.appendChild(t);
     });
+
     world.appendChild(g);
   });
-
-  // ── ACTOR ROLE LABELS (left side) ──
-  // Bracket/section labels on left outside boundary
-  const roleLabels = [
-    {y:230, label:'System Admin', color:'#c00000'},
-    {y:460, label:'Dean',         color:'#1a5fb4'},
-    {y:600, label:'Dept Head',    color:'#276e37'},
-    {y:740, label:'Lecturer',     color:'#7f3f00'},
-    {y:880, label:'Student',      color:'#4a4a8a'},
-  ];
 }
 
 function fitView() {
   const vp = document.getElementById('vp');
   const cw = vp.clientWidth, ch = vp.clientHeight;
-  const totalW = SB.x + SB.w + 250;
-  const totalH = SB.y + SB.h + 100;
-  scale = Math.min(cw/totalW, ch/totalH, 0.9);
-  tx = (cw - totalW*scale)/2;
-  ty = (ch - totalH*scale)/2 + 10;
+  const totalW = SB.x + SB.w + 60;
+  const totalH = SB.y + SB.h + 60;
+  scale = Math.min(cw / totalW, ch / totalH, 0.95);
+  tx = (cw - totalW * scale) / 2 + 20 * scale;
+  ty = (ch - totalH * scale) / 2 + 10 * scale;
   render();
 }
 
-function resetView() { scale = 0.6; tx = 20; ty = 20; render(); }
+function resetView() { scale = 0.47; tx = 30; ty = 20; render(); }
 
 const vp = document.getElementById('vp');
 vp.addEventListener('wheel', e => {
   e.preventDefault();
   const r = vp.getBoundingClientRect();
   const mx = e.clientX - r.left, my = e.clientY - r.top;
-  const d = e.deltaY > 0 ? .88 : 1/.88;
-  tx = mx - (mx-tx)*d; ty = my - (my-ty)*d; scale *= d; render();
+  const d = e.deltaY > 0 ? 0.9 : 1 / 0.9;
+  tx = mx - (mx - tx) * d;
+  ty = my - (my - ty) * d;
+  scale *= d;
+  render();
 }, {passive:false});
-vp.addEventListener('mousedown', e => { drag=true; lx=e.clientX; ly=e.clientY; });
-vp.addEventListener('mousemove', e => { if(!drag)return; tx+=e.clientX-lx; ty+=e.clientY-ly; lx=e.clientX; ly=e.clientY; render(); });
-vp.addEventListener('mouseup', () => drag=false);
-vp.addEventListener('mouseleave', () => drag=false);
-window.addEventListener('load', () => { render(); setTimeout(fitView, 120); });
+
+vp.addEventListener('mousedown', e => { drag = true; lx = e.clientX; ly = e.clientY; });
+vp.addEventListener('mousemove', e => {
+  if (!drag) return;
+  tx += e.clientX - lx; ty += e.clientY - ly;
+  lx = e.clientX; ly = e.clientY;
+  render();
+});
+vp.addEventListener('mouseup', () => drag = false);
+vp.addEventListener('mouseleave', () => drag = false);
+window.addEventListener('load', () => { render(); setTimeout(fitView, 100); });
 </script>
 </body>
 </html>

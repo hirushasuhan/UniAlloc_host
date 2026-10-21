@@ -4,700 +4,363 @@
 
 **Complete step-by-step instructions to get the University Dean's Office HR Allocation System running on your local machine.**
 
+[![Next.js 14](https://img.shields.io/badge/Frontend-Next.js%2014-black?style=flat&logo=next.js)](https://nextjs.org/)
+[![PHP 8.2](https://img.shields.io/badge/Backend-PHP%208.2%20(PDO)-777bb4?style=flat&logo=php&logoColor=white)](https://www.php.net/)
+[![MySQL 8.0](https://img.shields.io/badge/Database-MySQL%208.0-4479a1?style=flat&logo=mysql&logoColor=white)](https://www.mysql.com/)
+
 </div>
 
 ---
 
 ## Table of Contents
 
-1.  [Prerequisites](#1-prerequisites)
-2.  [Clone the Repository](#2-clone-the-repository)
-3.  [Database Setup (MySQL)](#3-database-setup-mysql)
-4.  [Backend Setup](#4-backend-setup)
-    - [Option A: Java (Servlets + JDBC)](#option-a-java-servlets--jdbc)
-    - [Option B: PHP (Vanilla + PDO)](#option-b-php-vanilla--pdo)
-5.  [Frontend Setup (Next.js)](#5-frontend-setup-nextjs)
-6.  [Running the Full Application](#6-running-the-full-application)
-7.  [Default Test Accounts](#7-default-test-accounts)
-8.  [Environment Variables Reference](#8-environment-variables-reference)
-9.  [Common Issues & Troubleshooting](#9-common-issues--troubleshooting)
-10. [Development Tools & Recommendations](#10-development-tools--recommendations)
+1. [Prerequisites](#1-prerequisites)
+2. [Project Architecture & Repository Structure](#2-project-architecture--repository-structure)
+3. [Database Setup (MySQL 8.x)](#3-database-setup-mysql-8x)
+4. [Backend Setup (Vanilla PHP 8.2 + PDO)](#4-backend-setup-vanilla-php-82--pdo)
+5. [Frontend Setup (Next.js 14)](#5-frontend-setup-nextjs-14)
+6. [Running the Full Application](#6-running-the-full-application)
+7. [Default Test Accounts](#7-default-test-accounts)
+8. [Environment Variables Reference](#8-environment-variables-reference)
+9. [Common Issues & Troubleshooting](#9-common-issues--troubleshooting)
+10. [Development Tools & Extensions](#10-development-tools--extensions)
 
 ---
 
 ## 1. Prerequisites
 
-Ensure the following software is installed **before** proceeding. Click each link for the official download page.
+Ensure the following software packages are installed before proceeding:
 
 | Software | Minimum Version | Purpose | Download |
 |---|---|---|---|
 | **Node.js** | v18.17+ (LTS) | Next.js frontend runtime | [nodejs.org](https://nodejs.org/) |
-| **npm** | v9+ (ships with Node) | JavaScript package manager | Included with Node.js |
-| **Git** | v2.40+ | Version control & cloning | [git-scm.com](https://git-scm.com/) |
-| **MySQL Server** | v8.0+ | Relational database | [dev.mysql.com](https://dev.mysql.com/downloads/mysql/) |
-| **MySQL Workbench** *(optional)* | v8.0+ | Visual DB management & ER diagrams | [dev.mysql.com](https://dev.mysql.com/downloads/workbench/) |
+| **npm** | v9+ (ships with Node) | Frontend package manager | Included with Node.js |
+| **PHP** | 8.2+ (CLI or XAMPP) | Backend REST API runtime with PDO & OpenSSL | [php.net](https://www.php.net/downloads) or [apachefriends.org](https://www.apachefriends.org/) |
+| **MySQL Server** | 8.0+ | Relational database engine | [dev.mysql.com](https://dev.mysql.com/downloads/mysql/) |
+| **Git** | 2.40+ | Version control | [git-scm.com](https://git-scm.com/) |
 
-**Choose ONE backend stack:**
+### Verify Installations
 
-| Backend Option | Software | Version | Download |
-|---|---|---|---|
-| **Option A** | Java Development Kit (JDK) | 17+ (LTS) | [adoptium.net](https://adoptium.net/) |
-| | Apache Maven | 3.9+ | [maven.apache.org](https://maven.apache.org/) |
-| | Apache Tomcat | 10.1+ | [tomcat.apache.org](https://tomcat.apache.org/) |
-| **Option B** | PHP | 8.2+ | [php.net](https://www.php.net/downloads) |
-| | XAMPP *(includes Apache + PHP + MySQL)* | 8.x | [apachefriends.org](https://www.apachefriends.org/) |
-
-### Verify installations
-
-Open a terminal and run these commands to confirm everything is installed:
+Open your terminal (PowerShell, Command Prompt, or Bash) and execute:
 
 ```bash
-# General
-node -v          # Should output v18.x or higher
-npm -v           # Should output 9.x or higher
-git --version    # Should output 2.x or higher
-mysql --version  # Should output 8.x
+node -v          # Expected: v18.x or v20.x
+npm -v           # Expected: 9.x or higher
+php -v           # Expected: PHP 8.2.x or 8.3.x
+mysql --version  # Expected: MySQL 8.x
+git --version    # Expected: Git 2.x
+```
 
-# If using Java (Option A)
-java -version    # Should output 17.x or higher
-mvn -v           # Should output 3.9.x or higher
+> **PHP Extension Checklist:** Ensure `pdo_mysql`, `openssl`, and `mbstring` extensions are enabled in your `php.ini`. (In XAMPP, click Apache -> Config -> `php.ini` and verify that `extension=pdo_mysql` and `extension=openssl` do not have a leading semicolon `;`).
 
-# If using PHP (Option B)
-php -v           # Should output 8.2.x or higher
+---
+
+## 2. Project Architecture & Repository Structure
+
+UniAlloc follows a strict decoupled architecture:
+
+```
+UniAlloc_host/
+├── backend-php/        # Hand-coded Vanilla PHP 8.2+ REST API (PDO, no frameworks)
+│   ├── config/         # Database and application configuration
+│   ├── public/         # Public web root & custom front router (index.php)
+│   ├── src/
+│   │   ├── controllers/# Route request controllers
+│   │   ├── dao/        # Data Access Objects (Raw SQL with PDO Prepared Statements)
+│   │   ├── helpers/    # Crypto, TOTP, JWT, Password & Validation policies
+│   │   ├── middleware/ # JWT authentication & RBAC middleware
+│   │   └── services/   # Business logic (WorkloadService, Overload calculation)
+│   ├── .env.example    # Environment variable template
+│   └── wasmer.toml     # Optional serverless deployment descriptor
+│
+├── frontend/           # Modern Next.js 14 React Application
+│   ├── src/
+│   │   ├── app/        # App router (role-scoped dashboards: admin, dean, department-head, lecturer, student)
+│   │   ├── components/ # Reusable UI components, widgets, modals, capacity charts
+│   │   ├── hooks/      # React hooks for API consumption and state
+│   │   └── lib/        # API clients, auth helpers, token management
+│   ├── public/         # Static assets (logos, badges, icons)
+│   └── package.json    # Frontend dependencies and scripts
+│
+├── database/           # Relational schema, seed datasets, and migration scripts
+│   ├── schema.sql      # Base DDL schema (14 tables with referential integrity)
+│   ├── seed.sql        # Initial test accounts and organizational hierarchies
+│   ├── apply_pending_migrations.sql # Idempotent migration runner (migrations 01-10)
+│   └── rotate_demo_credentials.sql  # Credential rotation tool
+│
+├── docs/               # Technical documentation & Interactive UML Diagrams
+│   ├── usecase_diagram.html  # Interactive UML 2.5 Use Case Diagram (SVG)
+│   ├── class_diagram.html    # Interactive UML 2.5 Class Diagram (SVG)
+│   ├── er_diagram.html       # Interactive Crow's Foot ER Diagram (SVG)
+│   ├── SYSTEM_DOCUMENTATION.md # Comprehensive System Specifications
+│   ├── setup.md        # This Setup & Installation Guide
+│   └── README.md       # Project Overview
+└── README.md           # Root repository overview & quickstart
 ```
 
 ---
 
-## 2. Clone the Repository
+## 3. Database Setup (MySQL 8.x)
+
+### 3.1 Start MySQL Service
+
+- **Windows Service:** Open Services -> Start `MySQL80` (or `net start mysql80` in Administrator Command Prompt).
+- **XAMPP:** Open XAMPP Control Panel and click **Start** next to MySQL.
+- **Linux/macOS:** `sudo systemctl start mysql` or `brew services start mysql`.
+
+### 3.2 Create the Database
+
+Log in to MySQL as root or an administrative user:
 
 ```bash
-# Clone the project repository
-git clone https://github.com/your-username/university-hr-allocation.git
-
-# Navigate into the project root
-cd university-hr-allocation
+mysql -u root -p
 ```
 
-> **Note:** Replace `your-username/university-hr-allocation` with your actual GitHub repository URL.
-
-After cloning, you should see this structure:
-
-```
-university-hr-allocation/
-├── frontend/          # Next.js application
-├── backend-php/       # Vanilla PHP backend (Option B)
-├── database/          # SQL scripts, ER diagrams
-├── docs/              # API specs, wireframes
-├── README.md
-└── setup.md           # <- You are here
-```
-
----
-
-## 3. Database Setup (MySQL)
-
-### 3.1 Start the MySQL Server
-
-- **Windows (standalone):** Open Services -> Start "MySQL80"
-- **Windows (XAMPP):** Open XAMPP Control Panel -> Start "MySQL"
-- **macOS:** `brew services start mysql`
-- **Linux:** `sudo systemctl start mysql`
-
-### 3.2 Create the Database and User
-
-Open MySQL Workbench, phpMyAdmin, or a terminal and execute:
+Execute the following SQL commands:
 
 ```sql
--- Step 1: Create the database
-CREATE DATABASE IF NOT EXISTS uniAlloc_db
+CREATE DATABASE IF NOT EXISTS `uniAlloc_db`
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
--- Step 2 (Optional): Create a dedicated application user (if not using root)
-CREATE USER IF NOT EXISTS 'unialloc_user'@'localhost'
-  IDENTIFIED BY 'Str0ng!P@ssw0rd';
-
--- Step 3 (Optional): Grant privileges to the dedicated user
-GRANT ALL PRIVILEGES ON uniAlloc_db.* TO 'unialloc_user'@'localhost';
-FLUSH PRIVILEGES;
-
--- Step 4: Verify
-SHOW DATABASES LIKE 'university_hr%';
+EXIT;
 ```
 
-### 3.3 Import the Base Schema
+### 3.3 Import Schema & Apply Migrations
 
-Create all tables by running the DDL script:
+Run the SQL scripts in order from your terminal:
 
 ```bash
-# If your root user has a password: mysql -u root -p uniAlloc_db < database/schema.sql
-mysql -u root uniAlloc_db < database/schema.sql
+# 1. Load the Base Schema (All 14 core tables)
+mysql -u root -p uniAlloc_db < database/schema.sql
+
+# 2. Apply all pending security and feature migrations (01 through 10)
+mysql -u root -p uniAlloc_db < database/apply_pending_migrations.sql
+
+# 3. Seed default roles, faculties, departments, and demo accounts
+mysql -u root -p uniAlloc_db < database/seed.sql
 ```
 
-This creates all tables: `users`, `roles`, `faculties`, `departments`, `assignments`, `assignment_progress`, `work_requests`, `workload_appeals`, `student_requests`, `notifications`, `audit_logs`, `settings`, and `role_promotions`.
-
-### 3.4 Import Seed Data
-
-Populate the database with default roles, the test faculty/department structure, and all test user accounts:
-
-```bash
-# If your root user has a password: mysql -u root -p uniAlloc_db < database/seed.sql
-mysql -u root uniAlloc_db < database/seed.sql
-```
-
-The seed script creates:
-- All 5 roles (system_admin, dean, department_head, lecturer, student)
-- Two sample faculties: Faculty of Computing, Faculty of Engineering
-- Four sample departments: Computer Science, Software Engineering (under Computing); Civil Engineering, Electrical Engineering (under Engineering)
-- All test user accounts listed in Section 7
-
-> **Tip:** Since the backend is hand-coded (no ORM/framework), you must run these SQL scripts manually to set up your database schema and seed data before starting the backend server.
+*(If your local MySQL root user has no password, simply omit the `-p` flag).*
 
 ---
 
-## 4. Backend Setup
+## 4. Backend Setup (Vanilla PHP 8.2 + PDO)
 
-Choose **one** of the two options below based on your team's chosen backend technology.
+### 4.1 Configure Environment Variables
 
----
-
-### Option A: Java (Servlets + JDBC)
-
-> **Important:** Per project guidelines, the backend must be **hard-coded without frameworks**. We use plain Java Servlets for HTTP handling and raw JDBC for database access — no Spring Boot, no Hibernate, no JPA.
-
-#### A.1 Navigate to the backend directory
-
-```bash
-cd backend-java
-```
-
-#### A.2 Configure the database connection
-
-Open `resources/db.properties` and set your MySQL credentials:
-
-```properties
-# --- Database ---
-db.url=jdbc:mysql://localhost:3306/uniAlloc_db?useSSL=false&serverTimezone=UTC
-db.username=root
-db.password=
-db.driver=com.mysql.cj.jdbc.Driver
-
-# --- JWT ---
-jwt.secret=your-256-bit-secret-key-change-this-in-production
-jwt.expiration=86400000
-
-# --- CORS ---
-cors.allowed.origins=http://localhost:3000
-
-# --- Capacity Threshold ---
-# Percentage of capacity_hours at which overload alert is triggered
-overload.threshold.percent=90
-```
-
-#### A.3 Build the project with Maven
-
-```bash
-# Compile and package as a WAR file
-mvn clean package -DskipTests
-```
-
-This produces a `target/unialloc.war` file.
-
-#### A.4 Deploy to Apache Tomcat
-
-1. Copy the WAR file to Tomcat's `webapps/` directory:
-   ```bash
-   cp target/unialloc.war /path/to/tomcat/webapps/
-   ```
-2. Start Tomcat:
-   ```bash
-   # Windows
-   %CATALINA_HOME%\bin\startup.bat
-
-   # macOS / Linux
-   $CATALINA_HOME/bin/startup.sh
-   ```
-
-> **Alternative (development mode):** You can use the Maven Tomcat plugin for quick local testing:
-> ```bash
-> mvn tomcat7:run
-> ```
-
-#### A.5 Verify the backend is running
-
-Open [http://localhost:8080/unialloc/api/health](http://localhost:8080/unialloc/api/health) — you should see:
-```json
-{ "status": "UP", "database": "connected" }
-```
-
-#### A.6 Key Backend Files (Java)
-
-| File / Class | Purpose |
-|---|---|
-| `web.xml` | Maps URL patterns to Servlet classes and registers filters |
-| `DatabaseManager.java` | Manages JDBC connection pool (manual `DriverManager` or HikariCP) |
-| `AuthServlet.java` | Handles `/api/auth/login` with role-claim JWT generation |
-| `JwtFilter.java` | Servlet filter that validates JWT and injects role on every protected request |
-| `UserDAO.java` | Raw JDBC queries for user CRUD (prepared statements) |
-| `AssignmentDAO.java` | Raw JDBC queries for assignment CRUD, progress updates |
-| `WorkRequestDAO.java` | Raw JDBC queries for cross-dept/cross-faculty/upward requests |
-| `WorkloadService.java` | Capacity calculation and overload detection logic |
-| `NotificationDAO.java` | Raw JDBC queries for creating and listing in-app notifications |
-| `StudentRequestDAO.java` | Raw JDBC queries for student supervisor requests |
-| `AuditLogDAO.java` | Raw JDBC queries for writing and reading audit log entries |
-
-#### A.7 Key API Endpoints (Java)
-
-| Method | Endpoint | Description | Auth Required |
-|---|---|---|---|
-| POST | `/api/auth/login` | Login and receive JWT with role claim | No |
-| GET | `/api/users` | List users (scoped to caller's faculty/dept by role) | Yes |
-| POST | `/api/users` | Create a new user account | Yes (Admin, Dean, Dept Head) |
-| GET | `/api/faculties` | List all faculties | Yes (Admin, Dean) |
-| GET | `/api/departments` | List departments (scoped by faculty) | Yes |
-| POST | `/api/assignments` | Create and assign work to a lecturer/dept head | Yes (Dean, Dept Head) |
-| GET | `/api/assignments` | List assignments (scoped to caller's role/dept) | Yes |
-| PATCH | `/api/assignments/{id}/progress` | Update assignment progress percentage and note | Yes (Lecturer) |
-| GET | `/api/capacity/{userId}` | Get a user's workload capacity summary | Yes (Dean, Dept Head) |
-| POST | `/api/work-requests` | Submit a cross-dept, cross-faculty, or upward request | Yes |
-| GET | `/api/work-requests` | List incoming requests for the caller | Yes |
-| PATCH | `/api/work-requests/{id}` | Approve or reject a work request | Yes (Dean, Dept Head) |
-| POST | `/api/appeals` | Submit a workload appeal | Yes (Lecturer) |
-| GET | `/api/appeals` | List appeals (Dept Head sees dept appeals; Dean sees faculty appeals) | Yes |
-| PATCH | `/api/appeals/{id}` | Review/resolve an appeal | Yes (Dept Head, Dean) |
-| POST | `/api/student-requests` | Submit a student project/thesis supervisor request | Yes (Student) |
-| GET | `/api/student-requests` | List student requests (Dean sees faculty requests; Student sees own) | Yes |
-| PATCH | `/api/student-requests/{id}` | Assign or reject a student request | Yes (Dean) |
-| GET | `/api/notifications` | List notifications for the caller | Yes |
-| PATCH | `/api/notifications/{id}/read` | Mark a notification as read | Yes |
-| POST | `/api/promotions` | Initiate or approve a role promotion | Yes (Dean, Admin) |
-| GET | `/api/audit-logs` | List all audit log entries | Yes (Admin) |
-
----
-
-### Option B: PHP (Vanilla + PDO)
-
-> **Important:** Per project guidelines, the backend must be **hard-coded without frameworks**. We use vanilla PHP for HTTP handling and raw PDO for database access — no Laravel, no Symfony, no Eloquent ORM.
-
-#### B.1 Navigate to the backend directory
+Navigate to the `backend-php/` directory:
 
 ```bash
 cd backend-php
-```
-
-#### B.2 Configure secrets and the database connection
-
-All backend secrets live in `backend-php/.env`, which is **gitignored** —
-`config/app.php` and `config/database.php` only read from it and contain no
-credentials of their own. Start from the template:
-
-```bash
 cp .env.example .env
 ```
 
-Generate the two required keys (run each and paste the output into `.env`):
+Generate two secure 256-bit cryptographic keys using PHP:
 
 ```bash
-php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"   # JWT_SECRET
-php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"   # APP_KEY
+php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"   # Generates JWT_SECRET
+php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"   # Generates APP_KEY
 ```
 
-Then fill in the rest:
+Open `backend-php/.env` in your code editor and configure:
 
 ```ini
-APP_DEBUG=false                # true only on your own machine
-JWT_SECRET=<64 hex characters> # required; the app refuses to start without it
-JWT_TTL=480                    # access token lifetime in minutes (8 hours)
-APP_KEY=<64 hex characters>    # required; encrypts TOTP secrets at rest
+APP_DEBUG=true
+JWT_SECRET=<paste_first_generated_64_hex_string_here>
+JWT_TTL=480
+APP_KEY=<paste_second_generated_64_hex_string_here>
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_NAME=uniAlloc_db
 DB_USER=root
 DB_PASSWORD=
 CORS_ORIGINS=http://localhost:3000
-REGISTRATION_EMAIL_DOMAIN=     # e.g. university.edu to restrict student sign-ups
+REGISTRATION_EMAIL_DOMAIN=
+OVERLOAD_THRESHOLD_PCT=90
 ```
 
-> **Never commit `.env`.** Each machine and each deployment gets its own
-> `JWT_SECRET` and `APP_KEY`. Changing `APP_KEY` invalidates every enrolled
-> authenticator app; changing `JWT_SECRET` signs everyone out.
+> **Security Note:** Never commit `backend-php/.env`. `JWT_SECRET` signs authentication tokens; `APP_KEY` encrypts user TOTP authenticator secrets at rest.
 
-#### B.3 Import the database schema and seed data
+### 4.2 Start the Backend Development Server
 
-```bash
-# Create all tables (if root has a password, add the -p flag)
-mysql -u root uniAlloc_db < sql/schema.sql
-
-# Seed default roles, faculty structure, and test accounts
-mysql -u root uniAlloc_db < sql/seed.sql
-```
-
-#### B.4 Start the development server
+Run PHP's high-performance built-in web server pointing to the `public/` directory:
 
 ```bash
-# Using PHP's built-in development server
 php -S localhost:8000 -t public/
 ```
 
-> **Alternative:** If using XAMPP, place the `backend-php` folder inside `htdocs/` and access via `http://localhost/backend-php/public/`.
+Verify the API is operational by opening:
+[http://localhost:8000/api/health](http://localhost:8000/api/health)
 
-Verify the backend is running by opening [http://localhost:8000/api/health](http://localhost:8000/api/health) — you should see:
+Expected response:
 ```json
-{ "status": "UP", "database": "connected" }
+{
+  "status": "UP",
+  "database": "connected"
+}
 ```
-
-#### B.5 Key Backend Files (PHP)
-
-| File | Purpose |
-|---|---|
-| `public/index.php` | Entry point — custom router that maps URLs to controller methods |
-| `.env` | **All secrets** (JWT key, app key, DB credentials). Gitignored — never commit |
-| `.env.example` | Committed template showing which variables are required |
-| `config/database.php` | Reads DB settings from `.env` (no credentials of its own) |
-| `config/app.php` | Reads app settings from `.env` (no secrets of its own) |
-| `src/controllers/AuthController.php` | Handles login with manual JWT generation and role claims |
-| `src/middleware/JwtMiddleware.php` | Validates JWT token and role on every protected request |
-| `src/dao/UserDAO.php` | Raw PDO queries for user CRUD (prepared statements) |
-| `src/dao/AssignmentDAO.php` | Raw PDO queries for assignment CRUD, progress logging |
-| `src/dao/WorkRequestDAO.php` | Raw PDO queries for cross-dept/cross-faculty/upward requests |
-| `src/services/WorkloadService.php` | Capacity calculation and overload detection logic |
-| `src/dao/StudentRequestDAO.php` | Raw PDO queries for student supervisor requests |
-| `src/dao/AppealDAO.php` | Raw PDO queries for workload appeal CRUD |
-| `src/dao/NotificationDAO.php` | Raw PDO queries for in-app notifications |
-| `src/dao/AuditLogDAO.php` | Raw PDO queries for audit log entries |
-| `src/models/User.php` | OOP model class with getters/setters |
-
-#### B.6 Key API Endpoints (PHP)
-
-| Method | Endpoint | Description | Auth Required |
-|---|---|---|---|
-| POST | `/api/auth/login` | Login and receive JWT with role claim | No |
-| GET | `/api/users` | List users (scoped to caller's faculty/dept by role) | Yes |
-| POST | `/api/users` | Create a new user account | Yes (Admin, Dean, Dept Head) |
-| GET | `/api/faculties` | List all faculties | Yes (Admin, Dean) |
-| GET | `/api/departments` | List departments (scoped by faculty) | Yes |
-| POST | `/api/assignments` | Create and assign work to a lecturer/dept head | Yes (Dean, Dept Head) |
-| GET | `/api/assignments` | List assignments (scoped to caller's role/dept) | Yes |
-| PATCH | `/api/assignments/{id}/progress` | Update assignment progress percentage and note | Yes (Lecturer) |
-| GET | `/api/capacity/{userId}` | Get a user's workload capacity summary | Yes (Dean, Dept Head) |
-| POST | `/api/work-requests` | Submit a cross-dept, cross-faculty, or upward request | Yes |
-| GET | `/api/work-requests` | List incoming requests for the caller | Yes |
-| PATCH | `/api/work-requests/{id}` | Approve or reject a work request | Yes (Dean, Dept Head) |
-| POST | `/api/appeals` | Submit a workload appeal | Yes (Lecturer) |
-| GET | `/api/appeals` | List appeals (scoped by role) | Yes |
-| PATCH | `/api/appeals/{id}` | Review or resolve an appeal | Yes (Dept Head, Dean) |
-| POST | `/api/student-requests` | Submit a student project/thesis supervisor request | Yes (Student) |
-| GET | `/api/student-requests` | List student requests (scoped by role) | Yes |
-| PATCH | `/api/student-requests/{id}` | Assign or reject a student request | Yes (Dean) |
-| GET | `/api/notifications` | List notifications for the caller | Yes |
-| PATCH | `/api/notifications/{id}/read` | Mark a notification as read | Yes |
-| POST | `/api/promotions` | Initiate or approve a role promotion | Yes (Dean, Admin) |
-| GET | `/api/audit-logs` | List all audit log entries | Yes (Admin) |
 
 ---
 
-## 5. Frontend Setup (Next.js)
+## 5. Frontend Setup (Next.js 14)
 
-#### 5.1 Navigate to the frontend directory
+### 5.1 Install Frontend Dependencies
+
+Open a new terminal window, navigate to the `frontend/` directory, and install dependencies:
 
 ```bash
 cd frontend
-```
-
-#### 5.2 Install JavaScript dependencies
-
-```bash
 npm install
 ```
 
-#### 5.3 Configure environment variables
+### 5.2 Configure Frontend Environment
 
 Create a `.env.local` file in the `frontend/` directory:
 
 ```env
-# --- API Configuration ---
-# Use port 8080 if backend is Java (Servlets on Tomcat)
-# Use port 8000 if backend is PHP (Vanilla PHP)
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api
-
-# --- App Settings ---
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
 NEXT_PUBLIC_APP_NAME=UniAlloc
-NEXT_PUBLIC_APP_DESCRIPTION=University Dean Office Human Resource Allocation System
-
-# --- Auth ---
-NEXTAUTH_SECRET=a-random-secret-string-for-session-encryption
-NEXTAUTH_URL=http://localhost:3000
+NEXT_PUBLIC_APP_DESCRIPTION=University Dean's Office HR Allocation System
 ```
 
-#### 5.4 Start the development server
+### 5.3 Start the Frontend Development Server
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — you should see the UniAlloc login page.
+Open your browser at:
+[http://localhost:3000](http://localhost:3000)
 
-#### 5.5 Build for production (optional)
-
-```bash
-npm run build
-npm start
-```
+The UniAlloc portal login screen will load.
 
 ---
 
 ## 6. Running the Full Application
 
-To run the complete stack, you need **three terminals** (or background processes) running simultaneously:
+For active local development, keep two processes running:
 
 ```
-Terminal 1 — MySQL Server (usually auto-running as a service)
-Terminal 2 — Backend API server
-Terminal 3 — Frontend dev server
-```
-
-### Quick-Start Checklist
-
-```
-[1] Ensure MySQL service is running and uniAlloc_db exists with seeded data
-
-[2] Start the backend:
-    (Java)  cd backend-java && mvn tomcat7:run
-            OR deploy unialloc.war to Tomcat webapps/
-    (PHP)   cd backend-php && php -S localhost:8000 -t public/
-
-[3] Start the frontend:
-    cd frontend && npm run dev
-
-[4] Open http://localhost:3000 in your browser
-
-[5] Login with a test account from the table below
+┌─────────────────────────────────────────────────────────────┐
+│ Terminal 1: Backend API (PHP 8.2)                           │
+│ cd backend-php && php -S localhost:8000 -t public/          │
+│ Running on: http://localhost:8000                           │
+├─────────────────────────────────────────────────────────────┤
+│ Terminal 2: Frontend (Next.js 14)                           │
+│ cd frontend && npm run dev                                  │
+│ Running on: http://localhost:3000                           │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 7. Default Test Accounts
 
-After running the database seed script, the following test accounts are available. All accounts are active and ready to use immediately.
+The seed script creates ready-to-test accounts representing all 5 roles:
 
-| Role | Email | Password | Scope |
+| Role | Email | Password | Scope & Responsibilities |
 |---|---|---|---|
-| **System Admin** | `admin@university.edu` | `Admin@123` | Full system control; promotes users to Dean; manages audit logs and settings |
-| **Dean (Faculty of Computing)** | `dean.computing@university.edu` | `Dean@123` | Manages all departments and lecturers within Faculty of Computing |
-| **Dean (Faculty of Engineering)** | `dean.engineering@university.edu` | `Dean@123` | Manages all departments and lecturers within Faculty of Engineering |
-| **Department Head (CS Dept)** | `head.cs@university.edu` | `Head@123` | Manages lecturers in the Computer Science department |
-| **Department Head (SE Dept)** | `head.se@university.edu` | `Head@123` | Manages lecturers in the Software Engineering department |
-| **Lecturer** | `lecturer1@university.edu` | `Lecturer@123` | Assigned to Computer Science department |
-| **Lecturer** | `lecturer2@university.edu` | `Lecturer@123` | Assigned to Software Engineering department |
-| **Student** | `student@university.edu` | `Student@123` | Can submit supervisor requests to the Faculty of Computing Dean |
+| **System Admin** | `admin@university.edu` | `Admin@123` | Full system governance, User CRUD, Audit logs, Promote to Dean |
+| **Dean** (Computing) | `dean.computing@university.edu` | `Dean@123` | Faculty overview, Cross-faculty requests, Student request supervisor assignment |
+| **Dean** (Engineering) | `dean.engineering@university.edu` | `Dean@123` | Engineering faculty management |
+| **Department Head** (CS) | `head.cs@university.edu` | `Head@123` | CS lecturer workload monitoring, task allocation, student request endorsement (step 1) |
+| **Department Head** (SE) | `head.se@university.edu` | `Head@123` | SE department management |
+| **Lecturer** (CS) | `lecturer1@university.edu` | `Lecturer@123` | Progress slider updates (0-100%), task notes, workload appeal filing |
+| **Lecturer** (SE) | `lecturer2@university.edu` | `Lecturer@123` | Workload monitoring, upward work requests |
+| **Student** | `student@university.edu` | `Student@123` | Submit project/thesis supervisor request & real-time tracker |
 
-> ### ⚠️ These are LOCAL DEVELOPMENT credentials only
->
-> These passwords are published in this repository, so **every account above must
-> be considered public**. Never load `seed.sql` into a deployment that holds real
-> staff or student data.
->
-> Before any shared or production deployment:
-> 1. Load `schema.sql` **without** `seed.sql`, and create the first admin manually.
-> 2. If seed data was ever loaded, change every password above immediately —
->    a password reset also bumps `token_version`, which signs out any session
->    that was already using the old credentials.
-> 3. Set a unique `JWT_SECRET` and `APP_KEY` in `backend-php/.env`
->    (see `backend-php/.env.example`) — never reuse the values from another machine.
-
-### Testing Cross-Boundary Workflows
-
-Use these accounts together to verify the key workflows:
-
-| Workflow to Test | Accounts Involved |
-|---|---|
-| Cross-department request | `head.cs` submits a request to `head.se` for their lecturer |
-| Cross-faculty request | `dean.computing` submits a request to `dean.engineering` |
-| Student request flow | `student` submits a request; `dean.computing` reviews and assigns `lecturer1` |
-| Workload appeal | `lecturer1` files an appeal; `head.cs` reviews it; `dean.computing` resolves if escalated |
-| Lecturer promotion | `dean.computing` promotes `lecturer1` to Department Head |
-| Dept Head to Dean promotion | `admin` approves promotion of a Department Head to Dean role |
+> **Development Notice:** These default credentials are for local development and testing only. To rotate demo credentials, run `database/rotate_demo_credentials.sql`.
 
 ---
 
 ## 8. Environment Variables Reference
 
-### Backend (Java — `resources/db.properties`)
+### Backend (`backend-php/.env`)
 
-| Variable | Description | Default |
-|---|---|---|
-| `db.url` | JDBC connection string | `jdbc:mysql://localhost:3306/uniAlloc_db` |
-| `db.username` | MySQL username | `root` |
-| `db.password` | MySQL password | *(set in config)* |
-| `db.driver` | JDBC driver class | `com.mysql.cj.jdbc.Driver` |
-| `jwt.secret` | Secret key for signing JWT tokens | *(must be set — use a 256-bit random string)* |
-| `jwt.expiration` | Token expiry in milliseconds | `86400000` (24h) |
-| `overload.threshold.percent` | Capacity % at which overload alert fires | `90` |
-
-### Backend (PHP — `backend-php/.env`, gitignored)
-
-| Variable | Description | Default |
-|---|---|---|
-| `DB_HOST` | Database host | `127.0.0.1` |
-| `DB_PORT` | Database port | `3306` |
-| `DB_NAME` | Database name | `uniAlloc_db` |
-| `DB_USER` | MySQL username | `root` |
-| `DB_PASSWORD` | MySQL password | *(empty)* |
-| `JWT_SECRET` | Signing key for JWTs — **required**, 64 hex chars | *(none; app refuses to start)* |
-| `JWT_TTL` | Token expiry in minutes | `480` (8h) |
-| `APP_KEY` | AES-256-GCM key encrypting TOTP secrets — **required** | *(none; app refuses to start)* |
-| `APP_DEBUG` | Return raw exception messages in API errors | `false` |
-| `CORS_ORIGINS` | Comma-separated allowed browser origins | `http://localhost:3000` |
-| `REGISTRATION_EMAIL_DOMAIN` | Restrict student self-registration to one domain | *(blank = any)* |
-| `OVERLOAD_THRESHOLD_PCT` | Capacity % at which overload alert fires | `90` |
+| Variable | Type | Description | Default |
+|---|---|---|---|
+| `DB_HOST` | String | MySQL host address | `127.0.0.1` |
+| `DB_PORT` | Integer | MySQL connection port | `3306` |
+| `DB_NAME` | String | Database schema name | `uniAlloc_db` |
+| `DB_USER` | String | Database username | `root` |
+| `DB_PASSWORD` | String | Database user password | *(empty)* |
+| `JWT_SECRET` | String (64 hex) | Cryptographic signature key for authentication JWTs | *(Required)* |
+| `JWT_TTL` | Integer | Token lifespan in minutes | `480` (8 Hours) |
+| `APP_KEY` | String (64 hex) | AES-256-GCM symmetric key for TOTP secrets | *(Required)* |
+| `APP_DEBUG` | Boolean | Expose server-side exception detail | `true` (dev) / `false` (prod) |
+| `CORS_ORIGINS` | String | Permitted frontend origins | `http://localhost:3000` |
+| `OVERLOAD_THRESHOLD_PCT` | Integer | Workload % at which overload warning fires | `90` |
 
 ### Frontend (`frontend/.env.local`)
 
-| Variable | Description | Default |
+| Variable | Description | Value |
 |---|---|---|
-| `NEXT_PUBLIC_API_BASE_URL` | Backend API base URL | `http://localhost:8080/api` |
-| `NEXT_PUBLIC_APP_NAME` | Application display name | `UniAlloc` |
-| `NEXT_PUBLIC_APP_DESCRIPTION` | Application subtitle | `University Dean Office HR Allocation System` |
-| `NEXTAUTH_SECRET` | Session encryption secret | *(must be set)* |
-| `NEXTAUTH_URL` | Frontend base URL | `http://localhost:3000` |
+| `NEXT_PUBLIC_API_BASE_URL` | Base endpoint for REST calls | `http://localhost:8000/api` (dev) / `https://backend-php.wasmer.app/api` (prod) |
+| `NEXT_PUBLIC_APP_NAME` | Branding application title | `UniAlloc` |
 
 ---
 
-## 9. Common Issues & Troubleshooting
+## 9. Production Hosting & Cloudflare Security Configuration
 
-### MySQL Connection Refused
+For live deployments, UniAlloc uses a secure multi-tier hosting architecture:
 
-```
-Error: connect ECONNREFUSED 127.0.0.1:3306
-```
+| Component | Provider | Live URL | Security Role |
+|---|---|---|---|
+| **DNS & Perimeter** | Cloudflare | `https://www.unialloc.app` | Anycast Edge Reverse Proxy, DDoS Mitigation, WAF, Full (Strict) SSL/TLS 1.3 |
+| **Frontend Mirror** | Vercel | `https://uniallocsystem.vercel.app` | Next.js Serverless Edge Runtime |
+| **Backend REST API**| Wasmer Edge | `https://backend-php.wasmer.app/api` | Sandboxed WASI/PHP 8.2 Execution Environment |
 
-**Fix:** Ensure MySQL service is running:
-- Windows: `net start mysql80` or start via XAMPP Control Panel
-- macOS: `brew services start mysql`
-- Linux: `sudo systemctl start mysql`
-
----
-
-### Database Not Found / Table Does Not Exist
-
-```
-Error: Unknown database 'uniAlloc_db'
-```
-or
-```
-Error: Table 'uniAlloc_db.users' doesn't exist
-```
-
-**Fix:** You must create the database and run the schema and seed scripts before starting the backend. Follow Section 3 in order:
-
-```bash
-# 1. Create the database uniAlloc_db
-# 2. Import the schema
-mysql -u root uniAlloc_db < database/schema.sql
-# 3. Import the seed data
-mysql -u root uniAlloc_db < database/seed.sql
-```
+### Cloudflare Edge Proxy Setup
+1. **Proxy Status:** Enable **Proxied (Orange Cloud)** on `unialloc.app` (Apex) and `www.unialloc.app` CNAME records pointing to `cname.vercel-dns.com`.
+2. **SSL/TLS Mode:** Set encryption mode to **Full (Strict)** to ensure end-to-end cryptographic transit between Cloudflare and Vercel.
+3. **Security Rules:** Enable **Bot Fight Mode**, **Always Use HTTPS**, and **Automatic HTTPS Rewrites**.
+4. **CORS:** Ensure `CORS_ORIGINS` in the backend environment contains `https://unialloc.app,https://www.unialloc.app,https://uniallocsystem.vercel.app`.
 
 ---
 
-### CORS Errors in Browser Console
+## 10. Common Issues & Troubleshooting
 
-```
-Access-Control-Allow-Origin header missing
-```
+### 1. `SQLSTATE[HY000] [2002] Connection refused`
+- **Cause:** MySQL service is not running or port 3306 is occupied.
+- **Solution:** Verify MySQL status via XAMPP Control Panel or run `net start mysql80` (Windows) / `sudo systemctl status mysql` (Linux).
 
-**Fix:** Ensure the backend CORS configuration includes `http://localhost:3000`:
-- **Java:** Check your custom `CorsFilter` servlet filter settings in `web.xml` and the filter class
-- **PHP:** Check the CORS headers set in `public/index.php` or your middleware; verify `cors_origins` in `config/app.php`
+### 2. `Database schema is out of date — a required table or column is missing`
+- **Cause:** Migrations have not been applied to `uniAlloc_db`.
+- **Solution:** Run the automated idempotent migration script:
+  ```bash
+  mysql -u root uniAlloc_db < database/apply_pending_migrations.sql
+  ```
 
----
+### 3. `JWT_SECRET or APP_KEY is missing`
+- **Cause:** `backend-php/.env` was not created or keys are empty.
+- **Solution:** Copy `backend-php/.env.example` to `backend-php/.env` and generate both 64-hex keys using `php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"`.
 
-### JWT Token Expired or Invalid
+### 4. `CORS header 'Access-Control-Allow-Origin' missing`
+- **Cause:** The frontend URL does not match `CORS_ORIGINS` in `backend-php/.env`.
+- **Solution:** Ensure `CORS_ORIGINS=http://localhost:3000` in `.env`.
 
-```
-401 Unauthorized — Token expired
-```
-
-**Fix:** Login again to obtain a fresh token. Check that `jwt.expiration` (Java) or `jwt_ttl` (PHP) is set to a reasonable value (e.g., 24 hours = `86400000` ms or `1440` minutes).
-
----
-
-### Port Already in Use
-
-```
-Error: listen EADDRINUSE: address already in use :::3000
-```
-
-**Fix:** Kill the process occupying the port:
-- Windows: `netstat -ano | findstr :3000` then `taskkill /PID <PID> /F`
-- macOS/Linux: `lsof -ti:3000 | xargs kill -9`
-
-Or start the frontend on a different port: `npm run dev -- -p 3001`
+### 5. `Call to undefined function openssl_encrypt()` or `could not find driver`
+- **Cause:** Required PHP extensions are commented out in `php.ini`.
+- **Solution:** Open your `php.ini` file, find lines `;extension=pdo_mysql` and `;extension=openssl`, remove the semicolon `;` at the beginning of each line, and restart the PHP process.
 
 ---
 
-### Maven Wrapper Permission Denied (macOS/Linux)
+## 10. Development Tools & Extensions
 
-```
-./mvnw: Permission denied
-```
-
-**Fix:** Make the wrapper executable:
-```bash
-chmod +x mvnw
-```
-
----
-
-### Overload Alert Not Firing
-
-**Symptom:** A lecturer has more hours assigned than their `capacity_hours` value, but no notification is triggered.
-
-**Fix:** Verify:
-1. The `capacity_hours` field on the lecturer's user record is set to a non-zero value in the database.
-2. The `overload.threshold.percent` (Java) or `overload_threshold_pct` (PHP) is correctly set in the backend config.
-3. The `WorkloadService` is being called after every successful assignment creation — check that the assignment creation endpoint invokes the workload check before returning a 201 response.
-
----
-
-### Student Request Not Reaching Dean
-
-**Symptom:** A student submits a request but the Dean sees nothing in their inbox.
-
-**Fix:** Verify:
-1. The student's user record has a `department_id` set in the database.
-2. The department record has a `faculty_id` that maps to the correct faculty.
-3. The faculty record has a `dean_id` pointing to the Dean's user ID.
-4. The `student_requests` table row has the correct `faculty_id` populated at insert time.
-
----
-
-## 10. Development Tools & Recommendations
-
-| Tool | Purpose | Link |
-|---|---|---|
-| **VS Code** | Primary code editor | [code.visualstudio.com](https://code.visualstudio.com/) |
-| **IntelliJ IDEA** | Java IDE (recommended for Option A) | [jetbrains.com](https://www.jetbrains.com/idea/) |
-| **MySQL Workbench** | Visual database design, ER diagram creation, and query browser | [dev.mysql.com](https://dev.mysql.com/downloads/workbench/) |
-| **Postman** | API endpoint testing and collection documentation | [postman.com](https://www.postman.com/) |
-| **Figma** | UI/UX wireframing and prototyping | [figma.com](https://www.figma.com/) |
-| **dbdiagram.io** | Online ER diagram tool with SQL export | [dbdiagram.io](https://dbdiagram.io/) |
-| **draw.io** | General-purpose diagramming (Use Case, Class, Sequence, Activity diagrams) | [draw.io](https://app.diagrams.net/) |
-| **GitHub Desktop** | Visual Git client for version control | [desktop.github.com](https://desktop.github.com/) |
-
-### Recommended VS Code Extensions
-
-- **ES7+ React/Redux/React-Native snippets** — Fast component scaffolding
-- **Tailwind CSS IntelliSense** — Autocomplete for Tailwind classes
-- **Java Extension Pack / PHP Intelephense** — Language support for your chosen backend
-- **MySQL (by cweijan)** — Database browser inside VS Code
-- **Thunder Client** — Lightweight API tester (Postman alternative, works offline)
-- **GitLens** — Enhanced Git history and blame annotations inside the editor
+- **IDE:** [Visual Studio Code](https://code.visualstudio.com/)
+- **Recommended Extensions:**
+  - `PHP Intelephense` (bmewburn.vscode-intelephense-client)
+  - `Tailwind CSS IntelliSense` (bradlc.vscode-tailwindcss)
+  - `ESLint` (dbaeumer.vscode-eslint)
+- **API Testing:** Postman or Thunder Client
+- **Database GUI:** MySQL Workbench or phpMyAdmin
 
 ---
 
 <div align="center">
 
-**Need help?** Open an issue on the GitHub repository or contact the development team.
+**UniAlloc System Documentation & Diagrams**
+[Use Case Diagram](usecase_diagram.html) · [Class Diagram](class_diagram.html) · [ER Diagram](er_diagram.html) · [System Documentation](SYSTEM_DOCUMENTATION.md)
 
 </div>

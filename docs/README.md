@@ -4,11 +4,49 @@
 
 **A structured, role-based web platform for managing lecturer workloads, cross-department assignments, and student project requests across university faculties.**
 
-[![Next.js](https://img.shields.io/badge/Frontend-Next.js-000000?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
-[![PHP](https://img.shields.io/badge/Backend-Vanilla%20PHP%20(PDO)-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net/)
-[![MySQL](https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Release](https://img.shields.io/badge/Release-v1.0.0-emerald?style=for-the-badge&logo=github)](https://github.com/hirushasuhan/UniAlloc_host/releases/tag/v1.0.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](../LICENSE)
+[![Next.js 14](https://img.shields.io/badge/Frontend-Next.js%2014-black?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
+[![PHP 8.2](https://img.shields.io/badge/Backend-Vanilla%20PHP%208.2%20(PDO)-777bb4?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net/)
+[![MySQL 8.0](https://img.shields.io/badge/Database-MySQL%208.0%20(3NF)-4479a1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![UML Standard](https://img.shields.io/badge/Architecture-UML%202.5%20Standard-6366f1?style=for-the-badge)](SYSTEM_DOCUMENTATION.md)
+
+<p align="center">
+  <a href="https://www.unialloc.app" target="_blank"><strong>🌐 Live App: www.unialloc.app</strong></a> •
+  <a href="https://uniallocsystem.vercel.app" target="_blank"><strong>⚡ Vercel Mirror: uniallocsystem.vercel.app</strong></a> •
+  <a href="#demo-login-credentials"><strong>🔑 Demo Logins</strong></a>
+</p>
 
 </div>
+
+---
+
+## 🌐 Live Production Deployments
+
+The UniAlloc platform is deployed and live in production:
+
+| Deployment | URL | Status | Environment & Security Architecture |
+|---|---|---|---|
+| 🌍 **Primary Domain** | [https://www.unialloc.app](https://www.unialloc.app) | 🟢 **Active / Live** | **Cloudflare Proxied** (Full Strict SSL/TLS 1.3, DDoS Mitigation, WAF, Global Anycast CDN) &rarr; Vercel Serverless |
+| ⚡ **Vercel System Mirror** | [https://uniallocsystem.vercel.app](https://uniallocsystem.vercel.app) | 🟢 **Active / Live** | Direct Vercel Edge Production Deployment Mirror |
+| 🔌 **Backend REST API** | `https://backend-php.wasmer.app/api` | 🟢 **Active / Live** | High-performance Vanilla PHP 8.2 PDO REST Engine |
+
+> [!NOTE]
+> **Cloudflare Edge Security:** The primary domain `unialloc.app` and `www.unialloc.app` is routed through **Cloudflare** as an enterprise-grade security layer. Cloudflare provides automated L3/L4/L7 DDoS attack protection, Web Application Firewall (WAF) filtering, Bot Fight Mode, DNSSEC verification, and Full (Strict) SSL/TLS encryption before proxying to the Vercel edge deployment.
+
+---
+
+## 🔑 Demo Login Credentials
+
+For testing and demonstration, use the following pre-configured credentials across all 5 institutional roles:
+
+| Role | Email | Password | Access Scope & Permissions |
+|---|---|---|---|
+| 👑 **System Admin** | `admin@university.edu` | `Admin@123` | Institutional Administrator (Full system privileges, user administration, promotion approvals, audit logs) |
+| 🎓 **Dean (Computing)** | `dean.computing@university.edu` | `Dean@123` | Faculty of Computing (Faculty heatmap, cross-faculty requests, lecturer assignments, student appointments) |
+| 🏛️ **Department Head (CS)** | `head.cs@university.edu` | `Head@123` | Department of Computer Science (Department capacity, cross-dept requests, Step 1 student endorsement) |
+| 👨‍🏫 **Lecturer** | `lecturer1@university.edu` | `Lecturer@123` | Computer Science Academic Staff (Personal capacity donut, 0-100% assignment progress updates, appeal filing) |
+| 🎓 **Student** | `student@university.edu` | `Student@123` | Undergraduate Student (Research & thesis supervisor request submission, real-time status tracker) |
 
 ---
 
@@ -255,7 +293,7 @@ Students are requesters only — they cannot be assigned work within the system.
 ┌────────────────────────────┼─────────────────────────────────────────┐
 │                     API GATEWAY / BACKEND                             │
 │  ┌──────────────────────────────────────────────────────────────────┐│
-│  │              Vanilla PHP 8.2+ (Servlets :8000)                    ││
+│  │              Vanilla PHP 8.2+ (REST API :8000)                    ││
 │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────┐ ││
 │  │  │ Auth &   │ │Assignment│ │ Request  │ │ Workload │ │Appeal │ ││
 │  │  │ RBAC     │ │  Module  │ │  Module  │ │  Module  │ │Module │ ││
@@ -299,6 +337,13 @@ The relational database follows **3NF (Third Normal Form)** to eliminate redunda
 | `audit_logs` | System-wide action log (System Admin view) | id, user_id, action, entity, entity_id, timestamp |
 | `settings` | Global configuration key-value pairs | id, setting_key, setting_value, updated_by |
 | `role_promotions` | Full history of role promotions | id, user_id, old_role_id, new_role_id, promoted_by, approved_by, promoted_at |
+| `login_attempts` | Brute-force throttling & security log | id, identifier, ip_address, successful, attempted_at |
+
+> **Interactive Diagrams:**
+> - [Interactive Use Case Diagram (UML 2.5)](usecase_diagram.html)
+> - [Interactive Class Diagram (UML 2.5)](class_diagram.html)
+> - [Interactive ER Diagram (Crow's Foot 3NF)](er_diagram.html)
+> - [Full System Architecture Specification](SYSTEM_DOCUMENTATION.md)
 
 ### ER Diagram — Key Relationships
 
@@ -523,7 +568,7 @@ This project follows the **Waterfall Software Development Methodology** — a li
 ## 13. Project Structure
 
 ```
-university-hr-allocation/
+UniAlloc_host/
 ├── frontend/                    # Next.js application
 │   ├── src/
 │   │   ├── app/
@@ -546,7 +591,7 @@ university-hr-allocation/
 │   ├── package.json
 │   └── next.config.js
 │
-├── backend/                     # Vanilla PHP 8.2+ application (no frameworks)
+├── backend-php/                 # Vanilla PHP 8.2+ application (no frameworks)
 │   ├── public/
 │   │   └── index.php            # Entry point & custom router
 │   ├── src/
@@ -570,12 +615,14 @@ university-hr-allocation/
 │   └── seed.sql                 # Initial seed data
 │
 ├── docs/
-│   ├── api-specification.yaml   # OpenAPI / Swagger spec
-│   ├── use-case-diagram.png     # UML Use Case Diagram
-│   └── wireframes/              # UI mockups (Figma exports)
+│   ├── usecase_diagram.html     # UML 2.5 Use Case Diagram (Interactive SVG)
+│   ├── class_diagram.html       # UML 2.5 Class Diagram (Interactive SVG)
+│   ├── er_diagram.html          # Crow's Foot ER Diagram (Interactive SVG)
+│   ├── SYSTEM_DOCUMENTATION.md  # Detailed System Engineering Specs
+│   ├── setup.md                 # Local setup instructions
+│   └── README.md                # Documentation Guide
 │
-├── README.md                    # <- You are here
-└── setup.md                     # Local setup instructions
+└── README.md                    # Root repository overview
 ```
 
 ---
