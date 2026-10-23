@@ -4,8 +4,8 @@
 
 **Complete step-by-step instructions to get the University Dean's Office HR Allocation System running on your local machine.**
 
-[![Next.js 14](https://img.shields.io/badge/Frontend-Next.js%2014-black?style=flat&logo=next.js)](https://nextjs.org/)
-[![PHP 8.2](https://img.shields.io/badge/Backend-PHP%208.2%20(PDO)-777bb4?style=flat&logo=php&logoColor=white)](https://www.php.net/)
+[![Next.js 14](https://img.shields.io/badge/Frontend-Next.js%2014.2.35-black?style=flat&logo=next.js)](https://nextjs.org/)
+[![PHP 8.2.35+](https://img.shields.io/badge/Backend-PHP%208.2.35+%20(PDO)-777bb4?style=flat&logo=php&logoColor=white)](https://www.php.net/)
 [![MySQL 8.0](https://img.shields.io/badge/Database-MySQL%208.0-4479a1?style=flat&logo=mysql&logoColor=white)](https://www.mysql.com/)
 
 </div>
@@ -35,7 +35,7 @@ Ensure the following software packages are installed before proceeding:
 |---|---|---|---|
 | **Node.js** | v18.17+ (LTS) | Next.js frontend runtime | [nodejs.org](https://nodejs.org/) |
 | **npm** | v9+ (ships with Node) | Frontend package manager | Included with Node.js |
-| **PHP** | 8.2+ (CLI or XAMPP) | Backend REST API runtime with PDO & OpenSSL | [php.net](https://www.php.net/downloads) or [apachefriends.org](https://www.apachefriends.org/) |
+| **PHP** | 8.2.35+ / 8.3.36+ / 8.4.27+ | Backend REST API runtime (Patched against PHP2Shell CVE-2026-109618/19) | [php.net](https://www.php.net/downloads) or [apachefriends.org](https://www.apachefriends.org/) |
 | **MySQL Server** | 8.0+ | Relational database engine | [dev.mysql.com](https://dev.mysql.com/downloads/mysql/) |
 | **Git** | 2.40+ | Version control | [git-scm.com](https://git-scm.com/) |
 
@@ -46,7 +46,7 @@ Open your terminal (PowerShell, Command Prompt, or Bash) and execute:
 ```bash
 node -v          # Expected: v18.x or v20.x
 npm -v           # Expected: 9.x or higher
-php -v           # Expected: PHP 8.2.x or 8.3.x
+php -v           # Expected: PHP 8.2.35+ or 8.3.36+ (PHP2Shell patched)
 mysql --version  # Expected: MySQL 8.x
 git --version    # Expected: Git 2.x
 ```
@@ -145,7 +145,10 @@ mysql -u root -p uniAlloc_db < database/seed.sql
 
 ---
 
-## 4. Backend Setup (Vanilla PHP 8.2 + PDO)
+## 4. Backend Setup (Vanilla PHP 8.2.35+ + PDO)
+
+> [!IMPORTANT]
+> **PHP2Shell Security Mitigation:** The backend requires **PHP 8.2.35+**, **PHP 8.3.36+**, or **PHP 8.4.27+** to eliminate the critical core PHP2Shell interpreter flaws (**CVE-2026-109618** and **CVE-2026-109619**). In addition, `.htaccess` and `index.php` enforce defense-in-depth by disabling `session.upload_progress` and refusing any unexpected `multipart/form-data` bodies.
 
 ### 4.1 Configure Environment Variables
 

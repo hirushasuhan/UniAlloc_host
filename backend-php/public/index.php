@@ -40,8 +40,19 @@ spl_autoload_register(function (string $class): void {
 // detail server-side and return clean JSON instead.
 $cfg = require BASE_PATH . '/config/app.php';
 
+// --- Security runtime hardening (including PHP2Shell CVE-2026-109618 mitigation) ---
 ini_set('display_errors', !empty($cfg['debug']) ? '1' : '0');
+ini_set('session.upload_progress.enabled', '0');
 error_reporting(E_ALL);
+
+// UniAlloc REST API is strictly JSON-driven and never processes multipart uploads.
+$contentType = $_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '';
+if ($contentType !== '' && stripos($contentType, 'multipart/form-data') !== false) {
+    http_response_code(415);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Unsupported Media Type: multipart requests are not accepted.']);
+    exit;
+}
 
 set_exception_handler(function (\Throwable $e) use ($cfg) {
     error_log(sprintf(

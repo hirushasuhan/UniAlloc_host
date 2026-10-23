@@ -6,8 +6,8 @@
 
 [![Release](https://img.shields.io/badge/Release-v1.0.0-emerald?style=for-the-badge&logo=github)](https://github.com/hirushasuhan/UniAlloc_host/releases/tag/v1.0.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
-[![Next.js 14](https://img.shields.io/badge/Frontend-Next.js%2014%20(React)-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![PHP 8.2](https://img.shields.io/badge/Backend-Vanilla%20PHP%208.2%20(PDO)-777bb4?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net/)
+[![Next.js 14](https://img.shields.io/badge/Frontend-Next.js%2014.2.35%20(React)-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![PHP 8.2.35+](https://img.shields.io/badge/Backend-Vanilla%20PHP%208.2.35+%20(PDO)-777bb4?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net/)
 [![MySQL 8.0](https://img.shields.io/badge/Database-MySQL%208.0%20(3NF)-4479a1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![UML Standard](https://img.shields.io/badge/Architecture-UML%202.5%20Standard-6366f1?style=for-the-badge)](docs/SYSTEM_DOCUMENTATION.md)
 
@@ -174,7 +174,9 @@ mysql -u root -p uniAlloc_db < database/apply_pending_migrations.sql
 mysql -u root -p uniAlloc_db < database/seed.sql
 ```
 
-### 2. Backend Setup (PHP 8.2+)
+### 2. Backend Setup (PHP 8.2.35+ / 8.3.36+ / 8.4.27+)
+> [!IMPORTANT]
+> **Security Requirement (PHP2Shell Mitigation):** Ensure your PHP interpreter is updated to **PHP 8.2.35+**, **8.3.36+**, or **8.4.27+** to protect against the critical PHP2Shell core interpreter vulnerabilities (**CVE-2026-109618** and **CVE-2026-109619**). Defense-in-depth measures (disabling `session.upload_progress` and blocking multipart payloads at `.htaccess`) are active by default.
 ```bash
 cd backend-php
 cp .env.example .env
